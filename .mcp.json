@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "shared-server": {
+      "type": "stdio",
+      "command": "/path/to/server",
+      "args": [],
+      "env": {}
+    }
+  }
+}
