@@ -1,31 +1,22 @@
 import 'package:flutter/material.dart';
-
-import 'package:building_manage_front/features/auth/presentation/screens/admin_login_selection_screen.dart';
-import 'package:building_manage_front/features/auth/presentation/screens/user_login_screen.dart';
-import 'package:building_manage_front/features/common/presentation/widgets/full_screen_image_background.dart';
-import 'package:building_manage_front/features/common/presentation/widgets/page_header_text.dart';
-import 'package:building_manage_front/features/common/presentation/widgets/primary_action_button.dart';
-import 'package:building_manage_front/features/registration/presentation/screens/sign_up_screen.dart';
+import 'package:go_router/go_router.dart';
+import 'package:building_manage_front/presentation/common/widgets/full_screen_image_background.dart';
+import 'package:building_manage_front/presentation/common/widgets/page_header_text.dart';
+import 'package:building_manage_front/presentation/common/widgets/primary_action_button.dart';
 
 class MainHomeScreen extends StatelessWidget {
   const MainHomeScreen({super.key});
 
   void _openUserLogin(BuildContext context) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const UserLoginScreen()));
+    context.pushNamed('userLogin');
   }
 
   void _openAdminSelection(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const AdminLoginSelectionScreen()),
-    );
+    context.pushNamed('adminLoginSelection');
   }
 
   void _openSignUp(BuildContext context) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const SignUpScreen()));
+    context.pushNamed('signUp');
   }
 
   @override

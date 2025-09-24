@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
-import 'package:building_manage_front/features/common/presentation/widgets/page_header_text.dart';
+import 'package:building_manage_front/presentation/common/widgets/page_header_text.dart';
 
 class ManagerStaffLoginScreen extends StatefulWidget {
   const ManagerStaffLoginScreen({super.key});
@@ -41,6 +42,9 @@ class _ManagerStaffLoginScreenState extends State<ManagerStaffLoginScreen> {
           content: Text('로그인 성공 (stub). 백엔드 연동 시 실제 검증으로 대체 예정입니다.'),
         ),
       );
+
+      // 임시로 매니저 대시보드로 이동 (추후 인증 시스템과 연동)
+      context.goNamed('managerDashboard');
     }
   }
 

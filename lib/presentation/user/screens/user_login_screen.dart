@@ -1,8 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
-import 'package:building_manage_front/features/common/presentation/widgets/page_header_text.dart';
-import 'package:building_manage_front/features/registration/presentation/screens/sign_up_screen.dart';
+import 'package:building_manage_front/presentation/common/widgets/page_header_text.dart';
 
 class UserLoginScreen extends StatefulWidget {
   const UserLoginScreen({super.key});
@@ -43,6 +43,9 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('로그인 성공 (stub). 백엔드 연동 시 교체 예정입니다.')),
       );
+
+      // 임시로 유저 대시보드로 이동 (추후 인증 시스템과 연동)
+      context.goNamed('userDashboard');
     }
   }
 
@@ -53,9 +56,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
   }
 
   void _openSignUp() {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const SignUpScreen()));
+    context.pushNamed('signUp');
   }
 
   // 공통 입력 스타일

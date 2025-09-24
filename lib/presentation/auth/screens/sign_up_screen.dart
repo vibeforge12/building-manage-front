@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:building_manage_front/features/common/presentation/widgets/full_screen_image_background.dart';
-import 'package:building_manage_front/features/common/presentation/widgets/page_header_text.dart';
+import 'package:building_manage_front/presentation/common/widgets/full_screen_image_background.dart';
+import 'package:building_manage_front/presentation/common/widgets/page_header_text.dart';
 
 class SignUpScreen extends StatelessWidget {
   const SignUpScreen({super.key});
