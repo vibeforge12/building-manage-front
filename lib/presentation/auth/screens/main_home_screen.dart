@@ -16,7 +16,7 @@ class MainHomeScreen extends StatelessWidget {
   }
 
   void _openSignUp(BuildContext context) {
-    context.pushNamed('signUp');
+    context.pushNamed('residentSignup');
   }
 
   @override
@@ -52,7 +52,7 @@ class MainHomeScreen extends StatelessWidget {
                     label: '회원가입',
                     backgroundColor: const Color(0xFF006FFF),
                     foregroundColor: Colors.white,
-                    onPressed: () => _openSignUp(context),
+                    onPressed: () => context.go('/resident-signup'),
                   ),
                 ],
               ),

@@ -89,3 +89,53 @@ flutter clean                     # 빌드 캐시 정리
 - **Desktop**: Linux, macOS, Windows (각각의 디렉터리를 통해)
 
 각 플랫폼은 플랫폼별 설정과 빌드 구성이 있는 자체 설정 디렉터리를 가지고 있습니다.
+
+---
+
+## Agent Planning Notes (Foundation Review)
+
+### Current Snapshot
+- Riverpod + go_router 기반의 앱 골격과 기본 로그인 플로우(UI/Stub 로직)가 구축되어 있으며, `AuthStateNotifier`와 라우터 가드가 토대만 제공하고 있습니다.
+- Domain/Data 레이어, repository 인터페이스, dio 기반 API 연동, 로컬 스토리지(Hive, shared_preferences)는 구조만 존재하고 실제 구현이 비어 있습니다.
+- `UserRole`(core/auth)와 `UserType`(core/constants) 두 enum이 혼재하여 역할 정보 정합성 관리가 필요합니다.
+- 문서(`docs/`) 전반은 초기 설계/계획과 현 코드 구조가 뒤섞여 있어 최신 정보와 불일치하는 항목이 다수 존재합니다.
+- 테스트는 메인 홈 위젯 테스트 1건에 그쳐 있고, 상태/라우팅/역할 분기 관련 검증이 부재합니다.
+
+### Immediate Gaps & Risks
+- 인증 상태가 메모리 내 스텁으로만 유지되어 실제 로그인/토큰 흐름, 자동 로그인, 에러 처리 시나리오가 전혀 다뤄지지 않습니다.
+- 라우팅 플레이스홀더 대시보드는 역할별 요구사항을 전혀 반영하지 못하고 있으며, 접근권한 매트릭스에 대한 테스트/가드가 없습니다.
+- 테마/디자인 토큰이 Figma 기준으로 정리되지 않아 다크 모드, 반응형, 컴포넌트 일관성 확보가 어렵습니다.
+- 빌드/배포 파이프라인과 환경 분리(dev/staging/prod)가 정의되지 않아 실 서비스 준비 수준이 아닙니다.
+
+### Figma MCP Alignment Tasks
+1. `npx -y figma-developer-mcp --figma-api-key=… --stdio`로 Framelink Figma MCP 서버를 구동하고, 최신 디자인 토큰(컬러, 타입 스케일, spacing)과 컴포넌트 명세를 동기화합니다.
+2. Figma에서 정의된 공통 컴포넌트(CTA 버튼, 입력 필드, 배경, 카드 등)의 속성을 추출하여 Flutter Theme extensions 및 재사용 위젯에 반영할 매핑 테이블을 작성합니다.
+3. 각 역할별 핵심 플로우(유저/관리자/담당자/본사 대시보드)의 화면 구조, 네비게이션 패턴을 Figma 기준으로 캡처하여 `docs/ui_navigation_plan.md`와 라우팅 구성표를 업데이트합니다.
+
+### Implementation Roadmap (Not Yet Executed)
+1. **Foundation Hardening**
+   - 의존성 버전 재점검 및 정리(`pubspec.yaml`), 중복 enum 통합 전략 수립, 공통 상수/테마 정의.
+   - 정적 분석 규칙 강화(analysis_options)와 pre-commit 스크립트 초안 마련.
+2. **Design System Integration**
+   - Figma 토큰 기반 `ThemeData` 확장, 공통 컴포넌트 리팩토링, 반응형/접근성 가이드 수립.
+   - 자주 쓰이는 레이아웃/모듈을 `presentation/common`으로 통합하고 스토리북(Widgetbook 등) 도입 검토.
+3. **Authentication & Authorization Layer**
+   - `data/datasources`에 dio 기반 Auth API, 토큰 로컬 보관(Hive/secure storage) 구현.
+   - `AuthRepository` 및 usecase 정의, `AuthStateNotifier` 확장, 라우터 가드 및 에러 핸들링 정교화.
+   - 역할별 초기 라우팅 및 세션 복구 흐름 유닛/위젯 테스트 추가.
+4. **Role-Specific Dashboards**
+   - 각 역할 요구사항(Figma + `docs/user_types.md`)을 기준으로 MVP 화면 목록 및 상태 프로바이더 설계.
+   - 공통 모듈(공지, 신고, 예약 등)을 도메인 단위로 분리하고 Feature flag/조건 로딩 구조 마련.
+5. **Data & Offline Capabilities**
+   - API 에러/재시도/타임아웃 정책 수립, 응답 모델(JsonSerializable) 생성, 레포지토리 구현.
+   - Hive 박스 스키마 정의와 캐싱 전략, 오프라인 모드/동기화 전략 초안 작성.
+6. **Observability & Quality**
+   - 로그/에러 수집(예: Sentry) 연동 계획, 퍼포먼스 모니터링 시나리오 작성.
+   - 테스트 스위트 확장(Unit/Widget/Integration) 및 CI 파이프라인(Job: format → analyze → test) 설계.
+
+### Documentation & Workflow Updates
+- `docs/` 내 계획 문서들을 현 구조에 맞춰 리비전하고, 진행 상태를 체크박스/타임라인 형태로 관리합니다.
+- `README.md` 구조 설명을 최신 Clean Architecture 반영 버전으로 정리하고, 실행/테스트/디자인 토큰 가이드 링크를 추가합니다.
+- 에이전트 작업 시퀀스(요청 → Figma 참조 → 구현 → 테스트 → 문서화)를 `AGENTS.md`에 유지하며, 완료 여부는 PR 템플릿/체크리스트에서 관리할 예정입니다.
+
+> 위 항목들은 **계획 초안**이며, 아직 구현에 착수하지 않았습니다. 추후 작업 요청 시 이 문서를 기준으로 우선순위와 범위를 확정합니다.

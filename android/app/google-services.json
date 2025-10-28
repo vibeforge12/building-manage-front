@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1010780994133",
+    "project_id": "building-management-935a4",
+    "storage_bucket": "building-management-935a4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1010780994133:android:6a33be673a06945f0632dc",
+        "android_client_info": {
+          "package_name": "com.example.building_manage_front"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDEN-wplH6PW_zZ6igcuCxzZkfFaAuCD9E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

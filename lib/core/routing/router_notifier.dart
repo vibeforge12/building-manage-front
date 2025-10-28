@@ -4,13 +4,20 @@ import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/core/constants/auth_states.dart';
 import 'package:building_manage_front/core/constants/user_types.dart';
 import 'package:building_manage_front/domain/entities/user.dart';
-import 'package:building_manage_front/presentation/auth/providers/auth_state_provider.dart';
-import 'package:building_manage_front/presentation/auth/screens/main_home_screen.dart';
-import 'package:building_manage_front/presentation/auth/screens/admin_login_selection_screen.dart';
-import 'package:building_manage_front/presentation/auth/screens/sign_up_screen.dart';
-import 'package:building_manage_front/presentation/user/screens/user_login_screen.dart';
-import 'package:building_manage_front/presentation/manager/screens/manager_staff_login_screen.dart';
-import 'package:building_manage_front/presentation/headquarters/screens/headquarters_login_screen.dart';
+import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
+import 'package:building_manage_front/modules/auth/presentation/screens/main_home_screen.dart';
+import 'package:building_manage_front/modules/auth/presentation/screens/admin_login_selection_screen.dart';
+import 'package:building_manage_front/modules/resident/presentation/screens/resident_signup_screen.dart';
+import 'package:building_manage_front/modules/resident/presentation/screens/user_login_screen.dart';
+import 'package:building_manage_front/modules/admin/presentation/screens/admin_login_screen.dart';
+import 'package:building_manage_front/modules/admin/presentation/screens/admin_dashboard_screen.dart';
+import 'package:building_manage_front/modules/manager/presentation/screens/manager_staff_login_screen.dart';
+import 'package:building_manage_front/modules/headquarters/presentation/screens/headquarters_login_screen.dart';
+import 'package:building_manage_front/modules/headquarters/presentation/screens/headquarters_dashboard_screen.dart';
+import 'package:building_manage_front/modules/headquarters/presentation/screens/building_management_screen.dart';
+import 'package:building_manage_front/modules/headquarters/presentation/screens/building_registration_screen.dart';
+import 'package:building_manage_front/modules/headquarters/presentation/screens/department_creation_screen.dart';
+import 'package:building_manage_front/modules/headquarters/presentation/screens/admin_account_issuance_screen.dart';
 
 class RouterNotifier extends ChangeNotifier {
   final Ref _ref;
@@ -50,6 +57,10 @@ class RouterNotifier extends ChangeNotifier {
       '/admin/dashboard',
       '/manager/dashboard',
       '/headquarters/dashboard',
+      '/headquarters/building-management',
+      '/headquarters/building-registration',
+      '/headquarters/department-creation',
+      '/headquarters/admin-account-issuance',
     ];
 
     final isProtectedRoute = protectedRoutes.any((route) => path?.startsWith(route) == true);
@@ -60,7 +71,7 @@ class RouterNotifier extends ChangeNotifier {
       if (path?.startsWith('/user/') == true) {
         return '/user-login';
       } else if (path?.startsWith('/admin/') == true) {
-        return '/admin-login-selection';
+        return '/admin-login';
       } else if (path?.startsWith('/manager/') == true) {
         return '/manager-login';
       } else if (path?.startsWith('/headquarters/') == true) {
@@ -95,11 +106,14 @@ class RouterNotifier extends ChangeNotifier {
       builder: (context, state) => const MainHomeScreen(),
     ),
 
-    // 회원가입
+
+
+
+    // 입주민 회원가입
     GoRoute(
-      path: '/sign-up',
-      name: 'signUp',
-      builder: (context, state) => const SignUpScreen(),
+      path: '/resident-signup',
+      name: 'residentSignup',
+      builder: (context, state) => const ResidentSignupScreen(),
     ),
 
     // 관리자 로그인 선택
@@ -114,6 +128,13 @@ class RouterNotifier extends ChangeNotifier {
       path: '/user-login',
       name: 'userLogin',
       builder: (context, state) => const UserLoginScreen(),
+    ),
+
+    // 관리자 로그인
+    GoRoute(
+      path: '/admin-login',
+      name: 'adminLogin',
+      builder: (context, state) => const AdminLoginScreen(),
     ),
 
     // 담당자 로그인
@@ -141,7 +162,7 @@ class RouterNotifier extends ChangeNotifier {
     GoRoute(
       path: '/admin/dashboard',
       name: 'adminDashboard',
-      builder: (context, state) => _buildPlaceholder('Admin Dashboard'),
+      builder: (context, state) => const AdminDashboardScreen(),
     ),
 
     // 담당자 대시보드 (보호된 경로)
@@ -155,7 +176,35 @@ class RouterNotifier extends ChangeNotifier {
     GoRoute(
       path: '/headquarters/dashboard',
       name: 'headquartersDashboard',
-      builder: (context, state) => _buildPlaceholder('Headquarters Dashboard'),
+      builder: (context, state) => const HeadquartersDashboardScreen(),
+    ),
+
+    // 건물 관리 (보호된 경로)
+    GoRoute(
+      path: '/headquarters/building-management',
+      name: 'buildingManagement',
+      builder: (context, state) => const BuildingManagementScreen(),
+    ),
+
+    // 건물 등록 (보호된 경로)
+    GoRoute(
+      path: '/headquarters/building-registration',
+      name: 'buildingRegistration',
+      builder: (context, state) => const BuildingRegistrationScreen(),
+    ),
+
+    // 부서 생성 (보호된 경로)
+    GoRoute(
+      path: '/headquarters/department-creation',
+      name: 'departmentCreation',
+      builder: (context, state) => const DepartmentCreationScreen(),
+    ),
+
+    // 관리자 계정 발급 (보호된 경로)
+    GoRoute(
+      path: '/headquarters/admin-account-issuance',
+      name: 'adminAccountIssuance',
+      builder: (context, state) => const AdminAccountIssuanceScreen(),
     ),
   ];
 
