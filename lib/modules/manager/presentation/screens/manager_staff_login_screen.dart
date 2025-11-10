@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
+import 'package:building_manage_front/data/datasources/auth_remote_datasource.dart';
 import 'package:building_manage_front/shared/widgets/page_header_text.dart';
 
-class ManagerStaffLoginScreen extends StatefulWidget {
+class ManagerStaffLoginScreen extends ConsumerStatefulWidget {
   const ManagerStaffLoginScreen({super.key});
 
   @override
-  State<ManagerStaffLoginScreen> createState() =>
+  ConsumerState<ManagerStaffLoginScreen> createState() =>
       _ManagerStaffLoginScreenState();
 }
 
-class _ManagerStaffLoginScreenState extends State<ManagerStaffLoginScreen> {
+class _ManagerStaffLoginScreenState extends ConsumerState<ManagerStaffLoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _codeController = TextEditingController();
 
   bool _loginFailed = false;
+  bool _loading = false;
 
   @override
   void dispose() {
@@ -23,28 +26,47 @@ class _ManagerStaffLoginScreenState extends State<ManagerStaffLoginScreen> {
     super.dispose();
   }
 
-  void _attemptLogin() {
+  Future<void> _attemptLogin() async {
     if (!_formKey.currentState!.validate()) {
       setState(() => _loginFailed = false);
       return;
     }
 
     FocusScope.of(context).unfocus();
+    setState(() { _loading = true; _loginFailed = false; });
 
-    const demoStaffCode = 'STAFF1234';
-    final isSuccess = _codeController.text.trim() == demoStaffCode;
-
-    setState(() => _loginFailed = !isSuccess);
-
-    if (isSuccess) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('로그인 성공 (stub). 백엔드 연동 시 실제 검증으로 대체 예정입니다.'),
-        ),
+    try {
+      final authDataSource = ref.read(authRemoteDataSourceProvider);
+      final result = await authDataSource.loginStaff(
+        staffCode: _codeController.text.trim(),
       );
 
-      // 임시로 담당자 대시보드로 이동 (추후 인증 시스템과 연동)
-      context.goNamed('managerDashboard');
+      final data = result['data'] ?? result;
+      final accessToken = data['accessToken'] as String?;
+      final userData = data['user'] as Map<String, dynamic>?;
+
+      if (accessToken == null || accessToken.isEmpty) {
+        throw Exception('토큰이 응답에 없습니다.');
+      }
+
+      // AuthState 갱신
+      await ref.read(authStateProvider.notifier).loginSuccess(
+        userData ?? <String, dynamic>{},
+        accessToken,
+      );
+
+      if (mounted) {
+        context.goNamed('managerDashboard');
+      }
+    } catch (e) {
+      setState(() => _loginFailed = true);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('로그인 실패: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -141,7 +163,7 @@ class _ManagerStaffLoginScreenState extends State<ManagerStaffLoginScreen> {
                 ),
                 const Spacer(),
                 FilledButton(
-                  onPressed: _attemptLogin,
+                  onPressed: _loading ? null : _attemptLogin,
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(56),
                     shape: RoundedRectangleBorder(
@@ -149,7 +171,13 @@ class _ManagerStaffLoginScreenState extends State<ManagerStaffLoginScreen> {
                     ),
                     backgroundColor: Color(0xff006FFF)
                   ),
-                  child: const Text('로그인'),
+                  child: _loading
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('로그인'),
                 ),
               ],
             ),

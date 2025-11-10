@@ -19,17 +19,8 @@ void main() async {
 
     // 앱 실행
     runApp(
-      ProviderScope(
-        child: Consumer(
-          builder: (context, ref, child) {
-            // 앱 시작시 자동 로그인 체크
-            ref.read(authStateProvider.notifier).checkAutoLogin(
-              ref.read(authRemoteDataSourceProvider),
-            );
-
-            return const BuildingManageApp();
-          },
-        ),
+      const ProviderScope(
+        child: BuildingManageApp(),
       ),
     );
   } catch (e) {

@@ -6,13 +6,14 @@ class AuthInterceptor extends Interceptor {
   static const String _refreshTokenKey = 'refresh_token';
 
   @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+  Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
     // 토큰이 필요없는 엔드포인트들
     final publicEndpoints = [
       '/auth/resident/register',
       '/auth/manager/register',
       '/auth/resident/login',
       '/auth/manager/login',
+      '/auth/staff/login',
       '/auth/headquarters/login',
       '/auth/refresh',
     ];
@@ -28,10 +29,13 @@ class AuthInterceptor extends Interceptor {
 
       if (token != null && token.isNotEmpty) {
         options.headers['Authorization'] = 'Bearer $token';
+        print('🔐 AuthInterceptor: Token attached to request');
+      } else {
+        print('⚠️ AuthInterceptor: No token found in SharedPreferences');
       }
     }
 
-    super.onRequest(options, handler);
+    handler.next(options);
   }
 
   @override
@@ -47,10 +51,14 @@ class AuthInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
-    // 401 에러 (Unauthorized) 시 토큰 제거 및 로그아웃 처리
+    // 401 Unauthorized: 토큰 제거 후 앱 첫 화면으로 유도
     if (err.response?.statusCode == 401) {
       await _clearToken();
-      // TODO: 로그아웃 상태로 변경하는 로직 추가 (AuthStateProvider 연동)
+      // NOTE:
+      // 여기서는 네트워크 레이어라 라우터/Provider에 직접 접근하지 않습니다.
+      // 앱 레벨에서는 다음 앱 진입 시(스플래시 이후) 기본 홈('/')로 이동하게 됩니다.
+      // 만약 즉시 리디렉트가 필요하다면, 상위 레이어에서 이 에러를 감지하여
+      // 라우터(go('/')) 호출을 수행하도록 핸들링하세요.
     }
 
     super.onError(err, handler);

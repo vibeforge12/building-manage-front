@@ -20,6 +20,7 @@ class _ResidentSignupStep1State extends ConsumerState<ResidentSignupStep1> {
   final _formKey = GlobalKey<FormState>();
   final _dongController = TextEditingController();
   final _hosuController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _passwordConfirmController = TextEditingController();
 
@@ -35,30 +36,38 @@ class _ResidentSignupStep1State extends ConsumerState<ResidentSignupStep1> {
     _hosuController.text = formData.hosu ?? '';
     _passwordController.text = formData.password ?? '';
     _passwordConfirmController.text = formData.passwordConfirm ?? '';
+    _usernameController.text = formData.username ?? '';
   }
 
   @override
   void dispose() {
     _dongController.dispose();
     _hosuController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     _passwordConfirmController.dispose();
     super.dispose();
   }
 
+// ResidentSignupStep1.dart
   void _handleNext() {
     if (_formKey.currentState?.validate() ?? false) {
-      // 폼 데이터를 상태에 저장
+      // ✅ username 포함하여 1단계 데이터 저장
       ref.read(signupFormProvider.notifier).updateStep1Data(
+        username: _usernameController.text,
         dong: _dongController.text,
         hosu: _hosuController.text,
         password: _passwordController.text,
         passwordConfirm: _passwordConfirmController.text,
       );
 
+      // ✅ 여기서 username을 다시 updateStep2Data로 넣지 않습니다 (중복/충돌 방지)
+      // ref.read(signupFormProvider.notifier).updateStep2Data(...);  // 제거
+
       widget.onNext();
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -66,8 +75,8 @@ class _ResidentSignupStep1State extends ConsumerState<ResidentSignupStep1> {
     final colorScheme = theme.colorScheme;
 
     return Container(
-      color: Colors.white, // ✅ 전체 배경 흰색
-      padding: const EdgeInsets.all(24.0), // ✅ 내부 여백 유지
+      color: Colors.white, 
+      padding: const EdgeInsets.all(24.0),
       child: Form(
         key: _formKey,
         child: Column(
@@ -102,6 +111,25 @@ class _ResidentSignupStep1State extends ConsumerState<ResidentSignupStep1> {
                 }
                 if (!RegExp(r'^\d+호?$').hasMatch(value.trim())) {
                   return '올바른 호수 형식을 입력해주세요 (예: 1001호)';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // 아이디 입력
+            CommonInputField(
+              label: '아이디',
+              hint: '이메일을 입력 해주세요',
+              controller: _usernameController,
+              keyboardType: TextInputType.text,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return '아이디를 입력해주세요';
+                }
+                final v = value.trim();
+                if (!RegExp(r'^[a-zA-Z0-9_]{4,20}$').hasMatch(v)) {
+                  return '영문/숫자/언더스코어 4~20자로 입력해주세요';
                 }
                 return null;
               },

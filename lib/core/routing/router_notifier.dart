@@ -11,13 +11,19 @@ import 'package:building_manage_front/modules/resident/presentation/screens/resi
 import 'package:building_manage_front/modules/resident/presentation/screens/user_login_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/admin_login_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/admin_dashboard_screen.dart';
+import 'package:building_manage_front/modules/admin/presentation/screens/staff_account_issuance_screen.dart';
+import 'package:building_manage_front/modules/manager/presentation/screens/manager_dashboard_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/manager_staff_login_screen.dart';
+import 'package:building_manage_front/modules/manager/presentation/screens/attendance_history_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/headquarters_login_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/headquarters_dashboard_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/building_management_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/building_registration_screen.dart';
+import 'package:building_manage_front/modules/headquarters/presentation/screens/building_list_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/department_creation_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/admin_account_issuance_screen.dart';
+import 'package:building_manage_front/modules/headquarters/presentation/screens/manager_list_screen.dart';
+import 'package:building_manage_front/modules/headquarters/presentation/screens/manager_detail_screen.dart';
 
 class RouterNotifier extends ChangeNotifier {
   final Ref _ref;
@@ -56,9 +62,11 @@ class RouterNotifier extends ChangeNotifier {
       '/user/dashboard',
       '/admin/dashboard',
       '/manager/dashboard',
+      '/manager/attendance-history',
       '/headquarters/dashboard',
       '/headquarters/building-management',
       '/headquarters/building-registration',
+      '/headquarters/building-list',
       '/headquarters/department-creation',
       '/headquarters/admin-account-issuance',
     ];
@@ -169,7 +177,14 @@ class RouterNotifier extends ChangeNotifier {
     GoRoute(
       path: '/manager/dashboard',
       name: 'managerDashboard',
-      builder: (context, state) => _buildPlaceholder('Manager Dashboard'),
+      builder: (context, state) => const ManagerDashboardScreen(),
+    ),
+
+    // 출퇴근 조회 (담당자 전용)
+    GoRoute(
+      path: '/manager/attendance-history',
+      name: 'attendanceHistory',
+      builder: (context, state) => const AttendanceHistoryScreen(),
     ),
 
     // 본사 대시보드 (보호된 경로)
@@ -193,6 +208,30 @@ class RouterNotifier extends ChangeNotifier {
       builder: (context, state) => const BuildingRegistrationScreen(),
     ),
 
+    // 건물 목록 (보호된 경로)
+    GoRoute(
+      path: '/headquarters/building-list',
+      name: 'buildingList',
+      builder: (context, state) => const BuildingListScreen(),
+    ),
+
+    // 관리자 목록 (보호된 경로)
+    GoRoute(
+      path: '/headquarters/manager-list',
+      name: 'managerList',
+      builder: (context, state) => const ManagerListScreen(),
+    ),
+
+    // 관리자 상세 (보호된 경로)
+    GoRoute(
+      path: '/headquarters/manager-detail/:managerId',
+      name: 'managerDetail',
+      builder: (context, state) {
+        final managerId = state.pathParameters['managerId']!;
+        return ManagerDetailScreen(managerId: managerId);
+      },
+    ),
+
     // 부서 생성 (보호된 경로)
     GoRoute(
       path: '/headquarters/department-creation',
@@ -205,6 +244,13 @@ class RouterNotifier extends ChangeNotifier {
       path: '/headquarters/admin-account-issuance',
       name: 'adminAccountIssuance',
       builder: (context, state) => const AdminAccountIssuanceScreen(),
+    ),
+
+    // 담당자 계정 발급 (관리자 전용)
+    GoRoute(
+      path: '/admin/staff-account-issuance',
+      name: 'staffAccountIssuance',
+      builder: (context, state) => const StaffAccountIssuanceScreen(),
     ),
   ];
 

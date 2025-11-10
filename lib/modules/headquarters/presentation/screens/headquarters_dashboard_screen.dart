@@ -120,12 +120,7 @@ class HeadquartersDashboardScreen extends ConsumerWidget {
                             child: InkWell(
                               borderRadius: BorderRadius.circular(16),
                               onTap: () {
-                                // TODO: 관리자 관리 화면으로 이동
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('관리자 관리 기능 구현 예정'),
-                                  ),
-                                );
+                                context.push('/headquarters/manager-list');
                               },
                               child: Padding(
                                 padding: const EdgeInsets.all(12),

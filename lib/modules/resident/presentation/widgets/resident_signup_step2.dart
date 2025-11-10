@@ -106,11 +106,11 @@ class _ResidentSignupStep2State extends ConsumerState<ResidentSignupStep2> {
       return;
     }
 
-    // 선택된 건물 ID만 저장
+    // 선택된 건물 ID만 저장 (name, phoneNumber는 Step3에서 입력)
+    final formData = ref.read(signupFormProvider);
     ref.read(signupFormProvider.notifier).updateStep2Data(
-      username: '', // 3단계에서 입력받을 예정
-      name: '', // 3단계에서 입력받을 예정
-      phoneNumber: '', // 3단계에서 입력받을 예정
+      name: formData.name ?? '', // 기존 값 유지 또는 빈 문자열
+      phoneNumber: formData.phoneNumber ?? '', // 기존 값 유지 또는 빈 문자열
       buildingId: _selectedBuilding!['id'].toString(),
     );
 

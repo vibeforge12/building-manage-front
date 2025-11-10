@@ -25,8 +25,6 @@ class _ResidentSignupStep3State extends ConsumerState<ResidentSignupStep3> {
   @override
   void initState() {
     super.initState();
-
-    // 기존 데이터가 있다면 컨트롤러에 설정
     final formData = ref.read(signupFormProvider);
     _nameController.text = formData.name ?? '';
     _phoneController.text = formData.phoneNumber ?? '';
@@ -41,12 +39,10 @@ class _ResidentSignupStep3State extends ConsumerState<ResidentSignupStep3> {
 
   void _handleComplete() {
     if (_formKey.currentState?.validate() ?? false) {
-      // 3단계 데이터를 상태에 저장
+      // 3단계 데이터를 상태에 저장 (name, phoneNumber만 추가)
       final formData = ref.read(signupFormProvider);
-      final formNotifier = ref.read(signupFormProvider.notifier);
 
       ref.read(signupFormProvider.notifier).updateStep2Data(
-        username: formNotifier.generateUsername(), // 자동 생성된 아이디 사용
         name: _nameController.text,
         phoneNumber: _phoneController.text,
         buildingId: formData.buildingId ?? '', // 기존 buildingId 유지

@@ -10,6 +10,7 @@ class User extends Equatable {
     this.buildingId,
     this.dong,
     this.ho,
+    this.phoneNumber,
     this.permissions = const {},
     this.profileImageUrl,
   });
@@ -21,6 +22,7 @@ class User extends Equatable {
   final String? buildingId;
   final String? dong;
   final String? ho;
+  final String? phoneNumber;
   final Map<String, dynamic> permissions;
   final String? profileImageUrl;
 
@@ -55,6 +57,7 @@ class User extends Equatable {
       buildingId: json['buildingId'] as String?,
       dong: json['dong'] as String?,
       ho: json['ho'] as String?,
+      phoneNumber: json['phoneNumber'] as String?,
       permissions: (json['permissions'] as Map<String, dynamic>?) ?? {},
       profileImageUrl: json['profileImageUrl'] as String?,
     );
@@ -70,6 +73,7 @@ class User extends Equatable {
       'buildingId': buildingId,
       'dong': dong,
       'ho': ho,
+      'phoneNumber': phoneNumber,
       'permissions': permissions,
       'profileImageUrl': profileImageUrl,
     };
@@ -96,6 +100,7 @@ class User extends Equatable {
     String? buildingId,
     String? dong,
     String? ho,
+    String? phoneNumber,
     Map<String, dynamic>? permissions,
     String? profileImageUrl,
   }) {
@@ -107,6 +112,7 @@ class User extends Equatable {
       buildingId: buildingId ?? this.buildingId,
       dong: dong ?? this.dong,
       ho: ho ?? this.ho,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
       permissions: permissions ?? this.permissions,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
     );
@@ -121,6 +127,7 @@ class User extends Equatable {
         buildingId,
         dong,
         ho,
+        phoneNumber,
         permissions,
         profileImageUrl,
       ];

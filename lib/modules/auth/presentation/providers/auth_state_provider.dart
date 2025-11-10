@@ -58,6 +58,11 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> checkAutoLogin(AuthRemoteDataSource authDataSource) async {
+    // 이미 로그인된 상태면 체크하지 않음
+    if (state == AuthState.authenticated && _currentUser != null) {
+      return;
+    }
+
     setLoading();
 
     try {
@@ -70,27 +75,54 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         return;
       }
 
-      // TODO: 토큰 유효성 검사 API가 있다면 여기서 호출
-      // 지금은 refresh token을 사용해서 새 토큰 발급 시도
+      // Refresh 시도: 실패 시 1회 재시도 후 포기
+      Future<Map<String, dynamic>> _attemptRefresh() async {
+        return await authDataSource.refreshToken(refreshToken);
+      }
+
+      Map<String, dynamic>? response;
       try {
-        final response = await authDataSource.refreshToken(refreshToken);
-        final newTokenData = response['data'];
-
-        if (newTokenData != null) {
-          _accessToken = newTokenData['accessToken'];
-
-          // 사용자 정보가 토큰에서 추출 가능하다면 설정
-          if (newTokenData['user'] != null) {
-            await loginSuccess(newTokenData['user'], _accessToken!);
-          } else {
-            // 임시로 토큰만 설정 (실제로는 사용자 정보를 별도 API로 가져와야 함)
-            state = AuthState.authenticated;
-          }
-        } else {
-          throw Exception('토큰 갱신 실패');
-        }
+        response = await _attemptRefresh();
       } catch (e) {
-        // refresh token도 유효하지 않음
+        // 1차 실패: 로깅 후 1회 재시도
+        // ignore: avoid_print
+        print('Token refresh failed (attempt 1): $e');
+        try {
+          response = await _attemptRefresh();
+        } catch (e2) {
+          // ignore: avoid_print
+          print('Token refresh failed (attempt 2): $e2');
+          response = null;
+        }
+      }
+
+      if (response != null) {
+        final newTokenData = response['data'] ?? response;
+        final newAccess = newTokenData['accessToken'];
+        final newRefresh = newTokenData['refreshToken'];
+
+        if (newAccess is String && newAccess.isNotEmpty) {
+          _accessToken = newAccess;
+          // 저장소에도 저장해두면 이후 요청 헤더 반영에 안전
+          await AuthInterceptor.saveToken(newAccess);
+        }
+
+        if (newRefresh is String && newRefresh.isNotEmpty) {
+          // refresh 토큰이 갱신되는 백엔드라면 저장
+          // SharedPreferences 저장은 AuthInterceptor.onResponse 경유가 아니므로 여기서는 생략하거나
+          // 전용 저장 메서드를 별도로 둘 수 있습니다. 간단화를 위해 생략.
+        }
+
+        // 사용자 정보가 포함된 경우 반영
+        final userData = newTokenData['user'];
+        if (userData != null) {
+          await loginSuccess(userData, _accessToken ?? '');
+        } else {
+          // 사용자 정보가 없더라도 토큰만으로 인증 상태 유지
+          state = AuthState.authenticated;
+        }
+      } else {
+        // 두 번 모두 실패: 토큰 제거 후 미인증 처리
         await AuthInterceptor.clearToken();
         setUnauthenticated();
       }

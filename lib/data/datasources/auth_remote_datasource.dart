@@ -128,6 +128,31 @@ class AuthRemoteDataSource {
     }
   }
 
+  /// 담당자 로그인 (staffCode)
+  /// POST /api/v1/auth/staff/login
+  Future<Map<String, dynamic>> loginStaff({
+    required String staffCode,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.staffLogin,
+        data: {
+          'staffCode': staffCode,
+        },
+      );
+
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      if (e is ApiException) {
+        rethrow;
+      }
+      throw ApiException(
+        message: '담당자 로그인 중 오류가 발생했습니다.',
+        errorCode: 'STAFF_LOGIN_FAILED',
+      );
+    }
+  }
+
   /// 본사 로그인
   /// POST /api/v1/auth/headquarters/login
   Future<Map<String, dynamic>> loginHeadquarters({

@@ -39,15 +39,10 @@ class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScr
     });
 
     try {
-      final currentUser = ref.read(currentUserProvider);
-      if (currentUser == null) {
-        throw Exception('로그인 정보를 찾을 수 없습니다.');
-      }
-
       final departmentDataSource = ref.read(departmentRemoteDataSourceProvider);
       final response = await departmentDataSource.getDepartments(
         keyword: _searchController.text.trim().isEmpty ? null : _searchController.text.trim(),
-        headquartersId: currentUser.id,
+        // headquartersId는 JWT 토큰에서 자동으로 인식되므로 전달하지 않음 (관리자와 동일)
       );
 
       if (response['success'] == true) {
@@ -98,9 +93,17 @@ class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScr
         title: const Text(
           '건물 등록',
           style: TextStyle(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+            color: Color(0xFF464A4D),
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(
+            height: 1,
+            thickness: 1,
+            color: Color(0xFFE8EEF2),
           ),
         ),
         centerTitle: true,
@@ -108,7 +111,7 @@ class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScr
           IconButton(
             icon: const Icon(Icons.menu, color: Colors.black),
             onPressed: () {
-              // TODO: 메뉴 기능
+              context.push('/headquarters/building-list');
             },
           ),
         ],
@@ -157,7 +160,7 @@ class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScr
                     style: FilledButton.styleFrom(
                       backgroundColor: const Color(0xFF006FFF),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                     ),
@@ -189,7 +192,7 @@ class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScr
                   ),
                 ),
                 Container(
-                  height: 36,
+                  height: 48,
                   child: FilledButton(
                     onPressed: () {
                       context.push('/headquarters/department-creation');
@@ -197,16 +200,16 @@ class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScr
                     style: FilledButton.styleFrom(
                       backgroundColor: const Color(0xFF006FFF),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
                     ),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.add, size: 16),
+                        Icon(Icons.add, size: 18),
                         SizedBox(width: 4),
-                        Text('부서 생성', style: TextStyle(fontSize: 12)),
+                        Text('부서 생성', style: TextStyle(fontSize: 14)),
                       ],
                     ),
                   ),
@@ -249,14 +252,18 @@ class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScr
                       return Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(20),
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(36),
+                          border: Border.all(
+                            color: Color(0xFFE8EEF2),
+                            width: 1.5, // 두께(원하면 1로 내려도됨)
+                          ),
                         ),
                         child: Text(
                           department['name'] ?? '부서명 없음',
                           style: const TextStyle(
                             fontSize: 14,
-                            color: Colors.black87,
+                            color: Color(0xFF2D2D2D),
                           ),
                         ),
                       );

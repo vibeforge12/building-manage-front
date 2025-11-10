@@ -1,130 +1,66 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:building_manage_front/shared/widgets/separator.dart';
+import 'package:building_manage_front/shared/widgets/common_navigation_bar.dart';
+import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 
-class AdminDashboardScreen extends StatelessWidget {
+class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
+
+  @override
+  ConsumerState<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+}
+
+class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          // Main content
-          Column(
-            children: [
-              // Navigation Bar
-              _buildNavigationBar(context),
-
-              // Scrollable content
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header with background image
-                      _buildHeader(),
-
-                      // Separator
-                      _buildSeparator(),
-
-                      // Account issuance button
-                      _buildAccountIssuanceButton(context),
-
-                      // Menu grid
-                      _buildMenuGrid(context),
-
-                      // Bottom spacing for fixed button
-                      const SizedBox(height: 140),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          // Fixed bottom button
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: _buildFixedBottomButton(context),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavigationBar(BuildContext context) {
-    return Container(
-      height: 48,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: Color(0xFFE8EEF2),
-            width: 1,
-          ),
-        ),
-      ),
-      child: Stack(
-        children: [
-          // Notification bell
-          Positioned(
-            right: 52,
-            top: 12,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                const Icon(
-                  Icons.notifications_outlined,
-                  size: 24,
-                  color: Color(0xFF464A4D),
-                ),
-                // Badge
-                Positioned(
-                  top: -4,
-                  right: -4,
-                  child: Container(
-                    width: 18,
-                    height: 18,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF006FFF),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: Text(
-                        '2',
-                        style: TextStyle(
-                          fontFamily: 'Pretendard',
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12,
-                          height: 2,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Menu icon
-          Positioned(
-            right: 0,
-            child: IconButton(
-              icon: const Icon(
-                Icons.menu,
-                size: 24,
-                color: Color(0xFF464A4D),
-              ),
-              onPressed: () {
-                // Menu action
+      endDrawer: _buildMenuDrawer(context),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Navigation Bar - white background at top
+            CommonNavigationBar(
+              notificationCount: 2,
+              onNotificationTap: () {
+                // Handle notification tap
+              },
+              onMenuTap: () {
+                _scaffoldKey.currentState?.openEndDrawer();
               },
             ),
-          ),
-        ],
+
+            // Scrollable content below navigation bar
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header with background image
+                    _buildHeader(),
+
+                    // Account issuance button
+                    _buildAccountIssuanceButton(context),
+
+                    const SizedBox(height: 30),
+                    const SeparatorWidget(),
+
+                    // Menu grid
+                    _buildMenuGrid(context),
+
+                    _buildFixedBottomButton(context),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -143,60 +79,41 @@ class AdminDashboardScreen extends StatelessWidget {
           ),
 
           // Logo (placeholder - you can add actual logo)
-          Positioned(
-            left: 28,
-            top: 309,
-            child: Container(
-              width: 109,
-              height: 40,
-              color: Colors.white.withOpacity(0.2),
-              // Add your logo widget here
-            ),
-          ),
-
-          // Building name text
-          const Positioned(
-            left: 16,
-            top: 323,
-            child: Text(
-              '건물명',
-              style: TextStyle(
-                fontFamily: 'Pretendard',
-                fontWeight: FontWeight.w700,
-                fontSize: 36,
-                height: 1.25,
-                color: Color(0xFF17191A),
-              ),
-            ),
-          ),
+          // Positioned(
+          //   left: 28,
+          //   top: 309,
+          //   child: Container(
+          //     width: 109,
+          //     height: 40,
+          //     color: Colors.white.withOpacity(0.2),
+          //     // Add your logo widget here
+          //   ),
+          // ),
+          //
+          // // Building name text
+          // const Positioned(
+          //   left: 16,
+          //   top: 323,
+          //   child: Text(
+          //     '건물명',
+          //     style: TextStyle(
+          //       fontFamily: 'Pretendard',
+          //       fontWeight: FontWeight.w700,
+          //       fontSize: 36,
+          //       height: 1.25,
+          //       color: Color(0xFF17191A),
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );
   }
 
-  Widget _buildSeparator() {
-    return Container(
-      height: 8,
-      color: const Color(0xFFF2F8FC),
-      child: Stack(
-        children: [
-          Positioned(
-            left: 16,
-            top: 4,
-            right: 16,
-            child: Container(
-              height: 1,
-              color: const Color(0xFFBBC5CC).withOpacity(0.5),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildMenuGrid(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 76, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 26, 16, 0),
       child: Column(
         children: [
           // First row
@@ -302,13 +219,13 @@ class AdminDashboardScreen extends StatelessWidget {
 
   Widget _buildAccountIssuanceButton(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 41, 16, 0),
       child: SizedBox(
         width: double.infinity,
         height: 56,
         child: FilledButton(
           onPressed: () {
-            // Navigate to account issuance
+            context.pushNamed('staffAccountIssuance');
           },
           style: FilledButton.styleFrom(
             backgroundColor: const Color(0xFF006FFF),
@@ -367,6 +284,204 @@ class AdminDashboardScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMenuDrawer(BuildContext context) {
+    return Drawer(
+      backgroundColor: Colors.white,
+      width: MediaQuery.of(context).size.width,
+      child: SafeArea(
+        child: Column(
+          children: [
+            // Navigation Bar
+            Container(
+              height: 48,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  bottom: BorderSide(
+                    color: Color(0xFFE8EEF2),
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Stack(
+                children: [
+                  // Back button
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.arrow_back,
+                        color: Color(0xFF464A4D),
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
+                  // Title
+                  const Center(
+                    child: Text(
+                      '더보기',
+                      style: TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        height: 1.5,
+                        color: Color(0xFF464A4D),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Profile Section
+            Container(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  // Profile Image
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF2F8FC),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.person_outline,
+                      size: 32,
+                      color: Color(0xFF006FFF),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // Name and Phone
+                  Expanded(
+                    child: Builder(
+                      builder: (context) {
+                        final currentUser = ref.watch(currentUserProvider);
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              currentUser?.name ?? '관리자명',
+                              style: const TextStyle(
+                                fontFamily: 'Pretendard',
+                                fontWeight: FontWeight.w400,
+                                fontSize: 16,
+                                height: 1.5,
+                                color: Color(0xFF17191A),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              currentUser?.phoneNumber ?? '010-0000-0000',
+                              style: const TextStyle(
+                                fontFamily: 'Pretendard',
+                                fontWeight: FontWeight.w400,
+                                fontSize: 12,
+                                height: 1.67,
+                                color: Color(0xFF757B80),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Spacer
+            Container(
+              height: 8,
+              color: const Color(0xFFF2F8FC),
+            ),
+
+            // Menu List
+            Column(
+              children: [
+                _buildMenuItem(
+                  title: '입주민 관리',
+                  onTap: () {
+                    Navigator.pop(context);
+                    // TODO: Navigate to resident management
+                  },
+                ),
+                _buildMenuItem(
+                  title: '민원 관리',
+                  onTap: () {
+                    Navigator.pop(context);
+                    // TODO: Navigate to complaint management
+                  },
+                ),
+                _buildMenuItem(
+                  title: '담당자 관리',
+                  onTap: () {
+                    Navigator.pop(context);
+                    // TODO: Navigate to staff management
+                  },
+                ),
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: Color(0xFFE8EEF2),
+                ),
+                _buildMenuItem(
+                  title: '로그아웃',
+                  onTap: () async {
+                    Navigator.pop(context);
+
+                    // 로그아웃 처리
+                    await ref.read(authStateProvider.notifier).logout();
+
+                    if (context.mounted) {
+                      context.go('/');
+                    }
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuItem({
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontFamily: 'Pretendard',
+                  fontWeight: FontWeight.w400,
+                  fontSize: 16,
+                  height: 1.5,
+                  color: Color(0xFF17191A),
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right,
+              size: 24,
+              color: Color(0xFF464A4D),
+            ),
+          ],
+        ),
       ),
     );
   }

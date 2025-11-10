@@ -5,6 +5,7 @@ import 'package:building_manage_front/shared/widgets/fieldLable.dart';
 import 'package:building_manage_front/shared/widgets/primary_action_button.dart';
 import 'package:building_manage_front/shared/widgets/section_divider.dart';
 import 'package:building_manage_front/modules/common/data/datasources/building_list_remote_datasource.dart';
+import 'package:building_manage_front/modules/headquarters/data/datasources/admin_account_remote_datasource.dart';
 
 class AdminAccountIssuanceScreen extends ConsumerStatefulWidget {
   const AdminAccountIssuanceScreen({super.key});
@@ -83,21 +84,64 @@ class _AdminAccountIssuanceScreenState extends ConsumerState<AdminAccountIssuanc
     });
 
     try {
-      // TODO(human): 관리자 계정 발급 API 호출 로직 구현
-      // 필요한 데이터: 이름(_nameController.text), 전화번호(_phoneController.text), 선택된 건물(_selectedBuilding)
+      print('🔵 관리자 계정 발급 시작');
+      final adminAccountDataSource = ref.read(adminAccountRemoteDataSourceProvider);
 
-      await Future.delayed(const Duration(seconds: 2)); // 임시 딜레이
+      final response = await adminAccountDataSource.createAdminAccount(
+        name: _nameController.text.trim(),
+        phoneNumber: _phoneController.text.trim(),
+        buildingId: _selectedBuilding!['id'].toString(),
+      );
+
+      print('✅ 관리자 계정 발급 성공: $response');
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('관리자 계정이 성공적으로 발급되었습니다.')),
+        // 성공 다이얼로그 표시
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            icon: const Icon(Icons.check_circle, color: Colors.green, size: 48),
+            title: const Text('계정 발급 완료'),
+            content: const Text(
+              '관리자 계정이 발급되었습니다.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF17191A),
+              ),
+            ),
+
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // 다이얼로그 닫기
+                  context.pop(); // 화면 닫기
+                },
+                child: const Text('확인'),
+              ),
+            ],
+          ),
         );
-        context.pop();
       }
     } catch (e) {
+      print('❌ 관리자 계정 발급 실패: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('관리자 계정 발급 중 오류가 발생했습니다.')),
+        // 에러 다이얼로그 표시
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            icon: const Icon(Icons.error, color: Colors.red, size: 48),
+            title: const Text('계정 발급 실패'),
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('확인'),
+              ),
+            ],
+          ),
         );
       }
     } finally {

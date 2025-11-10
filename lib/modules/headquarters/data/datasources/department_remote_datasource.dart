@@ -94,7 +94,6 @@ class DepartmentRemoteDataSource {
     }
   }
 
-  /// 본사 부서 생성 (아이콘 포함)
   /// POST /api/v1/headquarters/departments
   Future<Map<String, dynamic>> createHeadquartersDepartment({
     required String name,

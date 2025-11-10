@@ -1,51 +1,71 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
+import 'package:building_manage_front/modules/resident/data/datasources/resident_auth_remote_datasource.dart';
 
 import 'package:building_manage_front/presentation/common/widgets/page_header_text.dart';
 import 'package:building_manage_front/common/widget/fieldLable.dart';
-class UserLoginScreen extends StatefulWidget {
+class UserLoginScreen extends ConsumerStatefulWidget {
   const UserLoginScreen({super.key});
 
   @override
-  State<UserLoginScreen> createState() => _UserLoginScreenState();
+  ConsumerState<UserLoginScreen> createState() => _UserLoginScreenState();
 }
 
-class _UserLoginScreenState extends State<UserLoginScreen> {
+class _UserLoginScreenState extends ConsumerState<UserLoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _dongController = TextEditingController();
-  final _hoController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
 
   bool _loginFailed = false;
+  bool _loading = false;
 
   @override
   void dispose() {
-    _dongController.dispose();
-    _hoController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  void _attemptLogin() {
+  Future<void> _attemptLogin() async {
     if (!_formKey.currentState!.validate()) {
       setState(() => _loginFailed = false);
       return;
     }
     FocusScope.of(context).unfocus();
+    setState(() { _loading = true; _loginFailed = false; });
 
-    const demoPassword = '1234';
-    final isSuccess = _passwordController.text.trim() == demoPassword;
-
-    setState(() => _loginFailed = !isSuccess);
-
-    if (isSuccess) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('로그인 성공 (stub). 백엔드 연동 시 교체 예정입니다.')),
+    try {
+      final dataSource = ref.read(residentAuthRemoteDataSourceProvider);
+      final res = await dataSource.login(
+        username: _usernameController.text.trim(),
+        password: _passwordController.text,
       );
 
-      // 임시로 유저 대시보드로 이동 (추후 인증 시스템과 연동)
-      context.goNamed('userDashboard');
+      final data = res['data'] ?? res;
+      final accessToken = data['accessToken'] as String?;
+      final user = data['user'] as Map<String, dynamic>?;
+      if (accessToken == null || accessToken.isEmpty) {
+        throw Exception('토큰이 응답에 없습니다.');
+      }
+
+      await ref.read(authStateProvider.notifier).loginSuccess(
+        user ?? <String, dynamic>{},
+        accessToken,
+      );
+
+      if (mounted) context.goNamed('userDashboard');
+    } catch (e) {
+      setState(() => _loginFailed = true);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('로그인 실패: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -69,7 +89,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
       ),
       isDense: true,
       filled: true,
-      fillColor: theme.colorScheme.surface,
+      fillColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -98,13 +118,15 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const PageHeaderText('로그인'),
+        title: const PageHeaderText('입주민 로그인'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -114,27 +136,15 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // 동
-                fieldLabel('동', context),
+                // 아이디
+                fieldLabel('아이디', context),
                 TextFormField(
-                  controller: _dongController,
-                  keyboardType: TextInputType.number,
+                  controller: _usernameController,
+                  keyboardType: TextInputType.text,
                   textInputAction: TextInputAction.next,
-                  decoration: _filledInput('동을 입력해주세요.'),
+                  decoration: _filledInput('아이디를 입력해주세요.'),
                   validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? '동 정보를 입력해 주세요.' : null,
-                ),
-                const SizedBox(height: 16),
-
-                // 호수
-                fieldLabel('호수', context),
-                TextFormField(
-                  controller: _hoController,
-                  keyboardType: TextInputType.number,
-                  textInputAction: TextInputAction.next,
-                  decoration: _filledInput('호수를 입력해주세요.'),
-                  validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? '호수를 입력해 주세요.' : null,
+                      (v == null || v.trim().isEmpty) ? '아이디를 입력해 주세요.' : null,
                 ),
                 const SizedBox(height: 16),
 
@@ -195,7 +205,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
 
                 // 버튼들
                 FilledButton.tonal(
-                  onPressed: _attemptLogin, // 로직 변경 없음
+                  onPressed: _loading ? null : _attemptLogin,
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(56),
                     shape: RoundedRectangleBorder(
@@ -203,7 +213,9 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
                     ),
                     backgroundColor: Color(0xFFE8EEF2),
                   ),
-                  child: const Text('로그인'),
+                  child: _loading
+                      ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Text('로그인'),
                 ),
                 const SizedBox(height: 12),
                 FilledButton(

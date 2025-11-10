@@ -9,6 +9,7 @@ class ApiEndpoints {
   // 로그인 엔드포인트
   static const String residentLogin = '$auth/resident/login';
   static const String managerLogin = '$auth/manager/login';
+  static const String staffLogin = '$auth/staff/login';
   static const String headquartersLogin = '$auth/headquarters/login';
 
   // Token 관련
