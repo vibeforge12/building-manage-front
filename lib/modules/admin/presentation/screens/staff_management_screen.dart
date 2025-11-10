@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/admin/data/datasources/staff_remote_datasource.dart';
 import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
+import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
 
 class StaffManagementScreen extends ConsumerStatefulWidget {
   const StaffManagementScreen({super.key});
@@ -62,6 +63,70 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _deleteStaff(String staffId, String staffName) async {
+    print('🗑️ _deleteStaff 호출: staffId=$staffId, staffName=$staffName');
+
+    final confirmed = await showCustomConfirmationDialog(
+      context: context,
+      content: Text(
+        '$staffName 담당자를 삭제하시겠습니까?',
+        style: const TextStyle(
+          fontFamily: 'Pretendard',
+          fontSize: 14,
+          color: Color(0xFF464A4D),
+        ),
+      ),
+      confirmText: '삭제',
+      cancelText: '취소',
+      isDestructive: true,
+    );
+
+    print('✅ 다이얼로그 결과: confirmed=$confirmed');
+
+    if (confirmed != true) {
+      print('❌ 삭제 취소됨');
+      return;
+    }
+
+    print('🔄 삭제 진행 시작...');
+
+    try {
+      final staffDataSource = ref.read(staffRemoteDataSourceProvider);
+      print('📤 deleteStaff API 호출 중...');
+      await staffDataSource.deleteStaff(staffId: staffId);
+
+      print('✅ 삭제 API 성공!');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('담당자가 삭제되었습니다.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        print('🔄 목록 새로고침 시작...');
+        // 목록 새로고침
+        await _loadStaffs();
+        print('✅ 목록 새로고침 완료!');
+      }
+    } catch (e) {
+      print('❌ 삭제 실패: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              e is ApiException
+                  ? e.userFriendlyMessage
+                  : '담당자 삭제 중 오류가 발생했습니다.',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -209,8 +274,7 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
               // 삭제 버튼
               GestureDetector(
                 onTap: () {
-                  // TODO: 삭제 기능
-                  print('담당자 삭제: $staffId');
+                  _deleteStaff(staffId, name);
                 },
                 child: Container(
                   padding: const EdgeInsets.all(8),

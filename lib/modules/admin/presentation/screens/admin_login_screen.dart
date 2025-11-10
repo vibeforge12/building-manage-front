@@ -49,16 +49,16 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
         managerCode: _codeController.text.trim(),
       );
 
-      // 사용자 정보 설정
-      final userData = response['data'];
-      if (userData != null) {
-        await authNotifier.loginSuccess(
-          userData['user'],
-          userData['accessToken'],
-        );
+      // 응답 payload 추출 및 관리자 역할 정규화(기존 동작 복원)
+      final payload = response['data'] ?? response;
+      final accessToken = payload['accessToken'];
+      final userJson = Map<String, dynamic>.from(payload['user'] ?? {});
+      userJson['role'] = 'admin';
+
+      if (accessToken is String && accessToken.isNotEmpty && userJson.isNotEmpty) {
+        await authNotifier.loginSuccess(userJson, accessToken);
 
         if (mounted) {
-          // 관리자 대시보드로 이동
           context.goNamed('adminDashboard');
         }
       }

@@ -90,6 +90,50 @@ class StaffRemoteDataSource {
       );
     }
   }
+
+  /// 담당자 삭제
+  /// DELETE /api/v1/managers/staffs/{staffId}
+  Future<Map<String, dynamic>> deleteStaff({
+    required String staffId,
+  }) async {
+    try {
+      print('🗑️ 담당자 삭제 요청 시작');
+      print('   담당자 ID: $staffId');
+      print('📤 API 호출: DELETE /api/v1/managers/staffs/$staffId');
+
+      final response = await _apiClient.delete('/managers/staffs/$staffId');
+
+      print('✅ 담당자 삭제 성공');
+      print('📦 응답 데이터: ${response.data}');
+
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      print('❌ DioException 발생: ${e.message}');
+      print('   상태 코드: ${e.response?.statusCode}');
+      print('   응답 데이터: ${e.response?.data}');
+
+      if (e.response?.data != null && e.response!.data is Map) {
+        final errorData = e.response!.data as Map<String, dynamic>;
+        throw ApiException(
+          message: errorData['message'] ?? '담당자 삭제에 실패했습니다.',
+          errorCode: errorData['errorCode'] ?? 'STAFF_DELETE_FAILED',
+          statusCode: e.response?.statusCode,
+        );
+      }
+
+      throw ApiException(
+        message: '담당자 삭제 중 오류가 발생했습니다.',
+        errorCode: 'STAFF_DELETE_FAILED',
+        statusCode: e.response?.statusCode,
+      );
+    } catch (e) {
+      print('❌ 일반 예외 발생: $e');
+      throw ApiException(
+        message: '담당자 삭제 중 오류가 발생했습니다.',
+        errorCode: 'STAFF_DELETE_FAILED',
+      );
+    }
+  }
 }
 
 // Riverpod Provider
