@@ -8,6 +8,28 @@ class StaffRemoteDataSource {
 
   StaffRemoteDataSource(this._apiClient);
 
+  /// 담당자 목록 조회
+  /// GET /api/v1/managers/staffs
+  Future<Map<String, dynamic>> getStaffs() async {
+    try {
+      print('👥 담당자 목록 조회 시작');
+      print('📤 API 호출: GET /api/v1/managers/staffs');
+
+      final response = await _apiClient.get('/managers/staffs');
+
+      print('✅ 담당자 목록 응답: ${response.data}');
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      print('❌ DioException 발생: ${e.message}');
+      print('❌ 응답 데이터: ${e.response?.data}');
+      print('❌ 상태 코드: ${e.response?.statusCode}');
+      throw Exception('담당자 목록을 불러오는 중 오류가 발생했습니다: ${e.message}');
+    } catch (e) {
+      print('❌ 일반 예외 발생: $e');
+      throw Exception('담당자 목록을 불러오는 중 오류가 발생했습니다: $e');
+    }
+  }
+
   /// 담당자 계정 발급
   /// POST /api/v1/managers/staffs
   Future<Map<String, dynamic>> createStaff({

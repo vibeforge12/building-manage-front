@@ -142,11 +142,15 @@ final authStateProvider = StateNotifierProvider<AuthStateNotifier, AuthState>((r
 });
 
 final currentUserProvider = Provider<User?>((ref) {
-  final authNotifier = ref.watch(authStateProvider.notifier);
+  // authStateProvider의 상태를 감시하여 상태 변경 시 자동으로 재계산
+  ref.watch(authStateProvider);
+  final authNotifier = ref.read(authStateProvider.notifier);
   return authNotifier.currentUser;
 });
 
 final isAuthenticatedProvider = Provider<bool>((ref) {
-  final authNotifier = ref.watch(authStateProvider.notifier);
+  // authStateProvider의 상태를 감시하여 상태 변경 시 자동으로 재계산
+  ref.watch(authStateProvider);
+  final authNotifier = ref.read(authStateProvider.notifier);
   return authNotifier.isAuthenticated;
 });

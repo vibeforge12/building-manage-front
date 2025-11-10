@@ -91,7 +91,9 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -122,7 +124,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                     hintText: '관리자 코드를 입력하세요.',
                     isDense: true,
                     filled: true,
-                    fillColor: theme.colorScheme.surface,
+                    fillColor: Colors.white,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 16,

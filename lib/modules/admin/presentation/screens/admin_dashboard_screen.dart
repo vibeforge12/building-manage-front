@@ -150,7 +150,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   icon: 'assets/icons/crown_filled.svg',
                   title: '담당자 관리',
                   onTap: () {
-                    // Navigate to staff management
+                    context.push('/admin/staff-management');
                   },
                 ),
               ),
@@ -364,6 +364,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                       builder: (context) {
                         final currentUser = ref.watch(currentUserProvider);
 
+                        print('📱 AdminDashboard Drawer - currentUser: ${currentUser?.toJson()}');
+                        print('📱 AdminDashboard Drawer - phoneNumber: ${currentUser?.phoneNumber}');
+
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -424,7 +427,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   title: '담당자 관리',
                   onTap: () {
                     Navigator.pop(context);
-                    // TODO: Navigate to staff management
+                    context.push('/admin/staff-management');
                   },
                 ),
                 const Divider(

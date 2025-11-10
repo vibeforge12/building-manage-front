@@ -1,14 +1,17 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:building_manage_front/core/network/api_client.dart';
 import 'package:building_manage_front/core/constants/api_endpoints.dart';
 import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
+import 'package:building_manage_front/modules/common/services/image_upload_service.dart';
 
 class DepartmentRemoteDataSource {
   final ApiClient _apiClient;
+  final ImageUploadService? _imageUploadService;
 
-  DepartmentRemoteDataSource(this._apiClient);
+  DepartmentRemoteDataSource(this._apiClient, [this._imageUploadService]);
 
   /// 부서 목록 조회
   /// GET /api/v1/common/departments
@@ -95,6 +98,7 @@ class DepartmentRemoteDataSource {
   }
 
   /// POST /api/v1/headquarters/departments
+  /// Presigned URL을 사용하여 S3에 직접 업로드하는 방식으로 변경
   Future<Map<String, dynamic>> createHeadquartersDepartment({
     required String name,
     File? iconFile,
@@ -102,37 +106,45 @@ class DepartmentRemoteDataSource {
     try {
       print('🏢 부서 생성 시작 - 이름: $name');
 
-      FormData formData = FormData.fromMap({
-        'name': name,
-      });
+      String? iconUrl;
 
-      // 아이콘 파일이 있는 경우 FormData에 추가
-      if (iconFile != null) {
-        String fileName = iconFile.path.split('/').last;
-        print('📷 아이콘 첨부 - 파일명: $fileName');
-        formData.files.add(
-          MapEntry(
-            'icon',
-            await MultipartFile.fromFile(
-              iconFile.path,
-              filename: fileName,
-            ),
-          ),
+      // 아이콘 파일이 있는 경우 S3에 업로드
+      if (iconFile != null && _imageUploadService != null) {
+        print('📷 이미지 업로드 시작');
+
+        // 파일을 바이트로 읽기
+        final Uint8List fileBytes = await iconFile.readAsBytes();
+        final String fileName = iconFile.path.split('/').last;
+        final String contentType = ImageUploadService.getContentType(fileName);
+
+        // Presigned URL 방식으로 S3에 업로드
+        iconUrl = await _imageUploadService!.uploadImage(
+          fileBytes: fileBytes,
+          fileName: fileName,
+          contentType: contentType,
+          folder: 'departments',
         );
+
+        print('✅ 이미지 업로드 완료: $iconUrl');
       } else {
-        print('📷 아이콘 없음');
+        print('📷 아이콘 없음 또는 이미지 업로드 서비스 없음');
+      }
+
+      // 부서 생성 API 호출 (iconUrl 포함)
+      final data = <String, dynamic>{
+        'name': name,
+      };
+
+      if (iconUrl != null) {
+        data['iconUrl'] = iconUrl;
       }
 
       print('📤 API 호출: POST ${ApiEndpoints.headquarters}/departments');
+      print('📦 데이터: $data');
 
       final response = await _apiClient.post(
         '${ApiEndpoints.headquarters}/departments',
-        data: formData,
-        options: Options(
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        ),
+        data: data,
       );
 
       print('✅ 부서 생성 응답: ${response.data}');
@@ -152,5 +164,6 @@ class DepartmentRemoteDataSource {
 // Riverpod Provider
 final departmentRemoteDataSourceProvider = Provider<DepartmentRemoteDataSource>((ref) {
   final apiClient = ref.watch(apiClientProvider);
-  return DepartmentRemoteDataSource(apiClient);
+  final imageUploadService = ref.watch(imageUploadServiceProvider);
+  return DepartmentRemoteDataSource(apiClient, imageUploadService);
 });
