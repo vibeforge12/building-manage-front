@@ -9,12 +9,17 @@ import 'package:building_manage_front/modules/auth/presentation/screens/main_hom
 import 'package:building_manage_front/modules/auth/presentation/screens/admin_login_selection_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/resident_signup_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/user_login_screen.dart';
+import 'package:building_manage_front/modules/resident/presentation/screens/user_dashboard_screen.dart';
+import 'package:building_manage_front/modules/resident/presentation/screens/complaint_create_screen.dart';
+import 'package:building_manage_front/modules/resident/presentation/screens/complaint_complete_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/admin_login_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/admin_dashboard_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/staff_account_issuance_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/staff_management_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/staff_edit_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/resident_management_screen.dart';
+import 'package:building_manage_front/modules/admin/presentation/screens/notice_management_screen.dart';
+import 'package:building_manage_front/modules/admin/presentation/screens/notice_create_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/manager_dashboard_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/manager_staff_login_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/attendance_history_screen.dart';
@@ -60,9 +65,13 @@ class RouterNotifier extends ChangeNotifier {
     final currentUser = _ref.read(currentUserProvider);
     final path = state.fullPath;
 
+    print('🔄 ROUTER REDIRECT - path: $path, authState: $authState, userType: ${currentUser?.userType}');
+
     // 인증이 필요한 경로들
     final protectedRoutes = [
       '/user/dashboard',
+      '/user/complaint-create',
+      '/user/complaint-complete',
       '/admin/dashboard',
       '/manager/dashboard',
       '/manager/attendance-history',
@@ -94,16 +103,26 @@ class RouterNotifier extends ChangeNotifier {
     // 인증된 사용자가 잘못된 권한의 경로에 접근하는 경우
     if (authState == AuthState.authenticated && currentUser != null && isProtectedRoute) {
       final userType = currentUser.userType;
+      print('🔐 CHECKING PERMISSION - userType: $userType, path: $path');
 
       if (path?.startsWith('/user/') == true && userType != UserType.user) {
-        return _getDefaultDashboard(userType);
+        final redirectPath = _getDefaultDashboard(userType);
+        print('❌ WRONG PERMISSION - Redirecting to: $redirectPath');
+        return redirectPath;
       } else if (path?.startsWith('/admin/') == true && userType != UserType.admin) {
-        return _getDefaultDashboard(userType);
+        final redirectPath = _getDefaultDashboard(userType);
+        print('❌ WRONG PERMISSION - Redirecting to: $redirectPath');
+        return redirectPath;
       } else if (path?.startsWith('/manager/') == true && userType != UserType.manager) {
-        return _getDefaultDashboard(userType);
+        final redirectPath = _getDefaultDashboard(userType);
+        print('❌ WRONG PERMISSION - Redirecting to: $redirectPath');
+        return redirectPath;
       } else if (path?.startsWith('/headquarters/') == true && userType != UserType.headquarters) {
-        return _getDefaultDashboard(userType);
+        final redirectPath = _getDefaultDashboard(userType);
+        print('❌ WRONG PERMISSION - Redirecting to: $redirectPath');
+        return redirectPath;
       }
+      print('✅ PERMISSION OK - No redirect needed');
     }
 
     return null; // 리다이렉트 없음
@@ -166,7 +185,28 @@ class RouterNotifier extends ChangeNotifier {
     GoRoute(
       path: '/user/dashboard',
       name: 'userDashboard',
-      builder: (context, state) => _buildPlaceholder('User Dashboard'),
+      builder: (context, state) => const UserDashboardScreen(),
+    ),
+
+    // 민원 등록 (보호된 경로)
+    GoRoute(
+      path: '/user/complaint-create',
+      name: 'complaintCreate',
+      builder: (context, state) {
+        final departmentId = state.uri.queryParameters['departmentId']!;
+        final departmentName = state.uri.queryParameters['departmentName']!;
+        return ComplaintCreateScreen(
+          departmentId: departmentId,
+          departmentName: departmentName,
+        );
+      },
+    ),
+
+    // 민원 등록 완료 (보호된 경로)
+    GoRoute(
+      path: '/user/complaint-complete',
+      name: 'complaintComplete',
+      builder: (context, state) => const ComplaintCompleteScreen(),
     ),
 
     // 관리자 대시보드 (보호된 경로)
@@ -198,6 +238,23 @@ class RouterNotifier extends ChangeNotifier {
       path: '/admin/resident-management',
       name: 'residentManagement',
       builder: (context, state) => const ResidentManagementScreen(),
+    ),
+
+    // 공지사항 관리 (보호된 경로)
+    GoRoute(
+      path: '/admin/notice-management',
+      name: 'noticeManagement',
+      builder: (context, state) => const NoticeManagementScreen(),
+    ),
+
+    // 공지사항/이벤트 등록 (보호된 경로)
+    GoRoute(
+      path: '/admin/notice-create',
+      name: 'noticeCreate',
+      builder: (context, state) {
+        final isEvent = state.uri.queryParameters['isEvent'] == 'true';
+        return NoticeCreateScreen(isEvent: isEvent);
+      },
     ),
 
     // 담당자 대시보드 (보호된 경로)

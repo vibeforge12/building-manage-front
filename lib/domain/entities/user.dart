@@ -41,6 +41,7 @@ class User extends Equatable {
         userType = UserType.admin;
         break;
       case 'manager':
+      case 'staff':  // API가 staff로 반환
         userType = UserType.manager;
         break;
       case 'resident':

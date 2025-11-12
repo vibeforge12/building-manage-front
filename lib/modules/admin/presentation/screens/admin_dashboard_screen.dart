@@ -160,7 +160,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   icon: 'assets/icons/notice_filled.svg',
                   title: '공지사항 등록',
                   onTap: () {
-                    // Navigate to notice registration
+                    context.push('/admin/notice-management');
                   },
                 ),
               ),

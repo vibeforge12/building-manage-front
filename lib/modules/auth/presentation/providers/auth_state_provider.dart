@@ -47,11 +47,14 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
 
   Future<void> loginSuccess(Map<String, dynamic> userData, String accessToken) async {
     try {
+      print('🔑 LOGIN SUCCESS - userData: $userData');
       final user = User.fromJson(userData);
       _currentUser = user;
       _accessToken = accessToken;
       state = AuthState.authenticated;
+      print('✅ USER SET - userType: ${user.userType}, name: ${user.name}, id: ${user.id}');
     } catch (e) {
+      print('❌ LOGIN ERROR: $e');
       setError();
       throw Exception('사용자 정보 처리 중 오류가 발생했습니다.');
     }
