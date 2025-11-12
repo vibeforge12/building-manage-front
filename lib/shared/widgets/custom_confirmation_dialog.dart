@@ -48,23 +48,25 @@ class _CustomConfirmationDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 두 버튼 공통 스타일
-    final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(18));
+    // 버튼 공통 스타일
+    final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(16));
 
     final confirmBtn = FilledButton(
       onPressed: () => Navigator.of(context).pop(true),
       style: FilledButton.styleFrom(
         backgroundColor: _lightBlueBg,     // 옅은 파랑 배경
         foregroundColor: _primaryBlue,     // 파랑 텍스트
-        minimumSize: const Size.fromHeight(56),
+        minimumSize: const Size.fromHeight(64),
         shape: shape,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         elevation: 0,
       ),
       child: Text(
         confirmText,
         style: TextStyle(
-          fontWeight: FontWeight.w800,
+          fontFamily: 'Pretendard',
+          fontWeight: FontWeight.w700,
+          fontSize: 16,
           color: isDestructive ? Colors.red : _primaryBlue,
         ),
       ),
@@ -75,14 +77,19 @@ class _CustomConfirmationDialog extends StatelessWidget {
       style: FilledButton.styleFrom(
         backgroundColor: _primaryBlue,     // 진한 파랑 배경
         foregroundColor: Colors.white,     // 흰 텍스트
-        minimumSize: const Size.fromHeight(56),
+        minimumSize: const Size.fromHeight(64),
         shape: shape,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         elevation: 0,
       ),
       child: Text(
         cancelText,
-        style: const TextStyle(fontWeight: FontWeight.w800),
+        style: const TextStyle(
+          fontFamily: 'Pretendard',
+          fontWeight: FontWeight.w700,
+          fontSize: 17,
+          color: Colors.white,
+        ),
       ),
     );
 
@@ -94,35 +101,43 @@ class _CustomConfirmationDialog extends StatelessWidget {
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+        padding: const EdgeInsets.fromLTRB(32, 48, 32, 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (title != null && title!.trim().isNotEmpty)
               Padding(
-                padding: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.only(bottom: 16),
                 child: Text(
                   title!,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF17191A),
+                    fontFamily: 'Pretendard',
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF17191A),
+                    height: 1.4,
                   ),
                 ),
               ),
             // 본문(있으면)
             if (!(content is SizedBox && (content as SizedBox).height == 0))
               Padding(
-                padding: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.only(bottom: 24),
                 child: DefaultTextStyle(
-                  style: const TextStyle(fontSize: 15, color: Color(0xFF17191A), height: 1.4),
-                  child: Align(alignment: Alignment.centerLeft, child: content),
+                  style: const TextStyle(
+                    fontFamily: 'Pretendard',
+                    fontSize: 16,
+                    color: Color(0xFF17191A),
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                  child: content,
                 ),
               ),
-            const SizedBox(height: 8),
-            // const Divider(height: 1, color: _divider),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             Row(children: buttons),
           ],
         ),

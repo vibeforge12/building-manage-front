@@ -13,6 +13,8 @@ import 'package:building_manage_front/modules/admin/presentation/screens/admin_l
 import 'package:building_manage_front/modules/admin/presentation/screens/admin_dashboard_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/staff_account_issuance_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/staff_management_screen.dart';
+import 'package:building_manage_front/modules/admin/presentation/screens/staff_edit_screen.dart';
+import 'package:building_manage_front/modules/admin/presentation/screens/resident_management_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/manager_dashboard_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/manager_staff_login_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/attendance_history_screen.dart';
@@ -179,6 +181,23 @@ class RouterNotifier extends ChangeNotifier {
       path: '/admin/staff-management',
       name: 'staffManagement',
       builder: (context, state) => const StaffManagementScreen(),
+    ),
+
+    // 담당자 수정 (보호된 경로)
+    GoRoute(
+      path: '/admin/staff-edit/:staffId',
+      name: 'staffEdit',
+      builder: (context, state) {
+        final staffId = state.pathParameters['staffId']!;
+        return StaffEditScreen(staffId: staffId);
+      },
+    ),
+
+    // 입주민 관리 (보호된 경로)
+    GoRoute(
+      path: '/admin/resident-management',
+      name: 'residentManagement',
+      builder: (context, state) => const ResidentManagementScreen(),
     ),
 
     // 담당자 대시보드 (보호된 경로)

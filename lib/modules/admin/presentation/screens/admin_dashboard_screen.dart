@@ -124,7 +124,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   icon: 'assets/icons/users_filled.svg',
                   title: '입주민 관리',
                   onTap: () {
-                    // Navigate to resident management
+                    context.push('/admin/resident-management');
                   },
                 ),
               ),
@@ -413,7 +413,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   title: '입주민 관리',
                   onTap: () {
                     Navigator.pop(context);
-                    // TODO: Navigate to resident management
+                    context.push('/admin/resident-management');
                   },
                 ),
                 _buildMenuItem(

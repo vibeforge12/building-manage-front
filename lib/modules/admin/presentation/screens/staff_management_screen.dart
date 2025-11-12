@@ -300,9 +300,12 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
               const SizedBox(width: 8),
               // 수정 버튼
               GestureDetector(
-                onTap: () {
-                  // TODO: 수정 기능
-                  print('담당자 수정: $staffId');
+                onTap: () async {
+                  final result = await context.push('/admin/staff-edit/$staffId');
+                  // 수정 성공 시 목록 새로고침
+                  if (result == true && mounted) {
+                    _loadStaffs();
+                  }
                 },
                 child: Container(
                   padding: const EdgeInsets.all(8),
