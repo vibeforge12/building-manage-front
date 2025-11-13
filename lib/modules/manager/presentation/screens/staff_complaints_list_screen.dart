@@ -305,34 +305,41 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
                                   child: Row(
                                     crossAxisAlignment: CrossAxisAlignment.center,
                                     children: [
-                                      // 좌측: 제목 및 거주자 정보
+                                      // 좌측: 제목 및 거주자 정보 (탭 가능)
                                       Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              title,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                fontFamily: 'Pretendard',
-                                                fontWeight: FontWeight.w700,
-                                                fontSize: 14,
-                                                color: Color(0xFF17191A),
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            if (complaintId != null) {
+                                              context.push('/manager/complaint-detail/$complaintId');
+                                            }
+                                          },
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Text(
+                                                title,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  fontFamily: 'Pretendard',
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 14,
+                                                  color: Color(0xFF17191A),
+                                                ),
                                               ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              '$dong동 $hosu호 $residentName',
-                                              style: const TextStyle(
-                                                fontFamily: 'Pretendard',
-                                                fontWeight: FontWeight.w400,
-                                                fontSize: 14,
-                                                color: Color(0xFF464A4D),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                '$dong동 $hosu호 $residentName',
+                                                style: const TextStyle(
+                                                  fontFamily: 'Pretendard',
+                                                  fontWeight: FontWeight.w400,
+                                                  fontSize: 14,
+                                                  color: Color(0xFF464A4D),
+                                                ),
                                               ),
-                                            ),
-                                          ],
+                                            ],
+                                          ),
                                         ),
                                       ),
                                       const SizedBox(width: 12),
@@ -341,9 +348,7 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
                                         height: 32,
                                         child: ElevatedButton(
                                           onPressed: () {
-                                            if (complaintId != null) {
-                                              context.push('/manager/complaint-detail/$complaintId');
-                                            }
+                                            // TODO: 민원 처리 기능 (API 추가 예정)
                                           },
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: Colors.white,
