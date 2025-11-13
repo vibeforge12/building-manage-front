@@ -58,6 +58,7 @@ class ApiEndpoints {
   // Staff Complaints - 담당자 미완료 민원
   static const String staffComplaints = '/staffs/complaints';
   static const String staffComplaintsPendingHighlight = '$staffComplaints/pending/highlight';
+  static const String staffComplaintsPending = '$staffComplaints/pending';
   static const String staffComplaintDetail = '$staffComplaints/{complaintId}';
 
   // Staff Notices - 담당자 공지사항
