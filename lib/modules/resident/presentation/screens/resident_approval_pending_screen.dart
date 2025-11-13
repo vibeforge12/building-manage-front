@@ -1,15 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 
-class ResidentApprovalPendingScreen extends ConsumerWidget {
+class ResidentApprovalPendingScreen extends ConsumerStatefulWidget {
   const ResidentApprovalPendingScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final currentUser = ref.watch(currentUserProvider);
+  ConsumerState<ResidentApprovalPendingScreen> createState() =>
+      _ResidentApprovalPendingScreenState();
+}
 
+class _ResidentApprovalPendingScreenState
+    extends ConsumerState<ResidentApprovalPendingScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // 3초 후 자동으로 대시보드로 이동
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        print('⏳ PENDING 화면 표시 완료 - 대시보드로 이동');
+        context.goNamed('userDashboard');
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -61,11 +77,11 @@ class ResidentApprovalPendingScreen extends ConsumerWidget {
                     const SizedBox(height: 24),
 
                     // 제목
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
                         '관리자\n승인 대기중',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w700,
                           height: 1.25,
@@ -78,11 +94,11 @@ class ResidentApprovalPendingScreen extends ConsumerWidget {
                     const SizedBox(height: 32),
 
                     // 설명 텍스트
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
-                        '입주하신 ${currentUser?.dong}동 ${currentUser?.ho}호의\n건물 관리자의 승인을 기다리고 있습니다.\n\n승인 시 입주민 서비스를 이용할 수 있습니다.',
-                        style: const TextStyle(
+                        '건물 관리자의 승인을 기다리고 있습니다.\n\n승인 시 입주민 서비스를 이용할 수 있습니다.',
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
                           height: 1.6,
@@ -97,30 +113,13 @@ class ResidentApprovalPendingScreen extends ConsumerWidget {
               ),
             ),
 
-            // Footer Button
+            // 타이머 표시
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: FilledButton(
-                onPressed: () async {
-                  await ref.read(authStateProvider.notifier).logout();
-                  if (context.mounted) {
-                    context.go('/');
-                  }
-                },
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(56),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  backgroundColor: const Color(0xFF006FFF),
-                ),
-                child: const Text(
-                  '로그아웃',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Pretendard',
-                  ),
+              child: Text(
+                '3초 후 자동으로 이동합니다...',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: const Color(0xFF999999),
                 ),
               ),
             ),

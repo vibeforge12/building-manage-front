@@ -62,8 +62,8 @@ class _UserLoginScreenState extends ConsumerState<UserLoginScreen> {
       print('🔐 APPROVAL STATUS: $approvalStatus (type: ${approvalStatus.runtimeType})');
       if (mounted) {
         if (approvalStatus == 'REJECTED') {
-          // 거부됨: 로그인 페이지로 리다이렉트
-          print('❌ REJECTED: 로그인 페이지로 이동');
+          // 거부됨만: 홈 화면(로그인 페이지)로 리다이렉트
+          print('❌ REJECTED: 홈 화면으로 이동');
           _usernameController.clear();
           _passwordController.clear();
           setState(() => _loginFailed = true);
@@ -73,14 +73,11 @@ class _UserLoginScreenState extends ConsumerState<UserLoginScreen> {
               backgroundColor: Colors.red,
             ),
           );
-        } else if (approvalStatus == 'PENDING') {
-          // 대기 중: 승인 대기 화면으로 이동
-          print('⏳ PENDING: 승인 대기 화면으로 이동');
-          context.goNamed('residentApprovalPending');
+          context.go('/');
         } else {
-          // 승인됨: 홈 화면으로 이동
-          print('✅ APPROVED (또는 기타): 홈 화면으로 이동');
-          context.goNamed('userDashboard');
+          // PENDING, APPROVED 모두: 승인 대기 화면으로 이동 (3초 후 자동 대시보드 이동)
+          print('✅ PENDING 또는 APPROVED: 승인 대기 화면으로 이동');
+          context.goNamed('residentApprovalPending');
         }
       }
     } catch (e) {
