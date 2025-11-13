@@ -74,10 +74,18 @@ class _UserLoginScreenState extends ConsumerState<UserLoginScreen> {
             ),
           );
           context.go('/');
-        } else {
-          // PENDING, APPROVED 모두: 승인 대기 화면으로 이동 (3초 후 자동 대시보드 이동)
-          print('✅ PENDING 또는 APPROVED: 승인 대기 화면으로 이동');
+        } else if (approvalStatus == 'PENDING') {
+          // PENDING: 승인 대기 화면으로 이동 (3초 후 자동 대시보드 이동)
+          print('⏳ PENDING: 승인 대기 화면으로 이동');
           context.goNamed('residentApprovalPending');
+        } else if (approvalStatus == 'APPROVED') {
+          // APPROVED: 바로 대시보드로 이동
+          print('✅ APPROVED: 바로 대시보드로 이동');
+          context.goNamed('userDashboard');
+        } else {
+          // 기타 상태: 기본적으로 대시보드로 이동
+          print('❓ Unknown status: $approvalStatus, 대시보드로 이동');
+          context.goNamed('userDashboard');
         }
       }
     } catch (e) {

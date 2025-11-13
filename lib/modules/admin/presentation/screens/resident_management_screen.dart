@@ -311,16 +311,24 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
         ),
         centerTitle: true,
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(89),
+          preferredSize: const Size.fromHeight(54),
           child: Column(
             children: [
-              const Divider(height: 1, thickness: 1, color: Color(0xFFE8EEF2)),
-              const SizedBox(height: 12),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: _buildSegmentedTabBar(),
+              Container(
+                height: 1,
+                color: const Color(0xFFE8EEF2),
               ),
-              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                height: 53,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildSegmentedTabBar(),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -411,7 +419,7 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
               child: Text(
-                hosuKey,
+                _formatHosuDisplay(hosuKey),
                 style: const TextStyle(
                   fontFamily: 'Pretendard',
                   fontWeight: FontWeight.w700,
@@ -468,7 +476,15 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
                 }).toList(),
               ),
             ),
-            const SizedBox(height: 8),
+            // 호수마다 구분줄 추가 (마지막 호수 제외)
+            if (index < groupedByHosu.length - 1)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Container(
+                  height: 8,
+                  color: const Color(0xFFF2F8FC),
+                ),
+              ),
           ],
         );
       },
@@ -608,6 +624,16 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
       ),
       child: Text(label),
     );
+  }
+
+  /// 호수 표시 포맷팅 (일관성 있게 "호" 붙이기)
+  String _formatHosuDisplay(String hosu) {
+    if (hosu.isEmpty) return '미지정';
+    // 이미 "호"로 끝나면 그대로, 아니면 "호" 추가
+    if (hosu.endsWith('호')) {
+      return hosu;
+    }
+    return '$hosu호';
   }
 
   /// 에러 공통 위젯

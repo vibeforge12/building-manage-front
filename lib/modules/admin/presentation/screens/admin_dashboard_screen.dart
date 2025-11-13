@@ -134,7 +134,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   icon: 'assets/icons/calendar_check_filled.svg',
                   title: '민원 관리',
                   onTap: () {
-                    // Navigate to complaint management
+                    context.push('/admin/complaint-management');
                   },
                 ),
               ),
@@ -420,7 +420,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   title: '민원 관리',
                   onTap: () {
                     Navigator.pop(context);
-                    // TODO: Navigate to complaint management
+                    context.push('/admin/complaint-management');
                   },
                 ),
                 _buildMenuItem(

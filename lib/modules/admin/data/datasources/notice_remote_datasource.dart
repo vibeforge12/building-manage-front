@@ -64,15 +64,15 @@ class NoticeRemoteDataSource {
   }
 
   /// 이벤트 목록 조회 (관리자)
-  /// TODO: 서버에서 이벤트 조회 API 준비 중 - GET /api/v1/managers/events (예상)
-  /// 현재는 사용하지 않음 (notice_management_screen.dart에서 더미 데이터 사용)
-  /// Parameters: page, limit, sortBy, sortOrder, departmentId, keyword
+  /// GET /api/v1/events
+  /// 역할과 소속 건물에 따라 접근 가능한 이벤트를 페이지네이션하여 조회
+  /// Parameters: page, limit, sortBy, sortOrder, target, keyword
   Future<Map<String, dynamic>> getEvents({
     int page = 1,
     int limit = 20,
     String? sortBy,
     String sortOrder = 'DESC',
-    String? departmentId,
+    String? target,
     String? keyword,
   }) async {
     final queryParams = <String, dynamic>{
@@ -81,17 +81,11 @@ class NoticeRemoteDataSource {
       'sortOrder': sortOrder,
     };
     if (sortBy != null) queryParams['sortBy'] = sortBy;
-    if (departmentId != null) queryParams['departmentId'] = departmentId;
+    if (target != null) queryParams['target'] = target;
     if (keyword != null) queryParams['keyword'] = keyword;
 
-    // TODO: 서버 API 준비 완료 후 아래 엔드포인트로 변경
-    // final response = await _apiClient.get(
-    //   ApiEndpoints.managerEvents,
-    //   queryParameters: queryParams,
-    // );
-
     final response = await _apiClient.get(
-      ApiEndpoints.notices,
+      ApiEndpoints.events,
       queryParameters: queryParams,
     );
     return response.data;
@@ -99,19 +93,16 @@ class NoticeRemoteDataSource {
 
   /// 이벤트 생성 (관리자)
   /// POST /api/v1/managers/events
+  /// 이벤트는 모든 사용자를 대상으로 하므로 target과 departmentId 불필요
   Future<Map<String, dynamic>> createEvent({
     required String title,
     required String content,
-    required String target, // BOTH, RESIDENT, STAFF
-    String? departmentId,
     String? imageUrl,
   }) async {
     final data = {
       'title': title,
       'content': content,
-      'target': target,
       if (imageUrl != null) 'imageUrl': imageUrl,
-      if (departmentId != null) 'departmentId': departmentId,
     };
 
     final response = await _apiClient.post(
@@ -145,7 +136,7 @@ class NoticeRemoteDataSource {
       'title': title,
       'content': content,
       'target': target,
-      if (imageUrl != null) 'imageUrl': imageUrl,
+      'imageUrl': imageUrl, // null값도 포함하여 기존 이미지 삭제 지원
       if (departmentId != null) 'departmentId': departmentId,
       if (status != null) 'status': status,
     };
@@ -158,31 +149,28 @@ class NoticeRemoteDataSource {
   }
 
   /// 이벤트 상세 조회
-  /// GET /api/v1/notices/{noticeId} (공지와 동일)
+  /// GET /api/v1/events/{eventId}
   Future<Map<String, dynamic>> getEventDetail(String eventId) async {
     final response = await _apiClient.get(
-      '${ApiEndpoints.notices}/$eventId',
+      '${ApiEndpoints.events}/$eventId',
     );
     return response.data;
   }
 
   /// 이벤트 수정
   /// PATCH /api/v1/managers/events/{eventId}
+  /// 이벤트는 모든 사용자를 대상으로 하므로 target과 departmentId 불필요
   Future<Map<String, dynamic>> updateEvent({
     required String eventId,
     required String title,
     required String content,
-    required String target,
     String? imageUrl,
-    String? departmentId,
     String? status,
   }) async {
     final data = {
       'title': title,
       'content': content,
-      'target': target,
-      if (imageUrl != null) 'imageUrl': imageUrl,
-      if (departmentId != null) 'departmentId': departmentId,
+      'imageUrl': imageUrl, // null값도 포함하여 기존 이미지 삭제 지원
       if (status != null) 'status': status,
     };
 
