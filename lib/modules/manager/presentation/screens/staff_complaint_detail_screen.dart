@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
@@ -200,18 +201,7 @@ class _StaffComplaintDetailScreenState extends State<StaffComplaintDetailScreen>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // 제목
-                              Text(
-                                _complaintData?['title'] ?? '제목없음',
-                                style: const TextStyle(
-                                  fontFamily: 'Pretendard',
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 18,
-                                  color: Color(0xFF17191A),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              // 거주자 정보 및 날짜
+                              // 거주자 정보
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
@@ -254,6 +244,17 @@ class _StaffComplaintDetailScreenState extends State<StaffComplaintDetailScreen>
                                 ],
                               ),
                               const SizedBox(height: 16),
+                              // 제목
+                              Text(
+                                _complaintData?['title'] ?? '제목없음',
+                                style: const TextStyle(
+                                  fontFamily: 'Pretendard',
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 18,
+                                  color: Color(0xFF17191A),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
                               // 부서 정보
                               Container(
                                 padding: const EdgeInsets.symmetric(
@@ -275,12 +276,6 @@ class _StaffComplaintDetailScreenState extends State<StaffComplaintDetailScreen>
                                 ),
                               ),
                               const SizedBox(height: 20),
-                              // 구분선
-                              Container(
-                                height: 1,
-                                color: const Color(0xFFE8EEF2),
-                              ),
-                              const SizedBox(height: 20),
                               // 내용
                               Text(
                                 _complaintData?['content'] ?? '',
@@ -294,6 +289,11 @@ class _StaffComplaintDetailScreenState extends State<StaffComplaintDetailScreen>
                               ),
                             ],
                           ),
+                        ),
+                        // 구분선 (패딩 없이 화면 끝까지)
+                        Container(
+                          height: 1,
+                          color: const Color(0xFFE8EEF2),
                         ),
                       ],
                     ),
