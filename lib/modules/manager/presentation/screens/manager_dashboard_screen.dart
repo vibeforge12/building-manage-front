@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 import 'package:building_manage_front/modules/manager/presentation/providers/attendance_provider.dart';
+import 'package:building_manage_front/modules/manager/data/datasources/staff_complaints_remote_datasource.dart';
 import 'package:building_manage_front/shared/widgets/confirmation_dialog.dart';
 
 class ManagerDashboardScreen extends ConsumerStatefulWidget {
@@ -15,6 +16,45 @@ class ManagerDashboardScreen extends ConsumerStatefulWidget {
 class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen> {
   int _tabIndex = 0; // 0: 민원 관리, 1: 공지사항
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _isLoadingComplaints = false;
+  List<Map<String, dynamic>> _pendingComplaints = [];
+  String? _complaintsError;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPendingComplaints();
+  }
+
+  Future<void> _loadPendingComplaints() async {
+    setState(() {
+      _isLoadingComplaints = true;
+      _complaintsError = null;
+    });
+
+    try {
+      final dataSource = ref.read(staffComplaintsRemoteDataSourceProvider);
+      final response = await dataSource.getPendingComplaintsHighlight();
+
+      if (response['success'] == true && response['data'] != null) {
+        setState(() {
+          _pendingComplaints = List<Map<String, dynamic>>.from(response['data'] ?? []);
+          _isLoadingComplaints = false;
+        });
+      } else {
+        setState(() {
+          _complaintsError = '민원을 불러올 수 없습니다.';
+          _isLoadingComplaints = false;
+        });
+      }
+    } catch (e) {
+      print('❌ 미완료 민원 조회 실패: $e');
+      setState(() {
+        _complaintsError = '민원 로드 중 오류가 발생했습니다.';
+        _isLoadingComplaints = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -128,9 +168,57 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
                   ),
                 ),
                 if (_tabIndex == 0) ...[
-                  _ComplaintTile(title: '물새요', subtitle: '센트럴파크 김00 105호'),
-                  _ComplaintTile(title: '비둘기가 와요', subtitle: '센트럴파크 김00 105호'),
-                  _ComplaintTile(title: '창문이 이상해요', subtitle: '센트럴파크 김00 105호'),
+                  if (_isLoadingComplaints)
+                    const Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child: Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                  else if (_complaintsError != null)
+                    Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Center(
+                        child: Text(
+                          _complaintsError!,
+                          style: const TextStyle(
+                            fontFamily: 'Pretendard',
+                            fontWeight: FontWeight.w400,
+                            fontSize: 14,
+                            color: Color(0xFF757B80),
+                          ),
+                        ),
+                      ),
+                    )
+                  else if (_pendingComplaints.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child: Center(
+                        child: Text(
+                          '미완료 민원이 없습니다.',
+                          style: TextStyle(
+                            fontFamily: 'Pretendard',
+                            fontWeight: FontWeight.w400,
+                            fontSize: 14,
+                            color: Color(0xFF757B80),
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    ..._pendingComplaints.map((complaint) {
+                      final title = complaint['title'] as String? ?? '제목없음';
+                      final resident = complaint['resident'] as Map<String, dynamic>?;
+                      final residentName = resident?['name'] as String? ?? '거주자명';
+                      final dong = resident?['dong'] as String? ?? '';
+                      final hosu = resident?['hosu'] as String? ?? '';
+                      final subtitle = '$dong$hosu $residentName'.trim();
+
+                      return _ComplaintTile(
+                        title: title,
+                        subtitle: subtitle,
+                      );
+                    }),
                 ] else ...[
                   _NoticeTile(title: '정기 소독 안내', subtitle: '10/30(수) 오후 2시 진행 예정'),
                   _NoticeTile(title: '승강기 점검', subtitle: '11/02(토) 09:00~11:00 예정'),

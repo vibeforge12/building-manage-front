@@ -49,4 +49,13 @@ class ApiEndpoints {
   static const String events = '/events';
   static const String managerNotices = '/managers/notices';
   static const String managerEvents = '/managers/events';
+
+  // Manager/Staff Complaints - 담당자 민원 관리
+  static const String managerComplaints = '/managers/complaints';
+  static const String managerComplaintsPending = '$managerComplaints/pending';
+  static const String managerComplaintsResolved = '$managerComplaints/resolved';
+
+  // Staff Complaints - 담당자 미완료 민원
+  static const String staffComplaints = '/staffs/complaints';
+  static const String staffComplaintsPendingHighlight = '$staffComplaints/pending/highlight';
 }
