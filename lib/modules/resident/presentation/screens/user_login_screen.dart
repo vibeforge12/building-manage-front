@@ -57,7 +57,28 @@ class _UserLoginScreenState extends ConsumerState<UserLoginScreen> {
         accessToken,
       );
 
-      if (mounted) context.goNamed('userDashboard');
+      // approvalStatus에 따른 조건부 라우팅
+      final approvalStatus = user?['approvalStatus'] as String?;
+      if (mounted) {
+        if (approvalStatus == 'REJECTED') {
+          // 거부됨: 로그인 페이지로 리다이렉트
+          _usernameController.clear();
+          _passwordController.clear();
+          setState(() => _loginFailed = true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('가입이 거부되었습니다. 관리자에게 문의해주세요.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        } else if (approvalStatus == 'PENDING') {
+          // 대기 중: 승인 대기 화면으로 이동
+          context.goNamed('residentApprovalPending');
+        } else {
+          // 승인됨: 홈 화면으로 이동
+          context.goNamed('userDashboard');
+        }
+      }
     } catch (e) {
       setState(() => _loginFailed = true);
       if (mounted) {

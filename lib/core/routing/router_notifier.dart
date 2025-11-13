@@ -12,6 +12,9 @@ import 'package:building_manage_front/modules/resident/presentation/screens/user
 import 'package:building_manage_front/modules/resident/presentation/screens/user_dashboard_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/complaint_create_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/complaint_complete_screen.dart';
+import 'package:building_manage_front/modules/resident/presentation/screens/resident_approval_pending_screen.dart';
+import 'package:building_manage_front/modules/resident/presentation/screens/resident_approval_completed_screen.dart';
+import 'package:building_manage_front/modules/resident/presentation/screens/resident_approval_rejected_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/admin_login_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/admin_dashboard_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/staff_account_issuance_screen.dart';
@@ -207,6 +210,30 @@ class RouterNotifier extends ChangeNotifier {
       path: '/user/complaint-complete',
       name: 'complaintComplete',
       builder: (context, state) => const ComplaintCompleteScreen(),
+    ),
+
+    // 입주민 승인 대기 화면
+    GoRoute(
+      path: '/resident-approval-pending',
+      name: 'residentApprovalPending',
+      builder: (context, state) => const ResidentApprovalPendingScreen(),
+    ),
+
+    // 입주민 승인 완료 화면
+    GoRoute(
+      path: '/resident-approval-completed',
+      name: 'residentApprovalCompleted',
+      builder: (context, state) => const ResidentApprovalCompletedScreen(),
+    ),
+
+    // 입주민 승인 거부 화면
+    GoRoute(
+      path: '/resident-approval-rejected',
+      name: 'residentApprovalRejected',
+      builder: (context, state) {
+        final reason = state.uri.queryParameters['reason'];
+        return ResidentApprovalRejectedScreen(reason: reason);
+      },
     ),
 
     // 관리자 대시보드 (보호된 경로)
