@@ -54,6 +54,10 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
         _contentController.text.trim().length >= 10;
   }
 
+  bool get _hasImage {
+    return _selectedImage != null || _uploadedImageUrl != null;
+  }
+
   Future<void> _pickImage() async {
     try {
       final XFile? image = await _picker.pickImage(
@@ -422,47 +426,54 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
               ),
             ),
 
-            // 이미지 첨부 영역
-            GestureDetector(
-              onTap: _isUploadingImage ? null : _pickImage,
-              child: Container(
-                width: double.infinity,
-                height: 245,
-                padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: Color(0xFFE8EEF2), width: 1),
-                  ),
-                ),
-                child: _buildImagePreview(),
-              ),
-            ),
-
             // 제목 및 내용 입력
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextField(
-                    controller: _titleController,
-                    style: const TextStyle(
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 20,
-                      color: Color(0xFF17191A),
-                    ),
-                    decoration: const InputDecoration(
-                      hintText: '제목 입력 (최소 3자)',
-                      hintStyle: TextStyle(
-                        fontFamily: 'Pretendard',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 20,
-                        color: Color(0xFFA4ADB2),
+                  // 제목 + 사진 아이콘
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _titleController,
+                          style: const TextStyle(
+                            fontFamily: 'Pretendard',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 20,
+                            color: Color(0xFF17191A),
+                          ),
+                          decoration: const InputDecoration(
+                            hintText: '제목 입력 (최소 3자)',
+                            hintStyle: TextStyle(
+                              fontFamily: 'Pretendard',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 20,
+                              color: Color(0xFFA4ADB2),
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
                       ),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.zero,
-                    ),
+                      const SizedBox(width: 12),
+                      // 사진 첨부 아이콘
+                      GestureDetector(
+                        onTap: _isUploadingImage ? null : _pickImage,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          child: Icon(
+                            Icons.add_photo_alternate_outlined,
+                            size: 24,
+                            color: _hasImage
+                                ? const Color(0xFF006FFF)
+                                : const Color(0xFFA4ADB2),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   Container(
@@ -470,6 +481,16 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
                     color: const Color(0xFFE8EEF2),
                   ),
                   const SizedBox(height: 8),
+                  // 이미지 미리보기 (내용 필드 위)
+                  if (_hasImage)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: SizedBox(
+                        height: 120,
+                        child: _buildImagePreview(),
+                      ),
+                    ),
+                  // 내용 입력
                   TextField(
                     controller: _contentController,
                     maxLines: null,
