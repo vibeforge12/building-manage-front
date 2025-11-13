@@ -756,7 +756,7 @@ class _NoticeTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(top: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F7F9),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
       ),
       child: ListTile(
