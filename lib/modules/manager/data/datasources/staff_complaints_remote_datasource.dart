@@ -110,4 +110,60 @@ class StaffComplaintsRemoteDataSource {
       rethrow;
     }
   }
+
+  /// 처리된 민원 목록 조회
+  /// GET /api/v1/staffs/complaints/resolved
+  Future<Map<String, dynamic>> getResolvedComplaints({
+    int page = 1,
+    int limit = 20,
+    String? sortBy,
+    String sortOrder = 'DESC',
+    String? keyword,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{
+        'page': page,
+        'limit': limit,
+        'sortOrder': sortOrder,
+      };
+      if (sortBy != null) queryParams['sortBy'] = sortBy;
+      if (keyword != null) queryParams['keyword'] = keyword;
+
+      final response = await _apiClient.get(
+        ApiEndpoints.staffComplaintsResolved,
+        queryParameters: queryParams,
+      );
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      print('❌ 처리된 민원 목록 조회 실패: $e');
+      rethrow;
+    }
+  }
+
+  /// 민원 처리 등록
+  /// POST /api/v1/staffs/complaints/{complaintId}/resolve
+  Future<Map<String, dynamic>> resolveComplaint({
+    required String complaintId,
+    required String content,
+    String? imageUrl,
+  }) async {
+    try {
+      final endpoint = ApiEndpoints.staffComplaintResolve
+          .replaceFirst('{complaintId}', complaintId);
+
+      final body = {
+        'content': content,
+        if (imageUrl != null) 'imageUrl': imageUrl,
+      };
+
+      final response = await _apiClient.post(
+        endpoint,
+        data: body,
+      );
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      print('❌ 민원 처리 등록 실패: $e');
+      rethrow;
+    }
+  }
 }

@@ -18,6 +18,7 @@ import 'package:building_manage_front/modules/resident/presentation/screens/my_c
 import 'package:building_manage_front/modules/resident/presentation/screens/resident_approval_pending_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/resident_approval_completed_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/resident_approval_rejected_screen.dart';
+import 'package:building_manage_front/modules/resident/presentation/screens/user_complaint_detail_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/admin_login_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/admin_dashboard_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/staff_account_issuance_screen.dart';
@@ -34,6 +35,8 @@ import 'package:building_manage_front/modules/manager/presentation/screens/atten
 import 'package:building_manage_front/modules/manager/presentation/screens/staff_complaint_detail_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/staff_notice_detail_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/staff_complaints_list_screen.dart';
+import 'package:building_manage_front/modules/manager/presentation/screens/complaint_resolve_screen.dart';
+import 'package:building_manage_front/modules/manager/presentation/screens/complaint_resolve_complete_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/headquarters_login_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/headquarters_dashboard_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/building_management_screen.dart';
@@ -86,6 +89,7 @@ class RouterNotifier extends ChangeNotifier {
       '/user/complaint-create',
       '/user/complaint-complete',
       '/user/my-complaints',
+      '/user/complaint/:complaintId',
       '/admin/dashboard',
       '/admin/complaint-management',
       '/admin/complaint-detail',
@@ -93,6 +97,8 @@ class RouterNotifier extends ChangeNotifier {
       '/manager/dashboard',
       '/manager/attendance-history',
       '/manager/complaint-detail/:complaintId',
+      '/manager/complaint-resolve/:complaintId',
+      '/manager/complaint-resolve-complete',
       '/headquarters/dashboard',
       '/headquarters/building-management',
       '/headquarters/building-registration',
@@ -254,6 +260,20 @@ class RouterNotifier extends ChangeNotifier {
       builder: (context, state) => const MyComplaintListScreen(),
     ),
 
+    // 민원 상세 조회 (보호된 경로)
+    GoRoute(
+      path: '/user/complaint/:complaintId',
+      name: 'userComplaintDetail',
+      builder: (context, state) {
+        final complaintId = state.pathParameters['complaintId']!;
+        final complaintData = state.extra as Map<String, dynamic>? ?? {};
+        return UserComplaintDetailScreen(
+          complaintId: complaintId,
+          complaintData: complaintData,
+        );
+      },
+    ),
+
     // 입주민 승인 대기 화면
     GoRoute(
       path: '/resident-approval-pending',
@@ -396,6 +416,29 @@ class RouterNotifier extends ChangeNotifier {
       path: '/manager/complaints',
       name: 'staffComplaintsList',
       builder: (context, state) => const StaffComplaintsListScreen(),
+    ),
+
+    // 민원 처리 등록 (담당자 전용)
+    GoRoute(
+      path: '/manager/complaint-resolve/:complaintId',
+      name: 'complaintResolve',
+      builder: (context, state) {
+        final complaintId = state.pathParameters['complaintId']!;
+        final complaintTitle = state.extra as String? ?? '민원';
+        final complaintData = <String, dynamic>{};
+        return ComplaintResolveScreen(
+          complaintId: complaintId,
+          complaintTitle: complaintTitle,
+          complaintData: complaintData,
+        );
+      },
+    ),
+
+    // 민원 처리 완료 (담당자 전용)
+    GoRoute(
+      path: '/manager/complaint-resolve-complete',
+      name: 'complaintResolveComplete',
+      builder: (context, state) => const ComplaintResolveCompleteScreen(),
     ),
 
     // 본사 대시보드 (보호된 경로)
