@@ -5,8 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 import 'package:building_manage_front/modules/resident/data/datasources/resident_auth_remote_datasource.dart';
 
-import 'package:building_manage_front/presentation/common/widgets/page_header_text.dart';
-import 'package:building_manage_front/common/widget/fieldLable.dart';
+import 'package:building_manage_front/shared/widgets/page_header_text.dart';
+import 'package:building_manage_front/shared/widgets/fieldLable.dart';
 class UserLoginScreen extends ConsumerStatefulWidget {
   const UserLoginScreen({super.key});
 

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:building_manage_front/presentation/common/widgets/full_screen_image_background.dart';
-import 'package:building_manage_front/presentation/common/widgets/page_header_text.dart';
-import 'package:building_manage_front/presentation/common/widgets/primary_action_button.dart';
+import 'package:building_manage_front/shared/widgets/full_screen_image_background.dart';
+import 'package:building_manage_front/shared/widgets/page_header_text.dart';
+import 'package:building_manage_front/shared/widgets/primary_action_button.dart';
 
 class AdminLoginSelectionScreen extends StatelessWidget {
   const AdminLoginSelectionScreen({super.key});

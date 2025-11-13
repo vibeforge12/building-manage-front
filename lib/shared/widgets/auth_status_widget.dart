@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:building_manage_front/presentation/auth/providers/auth_state_provider.dart';
+import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 
 class AuthStatusWidget extends ConsumerWidget {
   const AuthStatusWidget({super.key});
