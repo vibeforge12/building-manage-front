@@ -67,6 +67,7 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
         setState(() {
           _selectedImage = image;
         });
+        _updateFormState();
       }
     } catch (e) {
       if (mounted) {
@@ -280,6 +281,7 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
                     _selectedImage = null;
                     _uploadedImageUrl = null;
                   });
+                  _updateFormState();
                 },
               ),
             ),
@@ -321,6 +323,7 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
                   setState(() {
                     _selectedImage = null;
                   });
+                  _updateFormState();
                 },
               ),
             ),
