@@ -208,30 +208,8 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
                       color: const Color(0xFFF2F8FC),
                     ),
 
-                    // 공지사항/이벤트 탭
-                    _buildTabSection(),
-
-                    // 전체보기 버튼
-                    Padding(
-                      padding: const EdgeInsets.only(right: 16, top: 8),
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () {
-                            // TODO: 전체보기 화면으로 이동
-                          },
-                          child: const Text(
-                            '전체보기',
-                            style: TextStyle(
-                              fontFamily: 'Pretendard',
-                              fontWeight: FontWeight.w700,
-                              fontSize: 14,
-                              color: Color(0xFF757B80),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+                    // 공지사항/이벤트 탭 + 전체보기 버튼
+                    _buildTabAndViewAllSection(),
 
                     // 공지사항/이벤트 리스트
                     _isLoadingContent
@@ -514,10 +492,12 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
     );
   }
 
-  Widget _buildTabSection() {
+  Widget _buildTabAndViewAllSection() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             child: TabBar(
@@ -543,6 +523,21 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
                 Tab(text: '공지사항'),
                 Tab(text: '이벤트'),
               ],
+            ),
+          ),
+          // 전체보기 버튼
+          TextButton(
+            onPressed: () {
+              // TODO: 전체보기 화면으로 이동
+            },
+            child: const Text(
+              '전체보기',
+              style: TextStyle(
+                fontFamily: 'Pretendard',
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+                color: Color(0xFF757B80),
+              ),
             ),
           ),
         ],
