@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
+import 'package:building_manage_front/modules/admin/data/datasources/notice_remote_datasource.dart';
 
 class NoticeManagementScreen extends ConsumerStatefulWidget {
   const NoticeManagementScreen({super.key});
@@ -13,20 +14,78 @@ class NoticeManagementScreen extends ConsumerStatefulWidget {
 class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  String _selectedFilter = '전체';
+  String _selectedFilter = '최신순';
   String _selectedChip = '전체';
+  bool _isLoading = false;
 
-  // 임시 데이터
-  final List<Map<String, dynamic>> _notices = [
-    {'id': '1', 'title': '[미화] 건물 누수공사 공지드립니다'},
-    {'id': '2', 'title': '[관리] 건물 소방점검 공지드립니다'},
-    {'id': '3', 'title': '[방제] 공지드립니다'},
-  ];
+  // API에서 받은 데이터
+  List<Map<String, dynamic>> _notices = [];
+  List<Map<String, dynamic>> _events = [];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(_onTabChanged);
+    _loadNotices();
+  }
+
+  void _onTabChanged() {
+    if (_tabController.index == 0) {
+      _loadNotices();
+    } else {
+      _loadEvents();
+    }
+  }
+
+  Future<void> _loadNotices() async {
+    setState(() => _isLoading = true);
+    try {
+      final noticeDataSource = ref.read(noticeRemoteDataSourceProvider);
+      final response = await noticeDataSource.getNotices(
+        sortOrder: _selectedFilter == '오래된순' ? 'ASC' : 'DESC',
+      );
+
+      if (mounted) {
+        setState(() {
+          _notices = List<Map<String, dynamic>>.from(response['data']['data'] ?? []);
+        });
+      }
+    } catch (e) {
+      print('공지사항 목록 로드 실패: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('공지사항 로드 실패: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _loadEvents() async {
+    setState(() => _isLoading = true);
+    try {
+      final noticeDataSource = ref.read(noticeRemoteDataSourceProvider);
+      final response = await noticeDataSource.getEvents(
+        sortOrder: _selectedFilter == '오래된순' ? 'ASC' : 'DESC',
+      );
+
+      if (mounted) {
+        setState(() {
+          _events = List<Map<String, dynamic>>.from(response['data']['data'] ?? []);
+        });
+      }
+    } catch (e) {
+      print('이벤트 목록 로드 실패: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('이벤트 로드 실패: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -262,31 +321,110 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
   }
 
   Widget _buildNoticeList() {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    if (_notices.isEmpty) {
+      return Center(
+        child: Text(
+          '공지사항이 없습니다',
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+      );
+    }
+
+    // 칩 필터 적용
+    final filteredNotices = _notices.where((notice) {
+      if (_selectedChip == '전체') return true;
+      final target = notice['target'] as String?;
+      if (_selectedChip == '유저') return target == 'RESIDENT';
+      if (_selectedChip == '담당자') return target == 'STAFF';
+      return true;
+    }).toList();
+
+    if (filteredNotices.isEmpty) {
+      return Center(
+        child: Text(
+          '해당하는 공지사항이 없습니다',
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+      );
+    }
+
     return ListView.separated(
       padding: const EdgeInsets.all(16),
-      itemCount: _notices.length,
+      itemCount: filteredNotices.length,
       separatorBuilder: (context, index) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
-        final notice = _notices[index];
+        final notice = filteredNotices[index];
         return _buildNoticeItem(notice);
       },
     );
   }
 
   Widget _buildEventList() {
-    // 이벤트 리스트 (임시로 공지사항과 동일하게 표시)
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    if (_events.isEmpty) {
+      return Center(
+        child: Text(
+          '이벤트가 없습니다',
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+      );
+    }
+
+    // 칩 필터 적용
+    final filteredEvents = _events.where((event) {
+      if (_selectedChip == '전체') return true;
+      final target = event['target'] as String?;
+      if (_selectedChip == '유저') return target == 'RESIDENT';
+      if (_selectedChip == '담당자') return target == 'STAFF';
+      return true;
+    }).toList();
+
+    if (filteredEvents.isEmpty) {
+      return Center(
+        child: Text(
+          '해당하는 이벤트가 없습니다',
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+      );
+    }
+
     return ListView.separated(
       padding: const EdgeInsets.all(16),
-      itemCount: _notices.length,
+      itemCount: filteredEvents.length,
       separatorBuilder: (context, index) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
-        final notice = _notices[index];
-        return _buildNoticeItem(notice);
+        final event = filteredEvents[index];
+        return _buildNoticeItem(event);
       },
     );
   }
 
   Widget _buildNoticeItem(Map<String, dynamic> notice) {
+    final title = notice['title'] as String? ?? '제목 없음';
+    final content = notice['content'] as String? ?? '';
+    final createdAt = notice['createdAt'] as String? ?? '';
+
+    // 날짜 포맷팅 (ISO 8601 → 간단한 형식)
+    String formatDate(String dateStr) {
+      try {
+        final date = DateTime.parse(dateStr);
+        return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      } catch (e) {
+        return dateStr;
+      }
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -297,22 +435,54 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
         ),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Text(
-              notice['title'],
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontFamily: 'Pretendard',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    color: Color(0xFF17191A),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                formatDate(createdAt),
+                style: const TextStyle(
+                  fontFamily: 'Pretendard',
+                  fontWeight: FontWeight.w400,
+                  fontSize: 12,
+                  color: Color(0xFFA4ADB2),
+                ),
+              ),
+            ],
+          ),
+          if (content.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              content,
               style: const TextStyle(
                 fontFamily: 'Pretendard',
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
-                color: Color(0xFF17191A),
+                fontWeight: FontWeight.w400,
+                fontSize: 14,
+                color: Color(0xFF666666),
+                height: 1.5,
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-          ),
-          const SizedBox(width: 8),
+          ],
+          const SizedBox(height: 12),
           Row(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
               // 삭제 버튼
               GestureDetector(
@@ -379,7 +549,6 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildSortOption('전체'),
               _buildSortOption('최신순'),
               _buildSortOption('오래된순'),
             ],
@@ -396,6 +565,12 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
         setState(() {
           _selectedFilter = option;
         });
+        // 정렬 변경 시 데이터 새로고침
+        if (_tabController.index == 0) {
+          _loadNotices();
+        } else {
+          _loadEvents();
+        }
         Navigator.pop(context);
       },
     );

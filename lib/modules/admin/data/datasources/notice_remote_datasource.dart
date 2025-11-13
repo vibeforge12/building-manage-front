@@ -13,26 +13,28 @@ class NoticeRemoteDataSource {
   NoticeRemoteDataSource(this._apiClient);
 
   /// 공지사항 목록 조회 (관리자)
+  /// GET /api/v1/notices
   /// Parameters: page, limit, sortBy, sortOrder, departmentId, keyword
   Future<Map<String, dynamic>> getNotices({
-    int? page,
-    int? limit,
+    int page = 1,
+    int limit = 20,
     String? sortBy,
-    String? sortOrder,
+    String sortOrder = 'DESC',
     String? departmentId,
     String? keyword,
   }) async {
-    final queryParams = <String, dynamic>{};
-    if (page != null) queryParams['page'] = page;
-    if (limit != null) queryParams['limit'] = limit;
+    final queryParams = <String, dynamic>{
+      'page': page,
+      'limit': limit,
+      'sortOrder': sortOrder,
+    };
     if (sortBy != null) queryParams['sortBy'] = sortBy;
-    if (sortOrder != null) queryParams['sortOrder'] = sortOrder;
     if (departmentId != null) queryParams['departmentId'] = departmentId;
     if (keyword != null) queryParams['keyword'] = keyword;
 
     final response = await _apiClient.get(
-      ApiEndpoints.managerNotices,
-      queryParameters: queryParams.isNotEmpty ? queryParams : null,
+      ApiEndpoints.notices,
+      queryParameters: queryParams,
     );
     return response.data;
   }
@@ -62,26 +64,28 @@ class NoticeRemoteDataSource {
   }
 
   /// 이벤트 목록 조회 (관리자)
+  /// GET /api/v1/notices (공지사항과 동일한 API, target으로 구분)
   /// Parameters: page, limit, sortBy, sortOrder, departmentId, keyword
   Future<Map<String, dynamic>> getEvents({
-    int? page,
-    int? limit,
+    int page = 1,
+    int limit = 20,
     String? sortBy,
-    String? sortOrder,
+    String sortOrder = 'DESC',
     String? departmentId,
     String? keyword,
   }) async {
-    final queryParams = <String, dynamic>{};
-    if (page != null) queryParams['page'] = page;
-    if (limit != null) queryParams['limit'] = limit;
+    final queryParams = <String, dynamic>{
+      'page': page,
+      'limit': limit,
+      'sortOrder': sortOrder,
+    };
     if (sortBy != null) queryParams['sortBy'] = sortBy;
-    if (sortOrder != null) queryParams['sortOrder'] = sortOrder;
     if (departmentId != null) queryParams['departmentId'] = departmentId;
     if (keyword != null) queryParams['keyword'] = keyword;
 
     final response = await _apiClient.get(
-      ApiEndpoints.managerEvents,
-      queryParameters: queryParams.isNotEmpty ? queryParams : null,
+      ApiEndpoints.notices,
+      queryParameters: queryParams,
     );
     return response.data;
   }
