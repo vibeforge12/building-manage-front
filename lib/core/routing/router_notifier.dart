@@ -33,6 +33,7 @@ import 'package:building_manage_front/modules/manager/presentation/screens/manag
 import 'package:building_manage_front/modules/manager/presentation/screens/attendance_history_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/staff_complaint_detail_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/staff_notice_detail_screen.dart';
+import 'package:building_manage_front/modules/manager/presentation/screens/staff_complaints_list_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/headquarters_login_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/headquarters_dashboard_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/building_management_screen.dart';
@@ -388,6 +389,13 @@ class RouterNotifier extends ChangeNotifier {
         final noticeId = state.pathParameters['noticeId']!;
         return StaffNoticeDetailScreen(noticeId: noticeId);
       },
+    ),
+
+    // 미완료 민원 목록 (담당자 전용)
+    GoRoute(
+      path: '/manager/complaints',
+      name: 'staffComplaintsList',
+      builder: (context, state) => const StaffComplaintsListScreen(),
     ),
 
     // 본사 대시보드 (보호된 경로)

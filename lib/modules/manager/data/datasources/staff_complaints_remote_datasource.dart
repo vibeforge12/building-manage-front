@@ -81,4 +81,33 @@ class StaffComplaintsRemoteDataSource {
       rethrow;
     }
   }
+
+  /// 미완료 민원 목록 조회
+  /// GET /api/v1/staffs/complaints/pending
+  Future<Map<String, dynamic>> getPendingComplaints({
+    int page = 1,
+    int limit = 20,
+    String? sortBy,
+    String sortOrder = 'DESC',
+    String? keyword,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{
+        'page': page,
+        'limit': limit,
+        'sortOrder': sortOrder,
+      };
+      if (sortBy != null) queryParams['sortBy'] = sortBy;
+      if (keyword != null) queryParams['keyword'] = keyword;
+
+      final response = await _apiClient.get(
+        ApiEndpoints.staffComplaintsPending,
+        queryParameters: queryParams,
+      );
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      print('❌ 미완료 민원 목록 조회 실패: $e');
+      rethrow;
+    }
+  }
 }

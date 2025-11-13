@@ -794,7 +794,14 @@ class _DashboardTabs extends StatelessWidget {
           child: _TabChip(text: '공지사항', selected: index == 1),
         ),
         const Spacer(),
-        TextButton(onPressed: () {}, child: const Text('전체보기')),
+        TextButton(
+          onPressed: () {
+            if (index == 0) {
+              context.push('/manager/complaints');
+            }
+          },
+          child: const Text('전체보기'),
+        ),
       ],
     );
   }
