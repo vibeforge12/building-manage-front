@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:building_manage_front/modules/admin/data/datasources/staff_remote_datasource.dart';
+import 'package:building_manage_front/modules/admin/presentation/providers/admin_providers.dart';
 import 'package:building_manage_front/modules/headquarters/data/datasources/department_remote_datasource.dart';
 import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 
@@ -58,30 +58,26 @@ class _StaffEditScreenState extends ConsumerState<StaffEditScreen> {
     });
 
     try {
-      final staffDataSource = ref.read(staffRemoteDataSourceProvider);
-      final response = await staffDataSource.getStaffDetail(staffId: widget.staffId);
+      // UseCase를 통한 담당자 상세 조회 (비즈니스 로직 포함)
+      final getStaffDetailUseCase = ref.read(getStaffDetailUseCaseProvider);
+      final staff = await getStaffDetailUseCase.execute(staffId: widget.staffId);
 
-      if (response['success'] == true) {
-        final data = response['data'] as Map<String, dynamic>;
+      setState(() {
+        _nameController.text = staff.name;
+        _phoneController.text = staff.phoneNumber;
+        _imageUrl = staff.imageUrl;
+        _status = staff.status.toServerString();
+        _staffCode = staff.id; // staffCode가 id를 의미하는 것으로 추정
 
-        setState(() {
-          _nameController.text = data['name'] ?? '';
-          _phoneController.text = data['phoneNumber'] ?? '';
-          _imageUrl = data['imageUrl'];
-          _status = data['status'] ?? 'ACTIVE';
-          _staffCode = data['staffCode'];
-
-          final department = data['department'] as Map<String, dynamic>?;
-          _departmentId = department?['id'];
-          _departmentName = department?['name'] ?? '부서 없음';
-        });
-      }
+        _departmentId = staff.departmentId;
+        _departmentName = staff.departmentName;
+      });
     } catch (e) {
       setState(() {
         if (e is ApiException) {
           _errorMessage = e.userFriendlyMessage;
         } else {
-          _errorMessage = '담당자 정보를 불러오는 중 오류가 발생했습니다.';
+          _errorMessage = e.toString();
         }
       });
     } finally {
@@ -139,8 +135,9 @@ class _StaffEditScreenState extends ConsumerState<StaffEditScreen> {
     });
 
     try {
-      final staffDataSource = ref.read(staffRemoteDataSourceProvider);
-      await staffDataSource.updateStaff(
+      // UseCase를 통한 담당자 정보 수정 (비즈니스 로직 포함)
+      final updateStaffUseCase = ref.read(updateStaffUseCaseProvider);
+      await updateStaffUseCase.execute(
         staffId: widget.staffId,
         name: _nameController.text.trim(),
         phoneNumber: _phoneController.text.trim(),
@@ -163,11 +160,7 @@ class _StaffEditScreenState extends ConsumerState<StaffEditScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              e is ApiException
-                  ? e.userFriendlyMessage
-                  : '담당자 정보 수정 중 오류가 발생했습니다.',
-            ),
+            content: Text(e.toString()),
             backgroundColor: Colors.red,
           ),
         );

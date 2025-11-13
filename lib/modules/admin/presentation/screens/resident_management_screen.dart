@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:building_manage_front/modules/admin/data/datasources/resident_remote_datasource.dart';
+import 'package:building_manage_front/modules/admin/presentation/providers/admin_providers.dart';
 import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
 
@@ -46,24 +46,22 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
     });
 
     try {
-      final residentDataSource = ref.read(residentRemoteDataSourceProvider);
-      final response = await residentDataSource.getResidents(
+      // UseCase를 통한 입주민 목록 조회 (비즈니스 로직 포함)
+      final getResidentsUseCase = ref.read(getResidentsUseCaseProvider);
+      final residents = await getResidentsUseCase.execute(
         isVerified: true,
-        status: 'ACTIVE', // ACTIVE 상태인 입주민만 조회
+        status: 'ACTIVE',
       );
 
-      if (response['success'] == true) {
-        final data = response['data'] as Map<String, dynamic>;
-        setState(() {
-          _verifiedResidents = List<Map<String, dynamic>>.from(data['items'] ?? []);
-        });
-      }
+      setState(() {
+        _verifiedResidents = residents.map((resident) => resident.toJson()).toList();
+      });
     } catch (e) {
       setState(() {
         if (e is ApiException) {
           _errorMessageVerified = e.userFriendlyMessage;
         } else {
-          _errorMessageVerified = '입주민 목록을 불러오는 중 오류가 발생했습니다.';
+          _errorMessageVerified = e.toString();
         }
       });
     } finally {
@@ -80,21 +78,19 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
     });
 
     try {
-      final residentDataSource = ref.read(residentRemoteDataSourceProvider);
-      final response = await residentDataSource.getResidents(isVerified: false);
+      // UseCase를 통한 입주민 목록 조회 (비즈니스 로직 포함)
+      final getResidentsUseCase = ref.read(getResidentsUseCaseProvider);
+      final residents = await getResidentsUseCase.execute(isVerified: false);
 
-      if (response['success'] == true) {
-        final data = response['data'] as Map<String, dynamic>;
-        setState(() {
-          _pendingResidents = List<Map<String, dynamic>>.from(data['items'] ?? []);
-        });
-      }
+      setState(() {
+        _pendingResidents = residents.map((resident) => resident.toJson()).toList();
+      });
     } catch (e) {
       setState(() {
         if (e is ApiException) {
           _errorMessagePending = e.userFriendlyMessage;
         } else {
-          _errorMessagePending = '입주민 목록을 불러오는 중 오류가 발생했습니다.';
+          _errorMessagePending = e.toString();
         }
       });
     } finally {
@@ -133,11 +129,12 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
     print('🔄 승인 진행 시작...');
 
     try {
-      final residentDataSource = ref.read(residentRemoteDataSourceProvider);
-      print('📤 verifyResident API 호출 중...');
-      await residentDataSource.verifyResident(residentId: residentId);
+      // UseCase를 통한 입주민 승인 (비즈니스 로직 포함)
+      final verifyResidentUseCase = ref.read(verifyResidentUseCaseProvider);
+      print('📤 verifyResidentUseCase 호출 중...');
+      await verifyResidentUseCase.execute(residentId: residentId);
 
-      print('✅ 승인 API 성공!');
+      print('✅ 승인 성공!');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -195,11 +192,12 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
     print('🔄 거절 진행 시작...');
 
     try {
-      final residentDataSource = ref.read(residentRemoteDataSourceProvider);
-      print('📤 rejectResident API 호출 중...');
-      await residentDataSource.rejectResident(residentId: residentId);
+      // UseCase를 통한 입주민 거절 (비즈니스 로직 포함)
+      final rejectResidentUseCase = ref.read(rejectResidentUseCaseProvider);
+      print('📤 rejectResidentUseCase 호출 중...');
+      await rejectResidentUseCase.execute(residentId: residentId);
 
-      print('✅ 거절 API 성공!');
+      print('✅ 거절 성공!');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -257,11 +255,12 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
     print('🔄 삭제 진행 시작...');
 
     try {
-      final residentDataSource = ref.read(residentRemoteDataSourceProvider);
-      print('📤 deleteResident API 호출 중...');
-      await residentDataSource.rejectResident(residentId: residentId);
+      // UseCase를 통한 입주민 삭제 (비즈니스 로직 포함)
+      final rejectResidentUseCase = ref.read(rejectResidentUseCaseProvider);
+      print('📤 rejectResidentUseCase 호출 중...');
+      await rejectResidentUseCase.execute(residentId: residentId);
 
-      print('✅ 삭제 API 성공!');
+      print('✅ 삭제 성공!');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
