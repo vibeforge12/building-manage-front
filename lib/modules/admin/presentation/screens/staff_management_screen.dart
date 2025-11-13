@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:building_manage_front/modules/admin/data/datasources/staff_remote_datasource.dart';
+import 'package:building_manage_front/modules/admin/presentation/providers/admin_providers.dart';
 import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
@@ -43,20 +43,19 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
     });
 
     try {
-      final staffDataSource = ref.read(staffRemoteDataSourceProvider);
-      final response = await staffDataSource.getStaffs();
+      // UseCase를 통한 담당자 목록 조회 (비즈니스 로직 포함)
+      final getStaffsUseCase = ref.read(getStaffsUseCaseProvider);
+      final staffs = await getStaffsUseCase.execute();
 
-      if (response['success'] == true) {
-        setState(() {
-          _staffs = List<Map<String, dynamic>>.from(response['data'] ?? []);
-        });
-      }
+      setState(() {
+        _staffs = staffs.map((staff) => staff.toJson()).toList();
+      });
     } catch (e) {
       setState(() {
         if (e is ApiException) {
           _errorMessage = e.userFriendlyMessage;
         } else {
-          _errorMessage = '담당자 목록을 불러오는 중 오류가 발생했습니다.';
+          _errorMessage = e.toString();
         }
       });
     } finally {
@@ -94,11 +93,12 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
     print('🔄 삭제 진행 시작...');
 
     try {
-      final staffDataSource = ref.read(staffRemoteDataSourceProvider);
-      print('📤 deleteStaff API 호출 중...');
-      await staffDataSource.deleteStaff(staffId: staffId);
+      // UseCase를 통한 담당자 삭제 (비즈니스 로직 포함)
+      final deleteStaffUseCase = ref.read(deleteStaffUseCaseProvider);
+      print('📤 deleteStaffUseCase 호출 중...');
+      await deleteStaffUseCase.execute(staffId: staffId);
 
-      print('✅ 삭제 API 성공!');
+      print('✅ 삭제 성공!');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
