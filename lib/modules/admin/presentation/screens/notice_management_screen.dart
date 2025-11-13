@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 import 'package:building_manage_front/modules/admin/data/datasources/notice_remote_datasource.dart';
-import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
+import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart'; // 삭제 확인 다이얼로그용
 
 class NoticeManagementScreen extends ConsumerStatefulWidget {
   const NoticeManagementScreen({super.key});
@@ -76,17 +76,17 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
   Future<void> _loadEvents() async {
     setState(() => _isLoading = true);
     try {
-      // TODO: 서버에서 이벤트 조회 API 완성되면 아래 주석 해제 후 더미 데이터 제거
-      // final noticeDataSource = ref.read(noticeRemoteDataSourceProvider);
-      // final response = await noticeDataSource.getEvents(
-      //   sortOrder: _selectedFilter == '오래된순' ? 'ASC' : 'DESC',
-      // );
-      // final eventList = List<Map<String, dynamic>>.from(response['data']['data'] ?? []);
+      final noticeDataSource = ref.read(noticeRemoteDataSourceProvider);
+      final response = await noticeDataSource.getEvents(
+        sortOrder: _selectedFilter == '오래된순' ? 'ASC' : 'DESC',
+      );
 
-      // 임시 더미 데이터 (서버 API 준비 중)
-      final eventList = <Map<String, dynamic>>[];
+      print('📌 이벤트 API 응답: $response');
+      print('📌 이벤트 response["data"]["items"]: ${response["data"]["items"]}');
 
       if (mounted) {
+        // 이벤트 API 응답 구조: response["data"]["items"]
+        final eventList = List<Map<String, dynamic>>.from(response['data']['items'] ?? []);
         print('📌 파싱된 이벤트 개수: ${eventList.length}');
         setState(() {
           _events = eventList;
@@ -190,9 +190,19 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
                     ),
                     // 등록 버튼 (우측)
                     TextButton.icon(
-                      onPressed: () {
+                      onPressed: () async {
                         final isEvent = _tabController.index == 1;
-                        context.push('/admin/notice-create?isEvent=$isEvent');
+                        final result = await context.push<bool>(
+                          '/admin/notice-create?isEvent=$isEvent',
+                        );
+                        // 등록 성공 시 목록 새로고침
+                        if (result == true) {
+                          if (isEvent) {
+                            _loadEvents();
+                          } else {
+                            _loadNotices();
+                          }
+                        }
                       },
                       icon: const Icon(
                         Icons.add,
@@ -241,27 +251,25 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
                 Expanded(
                   child: GestureDetector(
                     onTap: () {
-                      _showSortDialog(context);
+                      // 최신순 <-> 오래된순 토글
+                      setState(() {
+                        _selectedFilter = _selectedFilter == '최신순' ? '오래된순' : '최신순';
+                      });
+                      // 정렬 변경 시 데이터 새로고침
+                      if (_tabController.index == 0) {
+                        _loadNotices();
+                      } else {
+                        _loadEvents();
+                      }
                     },
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          _selectedFilter,
-                          style: const TextStyle(
-                            fontFamily: 'Pretendard',
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
-                            color: Color(0xFF757B80),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        const Icon(
-                          Icons.keyboard_arrow_down,
-                          size: 16,
-                          color: Color(0xFF757B80),
-                        ),
-                      ],
+                    child: Text(
+                      _selectedFilter,
+                      style: const TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        color: Color(0xFF757B80),
+                      ),
                     ),
                   ),
                 ),
@@ -269,27 +277,28 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
             ),
           ),
 
-          // 칩스 필터
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: Color(0xFFE8EEF2),
-                  width: 1,
+          // 칩스 필터 (공지사항 탭에서만 표시)
+          if (_tabController.index == 0)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: Color(0xFFE8EEF2),
+                    width: 1,
+                  ),
                 ),
               ),
+              child: Row(
+                children: [
+                  _buildChip('전체', isActive: _selectedChip == '전체'),
+                  const SizedBox(width: 8),
+                  _buildChip('유저', isActive: _selectedChip == '유저'),
+                  const SizedBox(width: 8),
+                  _buildChip('담당자', isActive: _selectedChip == '담당자'),
+                ],
+              ),
             ),
-            child: Row(
-              children: [
-                _buildChip('전체', isActive: _selectedChip == '전체'),
-                const SizedBox(width: 8),
-                _buildChip('유저', isActive: _selectedChip == '유저'),
-                const SizedBox(width: 8),
-                _buildChip('담당자', isActive: _selectedChip == '담당자'),
-              ],
-            ),
-          ),
 
           // 공지사항/이벤트 리스트
           Expanded(
@@ -353,11 +362,23 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
     }
 
     // 칩 필터 적용
+    // target 값에 따른 필터링:
+    // - BOTH: 전체, 유저, 담당자 모두에서 보임
+    // - RESIDENT: 유저와 전체 섹션에서만 보임
+    // - STAFF: 담당자와 전체 섹션에서만 보임
     final filteredNotices = _notices.where((notice) {
-      if (_selectedChip == '전체') return true;
       final target = notice['target'] as String?;
-      if (_selectedChip == '유저') return target == 'RESIDENT';
-      if (_selectedChip == '담당자') return target == 'STAFF';
+
+      if (_selectedChip == '전체') {
+        // 전체 칩: BOTH, RESIDENT, STAFF 모두 표시
+        return true;
+      } else if (_selectedChip == '유저') {
+        // 유저 칩: BOTH(전체)와 RESIDENT만 표시
+        return target == 'RESIDENT' || target == 'BOTH';
+      } else if (_selectedChip == '담당자') {
+        // 담당자 칩: BOTH(전체)와 STAFF만 표시
+        return target == 'STAFF' || target == 'BOTH';
+      }
       return true;
     }).toList();
 
@@ -398,11 +419,23 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
     }
 
     // 칩 필터 적용
+    // target 값에 따른 필터링:
+    // - BOTH: 전체, 유저, 담당자 모두에서 보임
+    // - RESIDENT: 유저와 전체 섹션에서만 보임
+    // - STAFF: 담당자와 전체 섹션에서만 보임
     final filteredEvents = _events.where((event) {
-      if (_selectedChip == '전체') return true;
       final target = event['target'] as String?;
-      if (_selectedChip == '유저') return target == 'RESIDENT';
-      if (_selectedChip == '담당자') return target == 'STAFF';
+
+      if (_selectedChip == '전체') {
+        // 전체 칩: BOTH, RESIDENT, STAFF 모두 표시
+        return true;
+      } else if (_selectedChip == '유저') {
+        // 유저 칩: BOTH(전체)와 RESIDENT만 표시
+        return target == 'RESIDENT' || target == 'BOTH';
+      } else if (_selectedChip == '담당자') {
+        // 담당자 칩: BOTH(전체)와 STAFF만 표시
+        return target == 'STAFF' || target == 'BOTH';
+      }
       return true;
     }).toList();
 
@@ -434,7 +467,7 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
       confirmText: '예',
       cancelText: '아니요',
       isDestructive: true,
-      confirmOnLeft: true,
+      confirmOnLeft: false,
     );
 
     if (result == true) {
@@ -636,39 +669,4 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
     );
   }
 
-  void _showSortDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('정렬'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildSortOption('최신순'),
-              _buildSortOption('오래된순'),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildSortOption(String option) {
-    return ListTile(
-      title: Text(option),
-      onTap: () {
-        setState(() {
-          _selectedFilter = option;
-        });
-        // 정렬 변경 시 데이터 새로고침
-        if (_tabController.index == 0) {
-          _loadNotices();
-        } else {
-          _loadEvents();
-        }
-        Navigator.pop(context);
-      },
-    );
-  }
 }
