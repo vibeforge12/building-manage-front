@@ -764,10 +764,9 @@ class _NoticeTile extends StatelessWidget {
         subtitle: Text(subtitle, style: theme.textTheme.bodySmall?.copyWith(color: Colors.black54)),
         trailing: const Icon(Icons.chevron_right),
         onTap: () {
-          // TODO: Navigate to notice detail screen when available
-          // if (noticeId != null) {
-          //   context.push('/manager/notice-detail/$noticeId');
-          // }
+          if (noticeId != null) {
+            context.push('/manager/notice-detail/$noticeId');
+          }
         },
       ),
     );

@@ -62,4 +62,5 @@ class ApiEndpoints {
 
   // Staff Notices - 담당자 공지사항
   static const String staffNotices = '/staffs/notices';
+  static const String staffNoticeDetail = '$staffNotices/{noticeId}';
 }
