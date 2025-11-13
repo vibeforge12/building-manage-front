@@ -12,234 +12,164 @@ class ResidentApprovalRejectedScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
-            // Header
+            // Status Bar 영역 (높이 48)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    '회원가입',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF464A4D),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => context.pop(),
-                  ),
-                ],
-              ),
+              height: 48,
+              color: Colors.white,
             ),
-            Divider(
-              height: 1,
-              color: const Color(0xFFE8EEF2),
-            ),
+
             // Content
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // 거부 아이콘
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF5F5),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.cancel_outlined,
-                        size: 40,
-                        color: Colors.red,
-                      ),
+                    const SizedBox(height: 40),
+
+                    // 빨간색 체크마크 아이콘 (Figma: circle-check-filled)
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // 외부 빨간 원
+                        Container(
+                          width: 96,
+                          height: 96,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: const Color(0xFFFF1E00).withValues(alpha: 0.1),
+                          ),
+                        ),
+                        // 내부 파란 원
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Color(0xFFFF1E00),
+                          ),
+                          child: const Icon(
+                            Icons.check,
+                            size: 40,
+                            color: Colors.white,
+                            weight: 700,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 24),
 
                     // 제목
-                    Text(
-                      '승인이 보류되었습니다',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF464A4D),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        '관리자\n승인 보류',
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w700,
+                          height: 1.25,
+                          color: Color(0xFF17191A),
+                          fontFamily: 'Pretendard',
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-
-                    // 설명 텍스트
-                    Text(
-                      '건물 관리자가 가입을 보류했습니다.\n\n아래 사항을 확인하신 후\n다시 신청해주시기 바랍니다.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF808080),
-                        height: 1.6,
-                      ),
-                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 32),
 
-                    // 거부 사유 카드
+                    // 보류 안내
                     if (reason != null && reason!.isNotEmpty)
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF5F5),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: const Color(0xFFFFD5D5),
-                            width: 1,
-                          ),
-                        ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '보류 사유',
-                              style: theme.textTheme.titleMedium?.copyWith(
+                              '승인 보류나셨나요?',
+                              style: const TextStyle(
+                                fontSize: 14,
                                 fontWeight: FontWeight.w700,
-                                color: Colors.red,
+                                color: Color(0xFF17191A),
+                                fontFamily: 'Pretendard',
                               ),
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 8),
                             Text(
                               reason!,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: const Color(0xFF464A4D),
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
                                 height: 1.6,
+                                color: Color(0xFF17191A),
+                                fontFamily: 'Pretendard',
                               ),
+                              textAlign: TextAlign.center,
                             ),
                           ],
                         ),
                       )
                     else
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF2F8FC),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: const Color(0xFFE8EEF2),
-                            width: 1,
-                          ),
-                        ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '확인 사항',
-                              style: theme.textTheme.titleMedium?.copyWith(
+                              '승인 보류나셨나요?',
+                              style: const TextStyle(
+                                fontSize: 14,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFF464A4D),
+                                color: Color(0xFF17191A),
+                                fontFamily: 'Pretendard',
                               ),
                             ),
-                            const SizedBox(height: 12),
-                            _buildCheckItem('동/호수 정보 확인'),
                             const SizedBox(height: 8),
-                            _buildCheckItem('개인 정보 정확성 확인'),
-                            const SizedBox(height: 8),
-                            _buildCheckItem('건물 관리자에게 문의'),
+                            Text(
+                              '관리자 전화번호(010-1234-5678)로 전화해보세요',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                height: 1.4,
+                                color: Color(0xFF17191A),
+                                fontFamily: 'Pretendard',
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
                           ],
                         ),
                       ),
-                    const SizedBox(height: 32),
-
-                    // 안내 텍스트
-                    Text(
-                      '문제가 계속되는 경우 고객센터에 문의해주세요.',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF999999),
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
                   ],
                 ),
               ),
             ),
 
-            // Footer Buttons
+            // Footer Button
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Column(
-                children: [
-                  FilledButton(
-                    onPressed: () {
-                      context.goNamed('residentSignup');
-                    },
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(56),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      backgroundColor: const Color(0xFF006FFF),
-                    ),
-                    child: const Text('다시 신청하기'),
+              child: FilledButton(
+                onPressed: () {
+                  context.go('/');
+                },
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(56),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  const SizedBox(height: 8),
-                  OutlinedButton(
-                    onPressed: () {
-                      context.go('/');
-                    },
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(56),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      side: const BorderSide(
-                        color: Color(0xFFE8EEF2),
-                        width: 1,
-                      ),
-                    ),
-                    child: const Text(
-                      '뒤로 가기',
-                      style: TextStyle(
-                        color: Color(0xFF464A4D),
-                      ),
-                    ),
+                  backgroundColor: const Color(0xFF006FFF),
+                ),
+                child: const Text(
+                  '돌아가기',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Pretendard',
                   ),
-                ],
+                ),
               ),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildCheckItem(String text) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          '✓',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF006FFF),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF464A4D),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
