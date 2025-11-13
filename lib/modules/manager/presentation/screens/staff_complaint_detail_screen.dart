@@ -172,31 +172,41 @@ class _StaffComplaintDetailScreenState extends State<StaffComplaintDetailScreen>
                         // 이미지
                         if (_complaintData?['imageUrl'] != null &&
                             (_complaintData?['imageUrl'] as String?)?.isNotEmpty == true)
-                          CachedNetworkImage(
-                            imageUrl: _complaintData!['imageUrl'] as String,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            height: 240,
-                            placeholder: (context, url) => Container(
-                              color: const Color(0xFFF2F8FC),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(0),
+                            child: CachedNetworkImage(
+                              imageUrl: _complaintData!['imageUrl'] as String,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
                               height: 240,
-                              child: const Center(
-                                child: CircularProgressIndicator(),
-                              ),
-                            ),
-                            errorWidget: (context, url, error) => Container(
-                              color: const Color(0xFFF2F8FC),
-                              height: 240,
-                              child: const Icon(
-                                Icons.error,
-                                color: Color(0xFFA4ADB2),
+                              progressIndicatorBuilder: (context, url, downloadProgress) {
+                                return Container(
+                                  color: const Color(0xFFF2F8FC),
+                                  height: 240,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      value: downloadProgress.progress,
+                                      color: const Color(0xFF006FFF),
+                                    ),
+                                  ),
+                                );
+                              },
+                              errorWidget: (context, url, error) => Container(
+                                color: const Color(0xFFF2F8FC),
+                                height: 240,
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.error,
+                                    color: Color(0xFFA4ADB2),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
                         Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
-                            vertical: 24,
+                            vertical: 12,
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -251,13 +261,13 @@ class _StaffComplaintDetailScreenState extends State<StaffComplaintDetailScreen>
                           height: 1,
                           color: const Color(0xFFE8EEF2),
                         ),
-                        // 제목 (수직 중앙정렬)
+                        // 제목 (수직 중앙정)
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
                           ),
                           height: 56,
-                          alignment: Alignment.center,
+                          alignment: Alignment.centerLeft,
                           child: Text(
                             _complaintData?['title'] ?? '제목없음',
                             style: const TextStyle(
