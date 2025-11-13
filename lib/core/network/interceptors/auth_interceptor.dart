@@ -1,9 +1,16 @@
 import 'package:dio/dio.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthInterceptor extends Interceptor {
   static const String _tokenKey = 'access_token';
   static const String _refreshTokenKey = 'refresh_token';
+
+  // Secure Storage 인스턴스 (싱글톤 패턴)
+  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage(
+    aOptions: AndroidOptions(
+      encryptedSharedPreferences: true,
+    ),
+  );
 
   @override
   Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
@@ -23,15 +30,14 @@ class AuthInterceptor extends Interceptor {
         options.path.contains(endpoint));
 
     if (!isPublicEndpoint) {
-      // 저장된 토큰 가져오기
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString(_tokenKey);
+      // 저장된 토큰 가져오기 (Secure Storage)
+      final token = await _secureStorage.read(key: _tokenKey);
 
       if (token != null && token.isNotEmpty) {
         options.headers['Authorization'] = 'Bearer $token';
         print('🔐 AuthInterceptor: Token attached to request');
       } else {
-        print('⚠️ AuthInterceptor: No token found in SharedPreferences');
+        print('⚠️ AuthInterceptor: No token found in SecureStorage');
       }
     }
 
@@ -56,7 +62,7 @@ class AuthInterceptor extends Interceptor {
       await _clearToken();
       // NOTE:
       // 여기서는 네트워크 레이어라 라우터/Provider에 직접 접근하지 않습니다.
-      // 앱 레벨에서는 다음 앱 진입 시(스플래시 이후) 기본 홈('/')로 이동하게 됩니다.
+      // 앱 레벨에서는 다음 앱 진입 시(스플래시 이후) 기본 홈('/')으로 이동하게 됩니다.
       // 만약 즉시 리디렉트가 필요하다면, 상위 레이어에서 이 에러를 감지하여
       // 라우터(go('/')) 호출을 수행하도록 핸들링하세요.
     }
@@ -64,7 +70,7 @@ class AuthInterceptor extends Interceptor {
     super.onError(err, handler);
   }
 
-  // 응답에서 토큰 추출 및 저장
+  // 응답에서 토큰 추출 및 저장 (Secure Storage 사용)
   Future<void> _saveTokenFromResponse(Response response) async {
     try {
       final data = response.data;
@@ -76,14 +82,12 @@ class AuthInterceptor extends Interceptor {
         final refreshToken = data['data']?['refreshToken'] ??
                             data['refreshToken'];
 
-        final prefs = await SharedPreferences.getInstance();
-
         if (accessToken != null) {
-          await prefs.setString(_tokenKey, accessToken);
+          await _secureStorage.write(key: _tokenKey, value: accessToken);
         }
 
         if (refreshToken != null) {
-          await prefs.setString(_refreshTokenKey, refreshToken);
+          await _secureStorage.write(key: _refreshTokenKey, value: refreshToken);
         }
       }
     } catch (e) {
@@ -92,12 +96,11 @@ class AuthInterceptor extends Interceptor {
     }
   }
 
-  // 토큰 제거
+  // 토큰 제거 (Secure Storage)
   Future<void> _clearToken() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_tokenKey);
-      await prefs.remove(_refreshTokenKey);
+      await _secureStorage.delete(key: _tokenKey);
+      await _secureStorage.delete(key: _refreshTokenKey);
     } catch (e) {
       print('Failed to clear tokens: $e');
     }
@@ -106,8 +109,7 @@ class AuthInterceptor extends Interceptor {
   // 현재 토큰 가져오기 (외부에서 사용 가능)
   static Future<String?> getCurrentToken() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_tokenKey);
+      return await _secureStorage.read(key: _tokenKey);
     } catch (e) {
       print('Failed to get current token: $e');
       return null;
@@ -117,8 +119,7 @@ class AuthInterceptor extends Interceptor {
   // 토큰 수동 저장 (외부에서 사용 가능)
   static Future<void> saveToken(String token) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_tokenKey, token);
+      await _secureStorage.write(key: _tokenKey, value: token);
     } catch (e) {
       print('Failed to save token manually: $e');
     }
@@ -127,8 +128,7 @@ class AuthInterceptor extends Interceptor {
   // 현재 refresh token 가져오기 (외부에서 사용 가능)
   static Future<String?> getCurrentRefreshToken() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_refreshTokenKey);
+      return await _secureStorage.read(key: _refreshTokenKey);
     } catch (e) {
       print('Failed to get current refresh token: $e');
       return null;
@@ -138,9 +138,8 @@ class AuthInterceptor extends Interceptor {
   // 토큰 수동 제거 (외부에서 사용 가능)
   static Future<void> clearToken() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_tokenKey);
-      await prefs.remove(_refreshTokenKey);
+      await _secureStorage.delete(key: _tokenKey);
+      await _secureStorage.delete(key: _refreshTokenKey);
     } catch (e) {
       print('Failed to clear tokens manually: $e');
     }
