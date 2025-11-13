@@ -59,4 +59,7 @@ class ApiEndpoints {
   static const String staffComplaints = '/staffs/complaints';
   static const String staffComplaintsPendingHighlight = '$staffComplaints/pending/highlight';
   static const String staffComplaintDetail = '$staffComplaints/{complaintId}';
+
+  // Staff Notices - 담당자 공지사항
+  static const String staffNotices = '/staffs/notices';
 }

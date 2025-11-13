@@ -19,11 +19,15 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
   bool _isLoadingComplaints = false;
   List<Map<String, dynamic>> _pendingComplaints = [];
   String? _complaintsError;
+  bool _isLoadingNotices = false;
+  List<Map<String, dynamic>> _notices = [];
+  String? _noticesError;
 
   @override
   void initState() {
     super.initState();
     _loadPendingComplaints();
+    _loadNotices();
   }
 
   Future<void> _loadPendingComplaints() async {
@@ -52,6 +56,38 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
       setState(() {
         _complaintsError = '민원 로드 중 오류가 발생했습니다.';
         _isLoadingComplaints = false;
+      });
+    }
+  }
+
+  Future<void> _loadNotices() async {
+    setState(() {
+      _isLoadingNotices = true;
+      _noticesError = null;
+    });
+
+    try {
+      final dataSource = ref.read(staffComplaintsRemoteDataSourceProvider);
+      final response = await dataSource.getStaffNotices(limit: 3);
+
+      if (response['success'] == true && response['data'] != null) {
+        final data = response['data'] as Map<String, dynamic>;
+        final items = data['items'] as List<dynamic>?;
+        setState(() {
+          _notices = items?.map((item) => item as Map<String, dynamic>).toList() ?? [];
+          _isLoadingNotices = false;
+        });
+      } else {
+        setState(() {
+          _noticesError = '공지사항을 불러올 수 없습니다.';
+          _isLoadingNotices = false;
+        });
+      }
+    } catch (e) {
+      print('❌ 공지사항 조회 실패: $e');
+      setState(() {
+        _noticesError = '공지사항 로드 중 오류가 발생했습니다.';
+        _isLoadingNotices = false;
       });
     }
   }
@@ -222,8 +258,66 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
                       );
                     }),
                 ] else ...[
-                  _NoticeTile(title: '정기 소독 안내', subtitle: '10/30(수) 오후 2시 진행 예정'),
-                  _NoticeTile(title: '승강기 점검', subtitle: '11/02(토) 09:00~11:00 예정'),
+                  if (_isLoadingNotices)
+                    const Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child: Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                  else if (_noticesError != null)
+                    Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Center(
+                        child: Text(
+                          _noticesError!,
+                          style: const TextStyle(
+                            fontFamily: 'Pretendard',
+                            fontWeight: FontWeight.w400,
+                            fontSize: 14,
+                            color: Color(0xFF757B80),
+                          ),
+                        ),
+                      ),
+                    )
+                  else if (_notices.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child: Center(
+                        child: Text(
+                          '공지사항이 없습니다.',
+                          style: TextStyle(
+                            fontFamily: 'Pretendard',
+                            fontWeight: FontWeight.w400,
+                            fontSize: 14,
+                            color: Color(0xFF757B80),
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    ..._notices.map((notice) {
+                      final noticeId = notice['id'] as String?;
+                      final title = notice['title'] as String? ?? '제목없음';
+                      final createdAt = notice['createdAt'] as String?;
+
+                      // Format date: extract just the date part from ISO string
+                      String formattedDate = '';
+                      if (createdAt != null) {
+                        try {
+                          final dateTime = DateTime.parse(createdAt);
+                          formattedDate = '${dateTime.year.toString().padLeft(4, '0')}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}';
+                        } catch (e) {
+                          formattedDate = '';
+                        }
+                      }
+
+                      return _NoticeTile(
+                        noticeId: noticeId,
+                        title: title,
+                        subtitle: formattedDate,
+                      );
+                    }),
                 ],
               ],
             ),
@@ -647,9 +741,14 @@ class _ComplaintTile extends StatelessWidget {
 }
 
 class _NoticeTile extends StatelessWidget {
+  final String? noticeId;
   final String title;
   final String subtitle;
-  const _NoticeTile({required this.title, required this.subtitle});
+  const _NoticeTile({
+    this.noticeId,
+    required this.title,
+    required this.subtitle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -664,7 +763,12 @@ class _NoticeTile extends StatelessWidget {
         title: Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
         subtitle: Text(subtitle, style: theme.textTheme.bodySmall?.copyWith(color: Colors.black54)),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () {},
+        onTap: () {
+          // TODO: Navigate to notice detail screen when available
+          // if (noticeId != null) {
+          //   context.push('/manager/notice-detail/$noticeId');
+          // }
+        },
       ),
     );
   }
