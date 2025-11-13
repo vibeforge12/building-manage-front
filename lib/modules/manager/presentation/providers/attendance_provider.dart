@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:building_manage_front/modules/manager/data/datasources/attendance_remote_datasource.dart';
+import 'package:building_manage_front/modules/manager/domain/usecases/check_in_usecase.dart';
+import 'package:building_manage_front/modules/manager/domain/usecases/check_out_usecase.dart';
 import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
+import 'package:building_manage_front/modules/manager/presentation/providers/manager_providers.dart';
 
 /// 출근/퇴근 상태
 enum AttendanceStatus {
@@ -46,9 +48,13 @@ class AttendanceState {
 
 /// 출근 상태 관리 Notifier
 class AttendanceNotifier extends StateNotifier<AttendanceState> {
-  final AttendanceRemoteDataSource _dataSource;
+  final CheckInUseCase _checkInUseCase;
+  final CheckOutUseCase _checkOutUseCase;
 
-  AttendanceNotifier(this._dataSource) : super(AttendanceState());
+  AttendanceNotifier(
+    this._checkInUseCase,
+    this._checkOutUseCase,
+  ) : super(AttendanceState());
 
   /// 출근 처리
   Future<bool> checkIn() async {
@@ -72,7 +78,7 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
     try {
       print('🏢 출근 처리 시작 (Provider)');
 
-      final response = await _dataSource.checkIn();
+      final response = await _checkInUseCase.execute();
 
       print('✅ 출근 처리 성공 (Provider)');
 
@@ -137,7 +143,7 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
     try {
       print('🏃 퇴근 처리 시작 (Provider)');
 
-      final response = await _dataSource.checkOut();
+      final response = await _checkOutUseCase.execute();
 
       print('✅ 퇴근 처리 성공 (Provider)');
 
@@ -178,6 +184,7 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
 /// 출근 상태 Provider
 final attendanceProvider =
     StateNotifierProvider<AttendanceNotifier, AttendanceState>((ref) {
-  final dataSource = ref.watch(attendanceRemoteDataSourceProvider);
-  return AttendanceNotifier(dataSource);
+  final checkInUseCase = ref.watch(checkInUseCaseProvider);
+  final checkOutUseCase = ref.watch(checkOutUseCaseProvider);
+  return AttendanceNotifier(checkInUseCase, checkOutUseCase);
 });

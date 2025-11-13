@@ -2,14 +2,22 @@
   "permissions": {
     "allow": [
       "Bash(claude mcp add:*)",
-      "Bash(claude mcp:*)"
+      "Bash(claude mcp:*)",
+      "mcp__Framelink_Figma_MCP__get_figma_data",
+      "Bash(flutter run)",
+      "Bash(tree:*)",
+      "Bash(mkdir:*)",
+      "Bash(flutter analyze:*)",
+      "Bash(flutter build:*)",
+      "Bash(flutter run:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "shared-server"
   ],
-  "outputStyle": "Learning",
-  "enableAllProjectMcpServers": true
+  "outputStyle": "Learning"
 }

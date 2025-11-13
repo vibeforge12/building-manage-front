@@ -59,6 +59,26 @@ class DepartmentRemoteDataSource {
     }
   }
 
+  /// 부서 상세 조회
+  /// GET /api/v1/common/departments/:id
+  Future<Map<String, dynamic>> getDepartmentById(String id) async {
+    try {
+      final response = await _apiClient.get(
+        '${ApiEndpoints.departments}/$id',
+      );
+
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      if (e is ApiException) {
+        rethrow;
+      }
+      throw ApiException(
+        message: '부서 정보를 불러오는 중 오류가 발생했습니다.',
+        errorCode: 'DEPARTMENT_FETCH_FAILED',
+      );
+    }
+  }
+
   /// 부서 생성
   /// POST /api/v1/common/departments
   Future<Map<String, dynamic>> createDepartment({

@@ -354,11 +354,16 @@ lib/
 - **flutter_svg** ^2.0.16 - SVG 렌더링
 - **cached_network_image** ^3.4.1 - 네트워크 이미지 캐싱
 - **image_picker** ^1.0.7 - 이미지 선택
+- **table_calendar** ^3.1.2 - 캘린더 UI (출퇴근 기록 조회 등)
 
 ### 환경 설정 및 유틸리티
 - **flutter_dotenv** ^5.1.0 - 환경 변수 관리
 - **json_annotation** ^4.9.0 - JSON 직렬화 어노테이션
 - **firebase_core** ^4.2.0 - Firebase 초기화
+- **intl** - 날짜/시간 포맷팅 (flutter_localizations SDK 포함)
+
+### 보안
+- **flutter_secure_storage** ^9.2.2 - 민감한 데이터 암호화 저장
 
 ### 개발 의존성 (dev_dependencies)
 - **flutter_test** - Flutter 테스트 프레임워크
@@ -482,6 +487,50 @@ API_DEBUG=true  # true이면 LoggingInterceptor 활성화
 - 본사에서 건물별 관리자 계정을 발급하는 화면
 - **API**: `ApiEndpoints.adminRegister` (POST)
 
+### 담당자 출퇴근 관리 (Manager Module)
+- **출퇴근 기록** (`AttendanceHistoryScreen`):
+  - table_calendar 위젯으로 월별 출퇴근 기록 표시
+  - 일별 출근/퇴근 시간 확인
+  - **API**: `ApiEndpoints.attendanceHistory` (GET)
+  - **데이터소스**: `AttendanceRemoteDataSource`
+- **출퇴근 체크** (`ManagerDashboardScreen`):
+  - 출근/퇴근 버튼으로 실시간 기록
+  - **API**: `ApiEndpoints.checkIn`, `ApiEndpoints.checkOut` (POST)
+
+### 입주민 기능 (Resident Module)
+- **공지사항 조회**:
+  - 건물별 공지사항 목록 및 상세 조회
+  - **API**: `ApiEndpoints.notices` (GET)
+  - **데이터소스**: `NoticeRemoteDataSource`
+- **민원 등록** (`ComplaintCreateScreen` → `ComplaintCompleteScreen`):
+  - 부서 선택, 민원 내용 작성, 이미지 첨부
+  - **API**: `ApiEndpoints.complaints` (POST)
+  - **데이터소스**: `ComplaintRemoteDataSource`, `DepartmentRemoteDataSource`
+
+### 관리자 기능 (Admin Module)
+- **담당자 관리**:
+  - 담당자 목록 조회 (`StaffManagementScreen`)
+  - 담당자 정보 수정 (`StaffEditScreen`)
+  - 담당자 계정 발급 (`StaffAccountIssuanceScreen`)
+  - **데이터소스**: `StaffRemoteDataSource`
+- **입주민 관리**:
+  - 입주민 목록 조회 및 관리 (`ResidentManagementScreen`)
+  - **데이터소스**: `ResidentRemoteDataSource`
+- **공지사항 관리**:
+  - 공지사항 작성 (`NoticeCreateScreen`)
+  - 공지사항 목록 관리 (`NoticeManagementScreen`)
+
+### 이미지 업로드 시스템
+- **ImageUploadService** (`lib/modules/common/services/image_upload_service.dart`):
+  - S3 Presigned URL 방식으로 이미지 업로드
+  - 2단계 프로세스: 1) Presigned URL 요청 → 2) S3 직접 업로드
+  - 사용 예시: 부서 로고, 프로필 사진, 민원 첨부 이미지
+- **UploadRemoteDataSource**:
+  - `getPresignedUrl()`: 업로드 URL 및 최종 파일 URL 반환
+  - `uploadToS3()`: 바이너리 데이터를 S3에 직접 업로드
+- **Provider**: `imageUploadServiceProvider`
+- **지원 포맷**: JPEG, PNG, GIF, WebP
+
 ## 코딩 규칙 및 컨벤션
 
 ### Lint 및 분석
@@ -534,6 +583,74 @@ API_DEBUG=true  # true이면 LoggingInterceptor 활성화
 - 복잡한 로직에는 설명 주석 추가
 - TODO 주석은 `// TODO:` 형식으로 작성하고 이슈 번호 첨부
 
+## 일반적인 개발 패턴
+
+### 새로운 화면 추가하기
+1. 해당 모듈의 `presentation/screens/` 폴더에 화면 파일 생성
+2. `lib/core/providers/router_provider.dart`에 라우트 추가
+3. 필요한 경우 `presentation/providers/`에 상태 관리 Provider 생성
+4. API 통신이 필요한 경우:
+   - `data/datasources/`에 RemoteDataSource 생성
+   - `lib/core/constants/api_endpoints.dart`에 엔드포인트 추가
+5. 공통 경로 보호가 필요한 경우 `RouterNotifier`에 리다이렉트 로직 추가
+
+### API 연동 패턴
+```dart
+// 1. API 엔드포인트 정의 (lib/core/constants/api_endpoints.dart)
+static const String myEndpoint = '/my/endpoint';
+
+// 2. RemoteDataSource 생성 (lib/modules/[module]/data/datasources/)
+class MyRemoteDataSource {
+  final ApiClient _apiClient;
+
+  Future<Map<String, dynamic>> fetchData() async {
+    final response = await _apiClient.get(ApiEndpoints.myEndpoint);
+    return response.data;
+  }
+}
+
+// 3. Provider 등록
+final myRemoteDataSourceProvider = Provider((ref) {
+  return MyRemoteDataSource(ref.watch(apiClientProvider));
+});
+
+// 4. 화면에서 사용 (ConsumerWidget)
+final dataSource = ref.read(myRemoteDataSourceProvider);
+final result = await dataSource.fetchData();
+```
+
+### 이미지 업로드 패턴
+```dart
+// 1. ImageUploadService 사용
+final imageUploadService = ref.read(imageUploadServiceProvider);
+
+// 2. 파일 선택 (image_picker)
+final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+final bytes = await pickedFile!.readAsBytes();
+
+// 3. S3 업로드
+final imageUrl = await imageUploadService.uploadImage(
+  fileBytes: bytes,
+  fileName: 'my-image.jpg',
+  contentType: 'image/jpeg',
+  folder: 'my-folder',
+);
+```
+
+### 날짜/시간 포맷팅 패턴
+```dart
+// intl 패키지 사용 (flutter_localizations 포함)
+import 'package:intl/intl.dart';
+
+// 날짜 포맷
+final formatter = DateFormat('yyyy-MM-dd');
+final dateString = formatter.format(DateTime.now());
+
+// 시간 포맷
+final timeFormatter = DateFormat('HH:mm');
+final timeString = timeFormatter.format(DateTime.now());
+```
+
 ## 주의 사항 및 베스트 프랙티스
 
 ### 모듈 구조
@@ -560,8 +677,11 @@ API_DEBUG=true  # true이면 LoggingInterceptor 활성화
 
 ### 인증 및 보안
 - 토큰 갱신은 `AuthInterceptor`가 자동 처리하므로 직접 구현하지 말 것
-- 민감한 정보는 SharedPreferences에 암호화하여 저장 (현재 미구현, 추후 고려)
+- **민감한 정보 저장**:
+  - 일반 설정: SharedPreferences 사용
+  - 보안 정보: flutter_secure_storage 사용 (암호화된 저장소)
 - `.env` 파일은 절대 Git에 커밋하지 말 것 (`.gitignore`에 포함됨)
+- S3 업로드 시 Presigned URL 방식 사용으로 AWS 자격증명 노출 방지
 
 ### 에러 처리
 - 모든 API 호출은 try-catch로 감싸기
@@ -578,3 +698,204 @@ API_DEBUG=true  # true이면 LoggingInterceptor 활성화
 - 이미지는 `cached_network_image` 사용
 - 불필요한 `setState()` 호출 최소화
 - 무거운 연산은 별도 Isolate에서 실행 고려
+
+## 디버깅 및 문제 해결
+
+### API 통신 디버깅
+- **LoggingInterceptor**: `.env` 파일에서 `API_DEBUG=true` 설정 시 모든 HTTP 요청/응답 로깅
+- **ApiTestWidget**: 개발 중 API 연결 테스트용 위젯 (`lib/shared/widgets/`)
+- **AuthStatusWidget**: 인증 상태 실시간 확인 위젯 (디버깅용)
+
+### 일반적인 문제 및 해결
+1. **"401 Unauthorized" 에러**:
+   - AuthInterceptor가 자동으로 토큰 갱신 시도
+   - 갱신 실패 시 로그아웃 처리됨
+   - SharedPreferences에서 토큰 확인: `access_token`, `refresh_token`
+
+2. **코드 생성 관련 에러**:
+   - `*.g.dart` 파일 충돌 시: `flutter pub run build_runner build --delete-conflicting-outputs`
+   - part/part of 구문 확인
+
+3. **환경 변수 로드 실패**:
+   - `.env` 파일이 프로젝트 루트에 있는지 확인
+   - `pubspec.yaml`의 assets에 `.env` 포함 확인
+   - `main.dart`에서 `await dotenv.load()` 호출 확인
+
+4. **라우팅 에러**:
+   - `RouterNotifier`의 리다이렉트 로직 확인
+   - `authStateProvider`와 `currentUserProvider` 상태 확인
+   - GoRouter 경로 정의가 정확한지 확인
+
+5. **이미지 업로드 실패**:
+   - Presigned URL 응답 구조 확인 (`uploadUrl`, `fileUrl` 필드)
+   - S3 CORS 설정 확인
+   - Content-Type이 올바른지 확인
+
+## Clean Architecture 적용 현황 (2025-11-13 업데이트)
+
+### 모듈별 Clean Architecture 적용 상태
+
+모든 주요 모듈에 Clean Architecture가 완전히 적용되었습니다:
+
+#### ✅ Admin 모듈 (완료)
+- **Domain Layer**: Staff, ResidentInfo 엔티티, Repository 인터페이스, UseCase 구현 완료
+- **Data Layer**: StaffRemoteDataSource, ResidentRemoteDataSource, Repository 구현 완료
+- **Presentation Layer**: UseCase를 통한 비즈니스 로직 호출
+- **주요 파일**:
+  - `lib/modules/admin/domain/entities/staff.dart` - Staff 엔티티 (staffCode 필드 포함)
+  - `lib/modules/admin/domain/usecases/get_staff_detail_usecase.dart`
+  - `lib/modules/admin/data/repositories/staff_repository_impl.dart`
+  - `lib/modules/admin/presentation/providers/admin_providers.dart`
+
+#### ✅ Resident 모듈 (완료)
+- **Domain Layer**: Complaint, Notice, Department 엔티티, Repository 인터페이스, UseCase 구현 완료
+- **Data Layer**: ResidentAuthRemoteDataSource, ComplaintRemoteDataSource 등, Repository 구현 완료
+- **Presentation Layer**: UseCase를 통한 비즈니스 로직 호출
+- **주요 파일**:
+  - `lib/modules/resident/domain/usecases/create_complaint_usecase.dart`
+  - `lib/modules/resident/data/repositories/complaint_repository_impl.dart`
+  - `lib/modules/resident/presentation/providers/resident_providers.dart`
+
+#### ✅ Manager 모듈 (2025-11-13 완료)
+- **Domain Layer**:
+  - 엔티티: `AttendanceRecord`, `MonthlyAttendanceResponse`
+  - 레포지토리: `AttendanceRepository` 인터페이스
+  - 유스케이스: `CheckInUseCase`, `CheckOutUseCase`, `GetMonthlyAttendanceUseCase`
+- **Data Layer**:
+  - 데이터소스: `AttendanceRemoteDataSource`
+  - 레포지토리 구현: `AttendanceRepositoryImpl`
+- **Presentation Layer**:
+  - Providers: `manager_providers.dart` (UseCase DI 설정)
+  - UseCase 통합: `attendance_provider.dart`, `attendance_history_provider.dart`
+- **주요 기능**: 출퇴근 관리 (체크인/체크아웃, 월별 기록 조회)
+- **주요 파일**:
+  - `lib/modules/manager/domain/repositories/attendance_repository.dart`
+  - `lib/modules/manager/domain/usecases/check_in_usecase.dart`
+  - `lib/modules/manager/data/repositories/attendance_repository_impl.dart`
+  - `lib/modules/manager/presentation/providers/manager_providers.dart`
+
+#### ✅ Headquarters 모듈 (2025-11-13 완료)
+- **Domain Layer**:
+  - 엔티티: `Building`
+  - 레포지토리: `BuildingRepository` 인터페이스
+  - 유스케이스: `CreateBuildingUseCase`, `GetBuildingsUseCase`
+- **Data Layer**:
+  - 데이터소스: `BuildingRemoteDataSource`, `DepartmentRemoteDataSource`, `AdminAccountRemoteDataSource`
+  - 레포지토리 구현: `BuildingRepositoryImpl`
+- **Presentation Layer**:
+  - Providers: `headquarters_providers.dart` (UseCase DI 설정)
+- **주요 기능**: 건물 관리, 부서 생성, 관리자 계정 발급
+- **확장 가능**: Department, AdminAccount 관련 UseCase는 동일한 패턴으로 추가 가능
+- **주요 파일**:
+  - `lib/modules/headquarters/domain/entities/building.dart`
+  - `lib/modules/headquarters/domain/repositories/building_repository.dart`
+  - `lib/modules/headquarters/domain/usecases/create_building_usecase.dart`
+  - `lib/modules/headquarters/data/repositories/building_repository_impl.dart`
+  - `lib/modules/headquarters/presentation/providers/headquarters_providers.dart`
+
+### Clean Architecture 적용 패턴
+
+#### 1. Domain Layer (비즈니스 로직 중심)
+```dart
+// 1. Entity - 핵심 비즈니스 엔티티
+class Staff extends Equatable {
+  final String id;
+  final String staffCode;
+  final String name;
+  // ...
+}
+
+// 2. Repository Interface - 추상화된 데이터 접근 계층
+abstract class StaffRepository {
+  Future<Staff> getStaffDetail({required String staffId});
+  Future<List<Staff>> getStaffs();
+  // ...
+}
+
+// 3. UseCase - 비즈니스 로직 캡슐화
+class GetStaffDetailUseCase {
+  final StaffRepository _repository;
+
+  Future<Staff> execute({required String staffId}) async {
+    if (staffId.trim().isEmpty) {
+      throw Exception('담당자 ID가 유효하지 않습니다.');
+    }
+    return await _repository.getStaffDetail(staffId: staffId);
+  }
+}
+```
+
+#### 2. Data Layer (데이터 접근)
+```dart
+// 1. RemoteDataSource - API 통신
+class StaffRemoteDataSource {
+  final ApiClient _apiClient;
+
+  Future<Map<String, dynamic>> getStaffDetail({required String staffId}) async {
+    final response = await _apiClient.get('/staffs/$staffId');
+    return response.data;
+  }
+}
+
+// 2. Repository Implementation - 인터페이스 구현
+class StaffRepositoryImpl implements StaffRepository {
+  final StaffRemoteDataSource _dataSource;
+
+  @override
+  Future<Staff> getStaffDetail({required String staffId}) async {
+    final response = await _dataSource.getStaffDetail(staffId: staffId);
+    return Staff.fromJson(response['data']);
+  }
+}
+```
+
+#### 3. Presentation Layer (UI 및 상태 관리)
+```dart
+// 1. Providers - Riverpod DI 설정
+final staffRepositoryProvider = Provider<StaffRepository>((ref) {
+  final dataSource = ref.watch(staffRemoteDataSourceProvider);
+  return StaffRepositoryImpl(dataSource);
+});
+
+final getStaffDetailUseCaseProvider = Provider<GetStaffDetailUseCase>((ref) {
+  final repository = ref.watch(staffRepositoryProvider);
+  return GetStaffDetailUseCase(repository);
+});
+
+// 2. 화면에서 UseCase 사용
+final getStaffDetailUseCase = ref.read(getStaffDetailUseCaseProvider);
+final staff = await getStaffDetailUseCase.execute(staffId: widget.staffId);
+```
+
+### 의존성 방향
+
+```
+Presentation Layer (UI, Providers)
+    ↓ (의존)
+Domain Layer (Entities, Repositories Interface, UseCases)
+    ↑ (구현)
+Data Layer (DataSources, Repositories Implementation)
+```
+
+- **Domain Layer**는 외부 의존성이 없음 (순수 비즈니스 로직)
+- **Data Layer**는 Domain의 Repository 인터페이스를 구현
+- **Presentation Layer**는 Domain의 UseCase를 사용
+
+### 새로운 기능 추가 시 권장 절차
+
+1. **Domain Layer 먼저 구축**:
+   - Entity 정의
+   - Repository Interface 정의
+   - UseCase 작성 (비즈니스 로직 포함)
+
+2. **Data Layer 구현**:
+   - RemoteDataSource 작성 (API 호출)
+   - Repository Implementation 작성
+
+3. **Presentation Layer 연동**:
+   - Provider 설정 (DI)
+   - 화면에서 UseCase 호출
+
+4. **테스트**:
+   - UseCase 단위 테스트
+   - Repository Mock을 사용한 테스트

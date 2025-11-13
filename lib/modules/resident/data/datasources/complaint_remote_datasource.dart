@@ -30,4 +30,16 @@ class ComplaintRemoteDataSource {
     );
     return response.data;
   }
+
+  /// 내 민원 목록 조회
+  Future<Map<String, dynamic>> getMyComplaints() async {
+    final response = await _apiClient.get('/users/complaints');
+    return response.data;
+  }
+
+  /// 민원 상세 조회
+  Future<Map<String, dynamic>> getComplaintById(String id) async {
+    final response = await _apiClient.get('/users/complaints/$id');
+    return response.data;
+  }
 }
