@@ -76,6 +76,7 @@ class RouterNotifier extends ChangeNotifier {
       '/user/complaint-create',
       '/user/complaint-complete',
       '/admin/dashboard',
+      '/admin/notice-detail',
       '/manager/dashboard',
       '/manager/attendance-history',
       '/headquarters/dashboard',
@@ -281,6 +282,20 @@ class RouterNotifier extends ChangeNotifier {
       builder: (context, state) {
         final isEvent = state.uri.queryParameters['isEvent'] == 'true';
         return NoticeCreateScreen(isEvent: isEvent);
+      },
+    ),
+
+    // 공지사항/이벤트 상세 및 수정 (보호된 경로)
+    GoRoute(
+      path: '/admin/notice-detail/:noticeId',
+      name: 'noticeDetail',
+      builder: (context, state) {
+        final noticeId = state.pathParameters['noticeId']!;
+        final isEvent = state.uri.queryParameters['isEvent'] == 'true';
+        return NoticeCreateScreen(
+          noticeId: noticeId,
+          isEvent: isEvent,
+        );
       },
     ),
 

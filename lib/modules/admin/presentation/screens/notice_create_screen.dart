@@ -6,10 +6,12 @@ import 'package:building_manage_front/modules/admin/data/datasources/notice_remo
 
 class NoticeCreateScreen extends ConsumerStatefulWidget {
   final bool isEvent;
+  final String? noticeId; // 수정 모드용
 
   const NoticeCreateScreen({
     super.key,
     this.isEvent = false,
+    this.noticeId,
   });
 
   @override
@@ -27,11 +29,13 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
 
   List<Map<String, dynamic>> _departments = [];
   bool _isDepartmentsLoading = false;
+  bool _isLoadingDetail = false;
+  bool _isEditing = false; // 수정 모드 여부
 
   // 모든 필드가 채워졌는지 확인
-  // RESIDENT 선택 시 부서 선택 불필요
+  // RESIDENT 또는 BOTH 선택 시 부서 선택 불필요, STAFF만 부서 선택 필수
   bool get _isFormValid {
-    final hasDepartment = _selectedTarget == 'RESIDENT' || _selectedDepartmentId != null;
+    final hasDepartment = _selectedTarget != 'STAFF' || _selectedDepartmentId != null;
     return hasDepartment &&
         _titleController.text.trim().isNotEmpty &&
         _contentController.text.trim().isNotEmpty;
@@ -42,9 +46,47 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
     super.initState();
     _loadDepartments();
 
+    // 수정 모드라면 공지사항 상세 정보 로드
+    if (widget.noticeId != null) {
+      _loadNoticeDetail();
+    }
+
     // 텍스트 변경 시 UI 업데이트
     _titleController.addListener(_updateFormState);
     _contentController.addListener(_updateFormState);
+  }
+
+  Future<void> _loadNoticeDetail() async {
+    if (widget.noticeId == null) return;
+
+    setState(() => _isLoadingDetail = true);
+    try {
+      final noticeDataSource = ref.read(noticeRemoteDataSourceProvider);
+      final response = await noticeDataSource.getNoticeDetail(widget.noticeId!);
+      final data = response['data'];
+
+      if (mounted) {
+        setState(() {
+          _isEditing = true; // 수정 모드 활성화
+          _titleController.text = data['title'] as String? ?? '';
+          _contentController.text = data['content'] as String? ?? '';
+          _selectedTarget = data['target'] as String? ?? 'BOTH';
+          if (data['departmentId'] != null) {
+            _selectedDepartmentId = data['departmentId'] as String;
+            _selectedDepartmentName = data['department']?['name'] as String? ?? '부서 선택';
+          }
+        });
+      }
+    } catch (e) {
+      print('공지사항 상세 조회 실패: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('공지사항 조회 실패: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoadingDetail = false);
+    }
   }
 
   void _updateFormState() {
@@ -89,13 +131,14 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
     }
   }
 
+
   Future<void> _submitNotice() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    // RESIDENT이 아닌 경우 부서 선택 필수
-    if (_selectedTarget != 'RESIDENT' && _selectedDepartmentId == null) {
+    // STAFF 대상인 경우에만 부서 선택 필수
+    if (_selectedTarget == 'STAFF' && _selectedDepartmentId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('부서를 선택해주세요'),
@@ -107,43 +150,82 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
 
     try {
       final noticeDataSource = ref.read(noticeRemoteDataSourceProvider);
+      final title = _titleController.text.trim();
+      final content = _contentController.text.trim();
 
-      // isEvent 플래그와 target 선택에 따라 다른 API 호출
-      if (widget.isEvent) {
-        // 이벤트 생성
-        await noticeDataSource.createEvent(
-          title: _titleController.text.trim(),
-          content: _contentController.text.trim(),
-          target: _selectedTarget,
-          departmentId: _selectedTarget == 'RESIDENT' ? null : _selectedDepartmentId,
-          imageUrl: null, // 이미지 업로드 기능 추가 시 구현
-        );
+      if (_isEditing && widget.noticeId != null) {
+        // 수정 모드: PATCH API 호출
+        if (widget.isEvent) {
+          // 이벤트 수정
+          await noticeDataSource.updateEvent(
+            eventId: widget.noticeId!,
+            title: title,
+            content: content,
+            target: _selectedTarget,
+            departmentId: _selectedTarget == 'STAFF' ? _selectedDepartmentId : null,
+            imageUrl: null,
+          );
+        } else {
+          // 공지사항 수정
+          await noticeDataSource.updateNotice(
+            noticeId: widget.noticeId!,
+            title: title,
+            content: content,
+            target: _selectedTarget,
+            departmentId: _selectedTarget == 'STAFF' ? _selectedDepartmentId : null,
+            imageUrl: null,
+          );
+        }
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${widget.isEvent ? '이벤트' : '공지사항'}이 수정되었습니다.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // 수정 성공 시 true를 반환하여 부모 화면에서 새로고침하도록 함
+          context.pop(true);
+        }
       } else {
-        // 공지사항 생성
-        await noticeDataSource.createNotice(
-          title: _titleController.text.trim(),
-          content: _contentController.text.trim(),
-          target: _selectedTarget,
-          departmentId: _selectedTarget == 'RESIDENT' ? null : _selectedDepartmentId,
-          imageUrl: null, // 이미지 업로드 기능 추가 시 구현
-        );
-      }
+        // 생성 모드: POST API 호출
+        if (widget.isEvent) {
+          // 이벤트 생성
+          await noticeDataSource.createEvent(
+            title: title,
+            content: content,
+            target: _selectedTarget,
+            departmentId: _selectedTarget == 'STAFF' ? _selectedDepartmentId : null,
+            imageUrl: null,
+          );
+        } else {
+          // 공지사항 생성
+          await noticeDataSource.createNotice(
+            title: title,
+            content: content,
+            target: _selectedTarget,
+            departmentId: _selectedTarget == 'STAFF' ? _selectedDepartmentId : null,
+            imageUrl: null,
+          );
+        }
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${widget.isEvent ? '이벤트' : '공지사항'}이 등록되었습니다.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        context.pop();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${widget.isEvent ? '이벤트' : '공지사항'}이 등록되었습니다.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // 등록 성공 시 true를 반환하여 부모 화면에서 새로고침하도록 함
+          context.pop(true);
+        }
       }
     } catch (e) {
-      print('${widget.isEvent ? '이벤트' : '공지사항'} 등록 실패: $e');
+      print('${widget.isEvent ? '이벤트' : '공지사항'} ${_isEditing ? '수정' : '등록'} 실패: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('등록 실패: $e'),
+            content: Text('${_isEditing ? '수정' : '등록'} 실패: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -153,6 +235,7 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print('🔨 BUILD - isEditing: $_isEditing, noticeId: ${widget.noticeId}');
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -163,7 +246,9 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
           onPressed: () => context.pop(),
         ),
         title: Text(
-          widget.isEvent ? '이벤트 등록' : '공지 등록',
+          _isEditing
+              ? (widget.isEvent ? '이벤트 수정' : '공지 수정')
+              : (widget.isEvent ? '이벤트 등록' : '공지 등록'),
           style: const TextStyle(
             fontFamily: 'Pretendard',
             fontWeight: FontWeight.w700,
@@ -279,9 +364,9 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
                       ),
                     ),
 
-                    // 부서 드롭다운 (RESIDENT 선택 시 비활성화)
+                    // 부서 드롭다운 (BOTH 또는 RESIDENT 선택 시 비활성화)
                     PopupMenuButton<String>(
-                      enabled: !_isDepartmentsLoading && _departments.isNotEmpty && _selectedTarget != 'RESIDENT',
+                      enabled: !_isDepartmentsLoading && _departments.isNotEmpty && _selectedTarget == 'STAFF',
                       offset: const Offset(0, 48),
                       color: Colors.white,
                       surfaceTintColor: Colors.white,
@@ -331,16 +416,18 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              _selectedTarget == 'RESIDENT'
-                                  ? '부서 선택 (유저 대상 시 불필요)'
-                                  : _selectedDepartmentName,
+                              _selectedTarget == 'STAFF'
+                                  ? _selectedDepartmentName
+                                  : _selectedTarget == 'RESIDENT'
+                                      ? '부서 선택 (유저 대상 시 불필요)'
+                                      : '부서 선택 (전체 대상 시 불필요)',
                               style: TextStyle(
                                 fontFamily: 'Pretendard',
                                 fontWeight: FontWeight.w400,
                                 fontSize: 14,
-                                color: _selectedTarget == 'RESIDENT'
-                                    ? const Color(0xFFA4ADB2)
-                                    : const Color(0xFF17191A),
+                                color: _selectedTarget == 'STAFF'
+                                    ? const Color(0xFF17191A)
+                                    : const Color(0xFFA4ADB2),
                               ),
                             ),
                             _isDepartmentsLoading
@@ -352,9 +439,9 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
                                 : Icon(
                                     Icons.keyboard_arrow_down,
                                     size: 24,
-                                    color: _selectedTarget == 'RESIDENT'
-                                        ? const Color(0xFFA4ADB2)
-                                        : const Color(0xFF17191A),
+                                    color: _selectedTarget == 'STAFF'
+                                        ? const Color(0xFF17191A)
+                                        : const Color(0xFFA4ADB2),
                                   ),
                           ],
                         ),
@@ -433,7 +520,7 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
               ),
             ),
 
-            // 등록 버튼
+            // 등록/수정 버튼
             Container(
               padding: const EdgeInsets.all(22),
               child: SizedBox(
@@ -451,7 +538,7 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
                     ),
                   ),
                   child: Text(
-                    '등록하기',
+                    _isEditing ? '수정하기' : '등록하기',
                     style: TextStyle(
                       fontFamily: 'Pretendard',
                       fontWeight: FontWeight.w700,
