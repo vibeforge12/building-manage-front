@@ -298,6 +298,8 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
                                 final dong = resident?['dong'] as String? ?? '';
                                 final hosu = resident?['hosu'] as String? ?? '';
 
+                                final isResolved = complaint['isResolved'] as bool? ?? false;
+
                                 return Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 8),
                                   child: Row(
@@ -334,11 +336,22 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
                                         ),
                                       ),
                                       const SizedBox(width: 12),
-                                      // 우측: 우향 화살표
-                                      Icon(
-                                        Icons.chevron_right,
-                                        size: 24,
-                                        color: const Color(0xFF757B80),
+                                      // 우측: 상태 배지
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: isResolved ? const Color(0xFFEEF5FF) : const Color(0xFFFEEEE6),
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          isResolved ? '처리완료' : '처리필요',
+                                          style: TextStyle(
+                                            fontFamily: 'Pretendard',
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 11,
+                                            color: isResolved ? const Color(0xFF006FFF) : const Color(0xFFFF6B35),
+                                          ),
+                                        ),
                                       ),
                                       const SizedBox(width: 8),
                                       // 우측: 확인 버튼
