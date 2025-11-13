@@ -32,6 +32,7 @@ import 'package:building_manage_front/modules/manager/presentation/screens/manag
 import 'package:building_manage_front/modules/manager/presentation/screens/manager_staff_login_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/attendance_history_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/staff_complaint_detail_screen.dart';
+import 'package:building_manage_front/modules/manager/presentation/screens/staff_notice_detail_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/headquarters_login_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/headquarters_dashboard_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/building_management_screen.dart';
@@ -376,6 +377,16 @@ class RouterNotifier extends ChangeNotifier {
       builder: (context, state) {
         final complaintId = state.pathParameters['complaintId']!;
         return StaffComplaintDetailScreen(complaintId: complaintId);
+      },
+    ),
+
+    // 공지사항 상세 조회 (담당자 전용)
+    GoRoute(
+      path: '/manager/notice-detail/:noticeId',
+      name: 'staffNoticeDetail',
+      builder: (context, state) {
+        final noticeId = state.pathParameters['noticeId']!;
+        return StaffNoticeDetailScreen(noticeId: noticeId);
       },
     ),
 
