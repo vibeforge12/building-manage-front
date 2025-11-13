@@ -32,8 +32,29 @@ class ComplaintRemoteDataSource {
   }
 
   /// 내 민원 목록 조회
-  Future<Map<String, dynamic>> getMyComplaints() async {
-    final response = await _apiClient.get('/users/complaints');
+  /// GET /api/v1/users/complaints
+  /// Parameters: page, limit, sortBy, sortOrder, isResolved, departmentId
+  Future<Map<String, dynamic>> getMyComplaints({
+    int page = 1,
+    int limit = 20,
+    String? sortBy,
+    String sortOrder = 'DESC',
+    bool? isResolved,
+    String? departmentId,
+  }) async {
+    final queryParams = <String, dynamic>{
+      'page': page,
+      'limit': limit,
+      'sortOrder': sortOrder,
+    };
+    if (sortBy != null) queryParams['sortBy'] = sortBy;
+    if (isResolved != null) queryParams['isResolved'] = isResolved;
+    if (departmentId != null) queryParams['departmentId'] = departmentId;
+
+    final response = await _apiClient.get(
+      '/users/complaints',
+      queryParameters: queryParams,
+    );
     return response.data;
   }
 
