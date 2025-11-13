@@ -115,7 +115,7 @@ class _CustomConfirmationDialog extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontFamily: 'Pretendard',
-                    fontSize: 24,
+                    fontSize: 22,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF17191A),
                     height: 1.4,

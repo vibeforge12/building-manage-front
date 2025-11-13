@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 import 'package:building_manage_front/modules/admin/data/datasources/notice_remote_datasource.dart';
+import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
 
 class NoticeManagementScreen extends ConsumerStatefulWidget {
   const NoticeManagementScreen({super.key});
@@ -75,16 +76,17 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
   Future<void> _loadEvents() async {
     setState(() => _isLoading = true);
     try {
-      final noticeDataSource = ref.read(noticeRemoteDataSourceProvider);
-      final response = await noticeDataSource.getEvents(
-        sortOrder: _selectedFilter == '오래된순' ? 'ASC' : 'DESC',
-      );
+      // TODO: 서버에서 이벤트 조회 API 완성되면 아래 주석 해제 후 더미 데이터 제거
+      // final noticeDataSource = ref.read(noticeRemoteDataSourceProvider);
+      // final response = await noticeDataSource.getEvents(
+      //   sortOrder: _selectedFilter == '오래된순' ? 'ASC' : 'DESC',
+      // );
+      // final eventList = List<Map<String, dynamic>>.from(response['data']['data'] ?? []);
 
-      print('📌 이벤트 API 응답: $response');
-      print('📌 이벤트 response["data"]["data"]: ${response["data"]["data"]}');
+      // 임시 더미 데이터 (서버 API 준비 중)
+      final eventList = <Map<String, dynamic>>[];
 
       if (mounted) {
-        final eventList = List<Map<String, dynamic>>.from(response['data']['data'] ?? []);
         print('📌 파싱된 이벤트 개수: ${eventList.length}');
         setState(() {
           _events = eventList;
@@ -374,7 +376,7 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
       separatorBuilder: (context, index) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
         final notice = filteredNotices[index];
-        return _buildNoticeItem(notice);
+        return _buildNoticeItem(notice, isEvent: false);
       },
     );
   }
@@ -419,12 +421,66 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
       separatorBuilder: (context, index) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
         final event = filteredEvents[index];
-        return _buildNoticeItem(event);
+        return _buildNoticeItem(event, isEvent: true);
       },
     );
   }
 
-  Widget _buildNoticeItem(Map<String, dynamic> notice) {
+  void _showDeleteConfirmation(String noticeId, String noticeTitle, bool isEvent) async {
+    final result = await showCustomConfirmationDialog(
+      context: context,
+      title: '${isEvent ? '이벤트' : '공지사항'}을 삭제하시겠습니까?',
+      content: const SizedBox.shrink(),
+      confirmText: '예',
+      cancelText: '아니요',
+      isDestructive: true,
+      confirmOnLeft: true,
+    );
+
+    if (result == true) {
+      _deleteNotice(noticeId, isEvent);
+    }
+  }
+
+  Future<void> _deleteNotice(String noticeId, bool isEvent) async {
+    try {
+      final noticeDataSource = ref.read(noticeRemoteDataSourceProvider);
+
+      if (isEvent) {
+        await noticeDataSource.deleteEvent(noticeId);
+      } else {
+        await noticeDataSource.deleteNotice(noticeId);
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${isEvent ? '이벤트' : '공지사항'}이 삭제되었습니다.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        // 목록 새로고침
+        if (isEvent) {
+          _loadEvents();
+        } else {
+          _loadNotices();
+        }
+      }
+    } catch (e) {
+      print('${isEvent ? '이벤트' : '공지사항'} 삭제 실패: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('삭제 실패: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildNoticeItem(Map<String, dynamic> notice, {bool isEvent = false}) {
+    final id = notice['id'] as String? ?? '';
     final title = notice['title'] as String? ?? '제목 없음';
     final content = notice['content'] as String? ?? '';
     final createdAt = notice['createdAt'] as String? ?? '';
@@ -439,117 +495,143 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
       }
     }
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(
-          color: const Color(0xFFE8EEF2),
-          width: 1,
+    return GestureDetector(
+      onTap: () async {
+        // 공지사항/이벤트 클릭 시 상세 조회 화면으로 이동
+        final result = await context.push<bool>(
+          '/admin/notice-detail/$id?isEvent=${isEvent.toString()}',
+        );
+        // 수정 후 돌아올 때 true가 반환되면 목록 새로고침
+        if (result == true) {
+          if (isEvent) {
+            _loadEvents();
+          } else {
+            _loadNotices();
+          }
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(
+            color: const Color(0xFFE8EEF2),
+            width: 1,
+          ),
+          borderRadius: BorderRadius.circular(12),
         ),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontFamily: 'Pretendard',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      color: Color(0xFF17191A),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  formatDate(createdAt),
                   style: const TextStyle(
                     fontFamily: 'Pretendard',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                    color: Color(0xFF17191A),
+                    fontWeight: FontWeight.w400,
+                    fontSize: 12,
+                    color: Color(0xFFA4ADB2),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              const SizedBox(width: 8),
+              ],
+            ),
+            if (content.isNotEmpty) ...[
+              const SizedBox(height: 8),
               Text(
-                formatDate(createdAt),
+                content,
                 style: const TextStyle(
                   fontFamily: 'Pretendard',
                   fontWeight: FontWeight.w400,
-                  fontSize: 12,
-                  color: Color(0xFFA4ADB2),
+                  fontSize: 14,
+                  color: Color(0xFF666666),
+                  height: 1.5,
                 ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
-          ),
-          if (content.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              content,
-              style: const TextStyle(
-                fontFamily: 'Pretendard',
-                fontWeight: FontWeight.w400,
-                fontSize: 14,
-                color: Color(0xFF666666),
-                height: 1.5,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                // 삭제 버튼
+                GestureDetector(
+                  onTap: () {
+                    _showDeleteConfirmation(id, title, isEvent);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(
+                        color: const Color(0xFFE8EEF2),
+                        width: 1,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      '삭제',
+                      style: TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                        color: Color(0xFF464A4D),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // 수정 버튼 (아이템 클릭으로도 이동 가능)
+                GestureDetector(
+                  onTap: () async {
+                    // 수정 화면에서 돌아올 때 true가 반환되면 목록 새로고침
+                    final result = await context.push<bool>(
+                      '/admin/notice-detail/$id?isEvent=${isEvent.toString()}',
+                    );
+                    if (result == true) {
+                      if (isEvent) {
+                        _loadEvents();
+                      } else {
+                        _loadNotices();
+                      }
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEDF9FF),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      '수정',
+                      style: TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                        color: Color(0xFF0683FF),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              // 삭제 버튼
-              GestureDetector(
-                onTap: () {
-                  // TODO: 삭제 기능
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(
-                      color: const Color(0xFFE8EEF2),
-                      width: 1,
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    '삭제',
-                    style: TextStyle(
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
-                      color: Color(0xFF464A4D),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              // 수정 버튼
-              GestureDetector(
-                onTap: () {
-                  // TODO: 수정 기능
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEDF9FF),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    '수정',
-                    style: TextStyle(
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
-                      color: Color(0xFF0683FF),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
