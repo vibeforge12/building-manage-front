@@ -409,7 +409,7 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
             // 부서명 표시
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
               decoration: const BoxDecoration(
                 border: Border(
                   top: BorderSide(color: Color(0xFFE8EEF2), width: 1),
@@ -428,7 +428,7 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
 
             // 제목 및 내용 입력
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -484,9 +484,10 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
                   // 이미지 미리보기 (내용 필드 위)
                   if (_hasImage)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.only(bottom: 16),
                       child: SizedBox(
-                        height: 120,
+                        height: 160,
+                        width: double.infinity,
                         child: _buildImagePreview(),
                       ),
                     ),
