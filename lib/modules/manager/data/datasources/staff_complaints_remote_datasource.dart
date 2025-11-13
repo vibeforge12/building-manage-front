@@ -39,4 +39,33 @@ class StaffComplaintsRemoteDataSource {
       rethrow;
     }
   }
+
+  /// 공지사항 목록 조회
+  /// GET /api/v1/staffs/notices
+  Future<Map<String, dynamic>> getStaffNotices({
+    int page = 1,
+    int limit = 20,
+    String? sortBy,
+    String sortOrder = 'DESC',
+    String? keyword,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{
+        'page': page,
+        'limit': limit,
+        'sortOrder': sortOrder,
+      };
+      if (sortBy != null) queryParams['sortBy'] = sortBy;
+      if (keyword != null) queryParams['keyword'] = keyword;
+
+      final response = await _apiClient.get(
+        ApiEndpoints.staffNotices,
+        queryParameters: queryParams,
+      );
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      print('❌ 공지사항 목록 조회 실패: $e');
+      rethrow;
+    }
+  }
 }
