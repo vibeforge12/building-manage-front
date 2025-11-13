@@ -26,4 +26,17 @@ class StaffComplaintsRemoteDataSource {
       rethrow;
     }
   }
+
+  /// 민원 상세 조회
+  /// GET /api/v1/staffs/complaints/{complaintId}
+  Future<Map<String, dynamic>> getComplaintDetail(String complaintId) async {
+    try {
+      final endpoint = ApiEndpoints.staffComplaints;
+      final response = await _apiClient.get('$endpoint/$complaintId');
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      print('❌ 민원 상세 조회 실패: $e');
+      rethrow;
+    }
+  }
 }

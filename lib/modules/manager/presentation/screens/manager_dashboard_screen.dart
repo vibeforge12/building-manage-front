@@ -207,6 +207,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
                     )
                   else
                     ..._pendingComplaints.map((complaint) {
+                      final complaintId = complaint['id'] as String?;
                       final title = complaint['title'] as String? ?? '제목없음';
                       final resident = complaint['resident'] as Map<String, dynamic>?;
                       final residentName = resident?['name'] as String? ?? '거주자명';
@@ -215,6 +216,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
                       final subtitle = '${dong}동 $hosu호 $residentName'.trim();
 
                       return _ComplaintTile(
+                        complaintId: complaintId,
                         title: title,
                         subtitle: subtitle,
                       );
@@ -612,9 +614,14 @@ class _TabChip extends StatelessWidget {
 }
 
 class _ComplaintTile extends StatelessWidget {
+  final String? complaintId;
   final String title;
   final String subtitle;
-  const _ComplaintTile({required this.title, required this.subtitle});
+  const _ComplaintTile({
+    required this.complaintId,
+    required this.title,
+    required this.subtitle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -629,7 +636,11 @@ class _ComplaintTile extends StatelessWidget {
         title: Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
         subtitle: Text(subtitle, style: theme.textTheme.bodySmall?.copyWith(color: Colors.black54)),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () {},
+        onTap: () {
+          if (complaintId != null) {
+            context.push('/manager/complaint-detail/$complaintId');
+          }
+        },
       ),
     );
   }
