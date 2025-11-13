@@ -17,6 +17,7 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
   int _currentPage = 1;
   int _totalCount = 0;
   final int _pageSize = 20;
+  int _tabIndex = 0; // 0: 처리필요, 1: 처리완료
 
   @override
   void initState() {
@@ -61,6 +62,13 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
     }
   }
 
+  void _changeTab(int index) {
+    setState(() {
+      _tabIndex = index;
+      _currentPage = 1;
+    });
+  }
+
   String _formatDate(String? dateString) {
     if (dateString == null) return '';
     try {
@@ -102,7 +110,7 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
                     child: Align(
                       alignment: Alignment.center,
                       child: Text(
-                        '미완료 민원',
+                        '민원 관리',
                         style: TextStyle(
                           fontFamily: 'Pretendard',
                           fontWeight: FontWeight.w700,
@@ -113,6 +121,72 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
                     ),
                   ),
                   const SizedBox(width: 48),
+                ],
+              ),
+            ),
+            // 탭 바
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  bottom: BorderSide(
+                    color: Color(0xFFE8EEF2),
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => _changeTab(0),
+                      child: Column(
+                        children: [
+                          Text(
+                            '처리필요',
+                            style: TextStyle(
+                              fontFamily: 'Pretendard',
+                              fontWeight: _tabIndex == 0 ? FontWeight.w700 : FontWeight.w400,
+                              fontSize: 14,
+                              color: _tabIndex == 0 ? const Color(0xFF17191A) : const Color(0xFF757B80),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          if (_tabIndex == 0)
+                            Container(
+                              height: 2,
+                              color: const Color(0xFF006FFF),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => _changeTab(1),
+                      child: Column(
+                        children: [
+                          Text(
+                            '처리완료',
+                            style: TextStyle(
+                              fontFamily: 'Pretendard',
+                              fontWeight: _tabIndex == 1 ? FontWeight.w700 : FontWeight.w400,
+                              fontSize: 14,
+                              color: _tabIndex == 1 ? const Color(0xFF17191A) : const Color(0xFF757B80),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          if (_tabIndex == 1)
+                            Container(
+                              height: 2,
+                              color: const Color(0xFF006FFF),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -195,47 +269,54 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
                                 final dong = resident?['dong'] as String? ?? '';
                                 final hosu = resident?['hosu'] as String? ?? '';
                                 final createdAt = complaint['createdAt'] as String?;
+                                final isResolved = complaint['isResolved'] as bool? ?? false;
                                 final subtitle = '${dong}동 $hosu호 $residentName';
                                 final date = _formatDate(createdAt);
 
-                                return GestureDetector(
-                                  onTap: () {
-                                    if (complaintId != null) {
-                                      context.push('/manager/complaint-detail/$complaintId');
-                                    }
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: const Color(0xFFE8EEF2),
-                                        width: 1,
-                                      ),
+                                // 탭에 맞는 데이터만 표시
+                                final shouldShow = (_tabIndex == 0 && !isResolved) || (_tabIndex == 1 && isResolved);
+                                if (!shouldShow) {
+                                  return const SizedBox.shrink();
+                                }
+
+                                return Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: const Color(0xFFE8EEF2),
+                                      width: 1,
                                     ),
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                title,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                  fontFamily: 'Pretendard',
-                                                  fontWeight: FontWeight.w700,
-                                                  fontSize: 14,
-                                                  color: Color(0xFF17191A),
-                                                ),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              title,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                fontFamily: 'Pretendard',
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 14,
+                                                color: Color(0xFF17191A),
                                               ),
                                             ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              date,
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              subtitle,
                                               style: const TextStyle(
                                                 fontFamily: 'Pretendard',
                                                 fontWeight: FontWeight.w400,
@@ -243,20 +324,68 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
                                                 color: Color(0xFF757B80),
                                               ),
                                             ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          subtitle,
-                                          style: const TextStyle(
-                                            fontFamily: 'Pretendard',
-                                            fontWeight: FontWeight.w400,
-                                            fontSize: 12,
-                                            color: Color(0xFF757B80),
                                           ),
-                                        ),
-                                      ],
-                                    ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            date,
+                                            style: const TextStyle(
+                                              fontFamily: 'Pretendard',
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 12,
+                                              color: Color(0xFF757B80),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: _tabIndex == 0 ? const Color(0xFFFEEEE6) : const Color(0xFFEEF5FF),
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                            child: Text(
+                                              _tabIndex == 0 ? '처리필요' : '처리완료',
+                                              style: TextStyle(
+                                                fontFamily: 'Pretendard',
+                                                fontWeight: FontWeight.w500,
+                                                fontSize: 12,
+                                                color: _tabIndex == 0 ? const Color(0xFFFF6B35) : const Color(0xFF006FFF),
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(
+                                            height: 32,
+                                            child: TextButton(
+                                              onPressed: () {
+                                                if (complaintId != null) {
+                                                  context.push('/manager/complaint-detail/$complaintId');
+                                                }
+                                              },
+                                              style: TextButton.styleFrom(
+                                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                                backgroundColor: const Color(0xFF006FFF),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(6),
+                                                ),
+                                              ),
+                                              child: const Text(
+                                                '확인',
+                                                style: TextStyle(
+                                                  fontFamily: 'Pretendard',
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 12,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
                                 );
                               },
@@ -264,8 +393,17 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
             ),
             // 페이지네이션
             if (_complaints.isNotEmpty && _totalCount > _pageSize)
-              Padding(
+              Container(
                 padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    top: BorderSide(
+                      color: Color(0xFFE8EEF2),
+                      width: 1,
+                    ),
+                  ),
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
