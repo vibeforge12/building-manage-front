@@ -67,7 +67,7 @@ class _StaffEditScreenState extends ConsumerState<StaffEditScreen> {
         _phoneController.text = staff.phoneNumber;
         _imageUrl = staff.imageUrl;
         _status = staff.status.toServerString();
-        _staffCode = staff.id; // staffCode가 id를 의미하는 것으로 추정
+        _staffCode = staff.staffCode;
 
         _departmentId = staff.departmentId;
         _departmentName = staff.departmentName;

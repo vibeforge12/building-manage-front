@@ -1,7 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:building_manage_front/modules/manager/data/datasources/attendance_remote_datasource.dart';
+import 'package:building_manage_front/modules/manager/domain/usecases/get_monthly_attendance_usecase.dart';
 import 'package:building_manage_front/modules/manager/domain/entities/attendance_record.dart';
 import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
+import 'package:building_manage_front/modules/manager/presentation/providers/manager_providers.dart';
 
 /// 출퇴근 기록 조회 상태
 class AttendanceHistoryState {
@@ -84,9 +85,9 @@ class AttendanceHistoryState {
 
 /// 출퇴근 기록 조회 Notifier
 class AttendanceHistoryNotifier extends StateNotifier<AttendanceHistoryState> {
-  final AttendanceRemoteDataSource _dataSource;
+  final GetMonthlyAttendanceUseCase _getMonthlyAttendanceUseCase;
 
-  AttendanceHistoryNotifier(this._dataSource)
+  AttendanceHistoryNotifier(this._getMonthlyAttendanceUseCase)
       : super(AttendanceHistoryState(
           year: DateTime.now().year,
           month: DateTime.now().month,
@@ -99,7 +100,7 @@ class AttendanceHistoryNotifier extends StateNotifier<AttendanceHistoryState> {
     try {
       print('📅 월별 출퇴근 기록 조회 시작 (Provider): ${state.year}년 ${state.month}월');
 
-      final response = await _dataSource.getMonthlyAttendance(
+      final response = await _getMonthlyAttendanceUseCase.execute(
         year: state.year,
         month: state.month,
       );
@@ -157,6 +158,6 @@ class AttendanceHistoryNotifier extends StateNotifier<AttendanceHistoryState> {
 /// 출퇴근 기록 조회 Provider
 final attendanceHistoryProvider =
     StateNotifierProvider<AttendanceHistoryNotifier, AttendanceHistoryState>((ref) {
-  final dataSource = ref.watch(attendanceRemoteDataSourceProvider);
-  return AttendanceHistoryNotifier(dataSource);
+  final useCase = ref.watch(getMonthlyAttendanceUseCaseProvider);
+  return AttendanceHistoryNotifier(useCase);
 });

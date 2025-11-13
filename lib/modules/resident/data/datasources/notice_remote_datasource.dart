@@ -22,4 +22,22 @@ class NoticeRemoteDataSource {
     final response = await _apiClient.get('/users/events/highlight');
     return response.data;
   }
+
+  /// 공지사항 목록 조회
+  Future<Map<String, dynamic>> getNotices() async {
+    final response = await _apiClient.get('/users/notices');
+    return response.data;
+  }
+
+  /// 이벤트 목록 조회
+  Future<Map<String, dynamic>> getEvents() async {
+    final response = await _apiClient.get('/users/events');
+    return response.data;
+  }
+
+  /// 공지사항 상세 조회
+  Future<Map<String, dynamic>> getNoticeById(String id) async {
+    final response = await _apiClient.get('/users/notices/$id');
+    return response.data;
+  }
 }

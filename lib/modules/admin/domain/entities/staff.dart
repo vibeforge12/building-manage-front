@@ -36,6 +36,7 @@ enum StaffStatus {
 /// Admin 모듈에서 담당자 관리에 사용하는 핵심 도메인 엔티티
 class Staff extends Equatable {
   final String id;
+  final String staffCode;
   final String name;
   final String phoneNumber;
   final String departmentId;
@@ -47,6 +48,7 @@ class Staff extends Equatable {
 
   const Staff({
     required this.id,
+    required this.staffCode,
     required this.name,
     required this.phoneNumber,
     required this.departmentId,
@@ -63,6 +65,7 @@ class Staff extends Equatable {
 
     return Staff(
       id: json['id']?.toString() ?? '',
+      staffCode: json['staffCode'] as String? ?? '',
       name: json['name'] as String? ?? '',
       phoneNumber: json['phoneNumber'] as String? ?? '',
       departmentId: department?['id']?.toString() ?? '',
@@ -82,6 +85,7 @@ class Staff extends Equatable {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'staffCode': staffCode,
       'name': name,
       'phoneNumber': phoneNumber,
       'departmentId': departmentId,
@@ -99,6 +103,7 @@ class Staff extends Equatable {
   /// 불변 객체 업데이트
   Staff copyWith({
     String? id,
+    String? staffCode,
     String? name,
     String? phoneNumber,
     String? departmentId,
@@ -110,6 +115,7 @@ class Staff extends Equatable {
   }) {
     return Staff(
       id: id ?? this.id,
+      staffCode: staffCode ?? this.staffCode,
       name: name ?? this.name,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       departmentId: departmentId ?? this.departmentId,
@@ -124,6 +130,7 @@ class Staff extends Equatable {
   @override
   List<Object?> get props => [
         id,
+        staffCode,
         name,
         phoneNumber,
         departmentId,

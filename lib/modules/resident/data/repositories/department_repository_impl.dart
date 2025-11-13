@@ -1,6 +1,6 @@
 import 'package:building_manage_front/modules/resident/domain/repositories/department_repository.dart';
 import 'package:building_manage_front/modules/resident/domain/entities/department.dart';
-import 'package:building_manage_front/modules/resident/data/datasources/department_remote_datasource.dart';
+import 'package:building_manage_front/modules/headquarters/data/datasources/department_remote_datasource.dart';
 
 /// DepartmentRepository 구현체
 class DepartmentRepositoryImpl implements DepartmentRepository {

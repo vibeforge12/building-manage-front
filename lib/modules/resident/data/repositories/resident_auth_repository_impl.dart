@@ -40,7 +40,7 @@ class ResidentAuthRepositoryImpl implements ResidentAuthRepository {
       final result = await _dataSource.register(
         buildingId: buildingId,
         dong: dong,
-        ho: ho,
+        hosu: ho,
         name: name,
         phoneNumber: phoneNumber,
         username: username,

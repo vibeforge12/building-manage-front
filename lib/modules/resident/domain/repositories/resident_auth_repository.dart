@@ -1,5 +1,3 @@
-import 'package:building_manage_front/domain/entities/user.dart';
-
 /// 입주민 인증 Repository 인터페이스
 ///
 /// Clean Architecture의 Dependency Inversion Principle을 따릅니다.

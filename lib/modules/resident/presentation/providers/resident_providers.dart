@@ -3,7 +3,7 @@ import 'package:building_manage_front/core/network/api_client.dart';
 import 'package:building_manage_front/modules/resident/data/datasources/resident_auth_remote_datasource.dart';
 import 'package:building_manage_front/modules/resident/data/datasources/complaint_remote_datasource.dart';
 import 'package:building_manage_front/modules/resident/data/datasources/notice_remote_datasource.dart';
-import 'package:building_manage_front/modules/resident/data/datasources/department_remote_datasource.dart';
+import 'package:building_manage_front/modules/headquarters/data/datasources/department_remote_datasource.dart';
 import 'package:building_manage_front/modules/resident/data/repositories/resident_auth_repository_impl.dart';
 import 'package:building_manage_front/modules/resident/data/repositories/complaint_repository_impl.dart';
 import 'package:building_manage_front/modules/resident/data/repositories/notice_repository_impl.dart';
