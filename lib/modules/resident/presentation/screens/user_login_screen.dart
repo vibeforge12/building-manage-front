@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
-import 'package:building_manage_front/modules/resident/data/datasources/resident_auth_remote_datasource.dart';
+import 'package:building_manage_front/modules/resident/presentation/providers/resident_providers.dart';
 
 import 'package:building_manage_front/shared/widgets/page_header_text.dart';
 import 'package:building_manage_front/shared/widgets/field_label.dart';
@@ -38,8 +38,9 @@ class _UserLoginScreenState extends ConsumerState<UserLoginScreen> {
     setState(() { _loading = true; _loginFailed = false; });
 
     try {
-      final dataSource = ref.read(residentAuthRemoteDataSourceProvider);
-      final res = await dataSource.login(
+      // UseCase를 통한 로그인 (비즈니스 로직 포함)
+      final loginUseCase = ref.read(loginResidentUseCaseProvider);
+      final res = await loginUseCase.execute(
         username: _usernameController.text.trim(),
         password: _passwordController.text,
       );

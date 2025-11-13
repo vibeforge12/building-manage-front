@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/signup_form_provider.dart';
+import '../providers/resident_providers.dart';
 import '../widgets/resident_signup_step1.dart';
 import '../widgets/resident_signup_step2.dart';
 import '../widgets/resident_signup_step3.dart';
-import '../../data/datasources/resident_auth_remote_datasource.dart';
 import 'package:building_manage_front/shared/widgets/app_bar.dart';
 
 class ResidentSignupScreen extends ConsumerWidget {
@@ -70,16 +70,16 @@ class ResidentSignupScreen extends ConsumerWidget {
       );
 
       final formData = ref.read(signupFormProvider);
-      final authDataSource = ref.read(residentAuthRemoteDataSourceProvider);
 
-      // API 호출
-      await authDataSource.register(
+      // UseCase를 통한 회원가입 (비즈니스 로직 포함)
+      final registerUseCase = ref.read(registerResidentUseCaseProvider);
+      await registerUseCase.execute(
         username: formData.username!,
         password: formData.password!,
         name: formData.name!,
         phoneNumber: formData.phoneNumber!,
         dong: formData.dong!,
-        hosu: formData.hosu!,
+        ho: formData.hosu!,
         buildingId: formData.buildingId!,
       );
 
