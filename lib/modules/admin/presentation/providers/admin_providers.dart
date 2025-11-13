@@ -1,10 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:building_manage_front/modules/admin/data/datasources/staff_remote_datasource.dart';
 import 'package:building_manage_front/modules/admin/data/datasources/resident_remote_datasource.dart';
+import 'package:building_manage_front/modules/admin/data/datasources/complaint_remote_datasource.dart';
 import 'package:building_manage_front/modules/admin/data/repositories/staff_repository_impl.dart';
 import 'package:building_manage_front/modules/admin/data/repositories/resident_management_repository_impl.dart';
+import 'package:building_manage_front/modules/admin/data/repositories/complaint_repository_impl.dart';
 import 'package:building_manage_front/modules/admin/domain/repositories/staff_repository.dart';
 import 'package:building_manage_front/modules/admin/domain/repositories/resident_management_repository.dart';
+import 'package:building_manage_front/modules/admin/domain/repositories/complaint_repository.dart';
 import 'package:building_manage_front/modules/admin/domain/usecases/create_staff_usecase.dart';
 import 'package:building_manage_front/modules/admin/domain/usecases/get_staffs_usecase.dart';
 import 'package:building_manage_front/modules/admin/domain/usecases/get_staff_detail_usecase.dart';
@@ -13,6 +16,7 @@ import 'package:building_manage_front/modules/admin/domain/usecases/delete_staff
 import 'package:building_manage_front/modules/admin/domain/usecases/get_residents_usecase.dart';
 import 'package:building_manage_front/modules/admin/domain/usecases/verify_resident_usecase.dart';
 import 'package:building_manage_front/modules/admin/domain/usecases/reject_resident_usecase.dart';
+import 'package:building_manage_front/modules/admin/domain/usecases/complaint_usecases.dart';
 
 // ============================================================================
 // DataSource Providers
@@ -95,4 +99,48 @@ final verifyResidentUseCaseProvider = Provider<VerifyResidentUseCase>((ref) {
 final rejectResidentUseCaseProvider = Provider<RejectResidentUseCase>((ref) {
   final repository = ref.read(residentManagementRepositoryProvider);
   return RejectResidentUseCase(repository);
+});
+
+// ============================================================================
+// Complaint Repository Provider
+// ============================================================================
+
+/// Complaint Repository Provider
+final complaintRepositoryProvider = Provider<ComplaintRepository>((ref) {
+  final dataSource = ref.read(complaintRemoteDataSourceProvider);
+  return ComplaintRepositoryImpl(dataSource);
+});
+
+// ============================================================================
+// Complaint UseCase Providers
+// ============================================================================
+
+/// 전체 민원 조회 UseCase Provider
+final getAllComplaintsUseCaseProvider = Provider<GetAllComplaintsUseCase>((ref) {
+  final repository = ref.read(complaintRepositoryProvider);
+  return GetAllComplaintsUseCase(repository);
+});
+
+/// 미완료 민원 조회 UseCase Provider
+final getPendingComplaintsUseCaseProvider = Provider<GetPendingComplaintsUseCase>((ref) {
+  final repository = ref.read(complaintRepositoryProvider);
+  return GetPendingComplaintsUseCase(repository);
+});
+
+/// 완료된 민원 조회 UseCase Provider
+final getResolvedComplaintsUseCaseProvider = Provider<GetResolvedComplaintsUseCase>((ref) {
+  final repository = ref.read(complaintRepositoryProvider);
+  return GetResolvedComplaintsUseCase(repository);
+});
+
+/// 민원 상세 조회 UseCase Provider
+final getComplaintDetailUseCaseProvider = Provider<GetComplaintDetailUseCase>((ref) {
+  final repository = ref.read(complaintRepositoryProvider);
+  return GetComplaintDetailUseCase(repository);
+});
+
+/// 민원 상태 업데이트 UseCase Provider
+final updateComplaintStatusUseCaseProvider = Provider<UpdateComplaintStatusUseCase>((ref) {
+  final repository = ref.read(complaintRepositoryProvider);
+  return UpdateComplaintStatusUseCase(repository);
 });
