@@ -243,39 +243,50 @@ class _StaffComplaintDetailScreenState extends State<StaffComplaintDetailScreen>
                                   ),
                                 ],
                               ),
-                              Container(
-                                height: 1,
-                                color: const Color(0xFFE8EEF2),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                _complaintData?['title'] ?? '제목없음',
-                                style: const TextStyle(
-                                  fontFamily: 'Pretendard',
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 18,
-                                  color: Color(0xFF17191A),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              // 구분선
-                              Container(
-                                height: 1,
-                                color: const Color(0xFFE8EEF2),
-                              ),
-                              const SizedBox(height: 20),
-                              // 내용
-                              Text(
-                                _complaintData?['content'] ?? '',
-                                style: const TextStyle(
-                                  fontFamily: 'Pretendard',
-                                  fontWeight: FontWeight.w400,
-                                  fontSize: 14,
-                                  color: Color(0xFF17191A),
-                                  height: 1.6,
-                                ),
-                              ),
                             ],
+                          ),
+                        ),
+                        // 거주자명 밑 구분선 (화면 끝에서 끝까지)
+                        Container(
+                          height: 1,
+                          color: const Color(0xFFE8EEF2),
+                        ),
+                        // 제목 (수직 중앙정렬)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                          ),
+                          height: 56,
+                          alignment: Alignment.center,
+                          child: Text(
+                            _complaintData?['title'] ?? '제목없음',
+                            style: const TextStyle(
+                              fontFamily: 'Pretendard',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 18,
+                              color: Color(0xFF17191A),
+                            ),
+                          ),
+                        ),
+                        // 제목 밑 구분선 (화면 끝에서 끝까지)
+                        Container(
+                          height: 1,
+                          color: const Color(0xFFE8EEF2),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 20,
+                          ),
+                          child: Text(
+                            _complaintData?['content'] ?? '',
+                            style: const TextStyle(
+                              fontFamily: 'Pretendard',
+                              fontWeight: FontWeight.w400,
+                              fontSize: 14,
+                              color: Color(0xFF17191A),
+                              height: 1.6,
+                            ),
                           ),
                         ),
                       ],
