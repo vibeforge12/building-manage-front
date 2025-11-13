@@ -3,8 +3,6 @@ import 'package:building_manage_front/core/constants/auth_states.dart';
 import 'package:building_manage_front/domain/entities/user.dart';
 import 'package:building_manage_front/core/network/interceptors/auth_interceptor.dart';
 import 'package:building_manage_front/data/datasources/auth_remote_datasource.dart';
-import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
-import 'package:building_manage_front/core/constants/user_types.dart';
 
 class AuthStateNotifier extends StateNotifier<AuthState> {
   AuthStateNotifier() : super(AuthState.initial);

@@ -6,7 +6,7 @@ import '../widgets/resident_signup_step1.dart';
 import '../widgets/resident_signup_step2.dart';
 import '../widgets/resident_signup_step3.dart';
 import '../../data/datasources/resident_auth_remote_datasource.dart';
-import 'package:building_manage_front/shared/widgets/appBar.dart';
+import 'package:building_manage_front/shared/widgets/app_bar.dart';
 
 class ResidentSignupScreen extends ConsumerWidget {
   const ResidentSignupScreen({super.key});
