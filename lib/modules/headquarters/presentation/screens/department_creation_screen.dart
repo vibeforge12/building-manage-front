@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:building_manage_front/shared/widgets/fieldLable.dart';
+import 'package:building_manage_front/shared/widgets/field_label.dart';
 import 'package:building_manage_front/shared/widgets/primary_action_button.dart';
 import 'package:building_manage_front/modules/headquarters/data/datasources/department_remote_datasource.dart';
 import 'package:building_manage_front/core/network/exceptions/api_exception.dart';

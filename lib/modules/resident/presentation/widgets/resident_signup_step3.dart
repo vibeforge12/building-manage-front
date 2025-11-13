@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/signup_form_provider.dart';
-import 'package:building_manage_front/shared/widgets/signUp.dart';
+import 'package:building_manage_front/shared/widgets/sign_up.dart';
 
 class ResidentSignupStep3 extends ConsumerStatefulWidget {
   final VoidCallback onPrevious;

@@ -5,9 +5,6 @@ import 'package:building_manage_front/modules/auth/presentation/providers/auth_s
 import 'package:building_manage_front/modules/manager/presentation/providers/attendance_provider.dart';
 import 'package:building_manage_front/shared/widgets/confirmation_dialog.dart';
 
-import '../../../../core/network/exceptions/api_exception.dart';
-import '../../data/datasources/attendance_remote_datasource.dart';
-
 class ManagerDashboardScreen extends ConsumerStatefulWidget {
   const ManagerDashboardScreen({super.key});
 

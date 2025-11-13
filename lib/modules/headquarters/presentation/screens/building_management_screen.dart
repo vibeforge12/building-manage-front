@@ -3,9 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/headquarters/data/datasources/department_remote_datasource.dart';
 import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
-import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
-import 'package:building_manage_front/modules/headquarters/presentation/screens/building_registration_screen.dart';
-import 'package:building_manage_front/modules/headquarters/presentation/screens/department_creation_screen.dart';
 
 class BuildingManagementScreen extends ConsumerStatefulWidget {
   const BuildingManagementScreen({super.key});

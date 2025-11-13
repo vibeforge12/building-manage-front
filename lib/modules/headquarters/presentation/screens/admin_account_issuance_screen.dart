@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:building_manage_front/shared/widgets/fieldLable.dart';
+import 'package:building_manage_front/shared/widgets/field_label.dart';
 import 'package:building_manage_front/shared/widgets/primary_action_button.dart';
 import 'package:building_manage_front/shared/widgets/section_divider.dart';
 import 'package:building_manage_front/modules/common/data/datasources/building_list_remote_datasource.dart';
