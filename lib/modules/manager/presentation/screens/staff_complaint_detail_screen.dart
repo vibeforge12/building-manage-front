@@ -201,7 +201,7 @@ class _StaffComplaintDetailScreenState extends State<StaffComplaintDetailScreen>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // 거주자 정보
+                              // 제목
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
@@ -243,8 +243,11 @@ class _StaffComplaintDetailScreenState extends State<StaffComplaintDetailScreen>
                                   ),
                                 ],
                               ),
+                              Container(
+                                height: 1,
+                                color: const Color(0xFFE8EEF2),
+                              ),
                               const SizedBox(height: 16),
-                              // 제목
                               Text(
                                 _complaintData?['title'] ?? '제목없음',
                                 style: const TextStyle(
@@ -255,25 +258,10 @@ class _StaffComplaintDetailScreenState extends State<StaffComplaintDetailScreen>
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              // 부서 정보
+                              // 구분선
                               Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF2F8FC),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  _complaintData?['department']?['name'] ?? '부서',
-                                  style: const TextStyle(
-                                    fontFamily: 'Pretendard',
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 12,
-                                    color: Color(0xFF006FFF),
-                                  ),
-                                ),
+                                height: 1,
+                                color: const Color(0xFFE8EEF2),
                               ),
                               const SizedBox(height: 20),
                               // 내용
@@ -289,11 +277,6 @@ class _StaffComplaintDetailScreenState extends State<StaffComplaintDetailScreen>
                               ),
                             ],
                           ),
-                        ),
-                        // 구분선 (패딩 없이 화면 끝까지)
-                        Container(
-                          height: 1,
-                          color: const Color(0xFFE8EEF2),
                         ),
                       ],
                     ),
