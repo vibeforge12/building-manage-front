@@ -43,4 +43,10 @@ class ApiEndpoints {
 
   // Departments - 부서 관련
   static const String departments = '/common/departments';
+
+  // Notice & Event - 공지사항 및 이벤트
+  static const String notices = '/notices';
+  static const String events = '/events';
+  static const String managerNotices = '$manager/notices';
+  static const String managerEvents = '$manager/events';
 }
