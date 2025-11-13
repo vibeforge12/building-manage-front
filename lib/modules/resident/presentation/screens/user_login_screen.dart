@@ -59,9 +59,11 @@ class _UserLoginScreenState extends ConsumerState<UserLoginScreen> {
 
       // approvalStatus에 따른 조건부 라우팅
       final approvalStatus = user?['approvalStatus'] as String?;
+      print('🔐 APPROVAL STATUS: $approvalStatus (type: ${approvalStatus.runtimeType})');
       if (mounted) {
         if (approvalStatus == 'REJECTED') {
           // 거부됨: 로그인 페이지로 리다이렉트
+          print('❌ REJECTED: 로그인 페이지로 이동');
           _usernameController.clear();
           _passwordController.clear();
           setState(() => _loginFailed = true);
@@ -73,9 +75,11 @@ class _UserLoginScreenState extends ConsumerState<UserLoginScreen> {
           );
         } else if (approvalStatus == 'PENDING') {
           // 대기 중: 승인 대기 화면으로 이동
+          print('⏳ PENDING: 승인 대기 화면으로 이동');
           context.goNamed('residentApprovalPending');
         } else {
           // 승인됨: 홈 화면으로 이동
+          print('✅ APPROVED (또는 기타): 홈 화면으로 이동');
           context.goNamed('userDashboard');
         }
       }
