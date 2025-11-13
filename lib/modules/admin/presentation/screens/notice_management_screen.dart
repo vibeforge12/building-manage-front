@@ -27,6 +27,9 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(_onTabChanged);
+    // 초기 데이터 초기화
+    _notices = [];
+    _events = [];
     _loadNotices();
   }
 
@@ -46,9 +49,15 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
         sortOrder: _selectedFilter == '오래된순' ? 'ASC' : 'DESC',
       );
 
+      print('📌 API 응답: $response');
+      print('📌 response["data"]: ${response["data"]}');
+      print('📌 response["data"]["data"]: ${response["data"]["data"]}');
+
       if (mounted) {
+        final noticeList = List<Map<String, dynamic>>.from(response['data']['data'] ?? []);
+        print('📌 파싱된 공지사항 개수: ${noticeList.length}');
         setState(() {
-          _notices = List<Map<String, dynamic>>.from(response['data']['data'] ?? []);
+          _notices = noticeList;
         });
       }
     } catch (e) {
@@ -71,9 +80,14 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
         sortOrder: _selectedFilter == '오래된순' ? 'ASC' : 'DESC',
       );
 
+      print('📌 이벤트 API 응답: $response');
+      print('📌 이벤트 response["data"]["data"]: ${response["data"]["data"]}');
+
       if (mounted) {
+        final eventList = List<Map<String, dynamic>>.from(response['data']['data'] ?? []);
+        print('📌 파싱된 이벤트 개수: ${eventList.length}');
         setState(() {
-          _events = List<Map<String, dynamic>>.from(response['data']['data'] ?? []);
+          _events = eventList;
         });
       }
     } catch (e) {
