@@ -14,6 +14,7 @@ import 'package:building_manage_front/modules/resident/presentation/screens/noti
 import 'package:building_manage_front/modules/resident/presentation/screens/event_detail_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/complaint_create_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/complaint_complete_screen.dart';
+import 'package:building_manage_front/modules/resident/presentation/screens/my_complaint_list_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/resident_approval_pending_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/resident_approval_completed_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/resident_approval_rejected_screen.dart';
@@ -81,6 +82,7 @@ class RouterNotifier extends ChangeNotifier {
       '/user/event',
       '/user/complaint-create',
       '/user/complaint-complete',
+      '/user/my-complaints',
       '/admin/dashboard',
       '/admin/complaint-management',
       '/admin/complaint-detail',
@@ -239,6 +241,13 @@ class RouterNotifier extends ChangeNotifier {
       path: '/user/complaint-complete',
       name: 'complaintComplete',
       builder: (context, state) => const ComplaintCompleteScreen(),
+    ),
+
+    // 내 민원 보기 (보호된 경로)
+    GoRoute(
+      path: '/user/my-complaints',
+      name: 'myComplaints',
+      builder: (context, state) => const MyComplaintListScreen(),
     ),
 
     // 입주민 승인 대기 화면
