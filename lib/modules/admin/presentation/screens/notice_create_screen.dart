@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/headquarters/data/datasources/department_remote_datasource.dart';
+import 'package:building_manage_front/modules/admin/data/datasources/notice_remote_datasource.dart';
 
 class NoticeCreateScreen extends ConsumerStatefulWidget {
   final bool isEvent;
@@ -28,8 +29,10 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
   bool _isDepartmentsLoading = false;
 
   // 모든 필드가 채워졌는지 확인
+  // RESIDENT 선택 시 부서 선택 불필요
   bool get _isFormValid {
-    return _selectedDepartmentId != null &&
+    final hasDepartment = _selectedTarget == 'RESIDENT' || _selectedDepartmentId != null;
+    return hasDepartment &&
         _titleController.text.trim().isNotEmpty &&
         _contentController.text.trim().isNotEmpty;
   }
@@ -91,7 +94,8 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
       return;
     }
 
-    if (_selectedDepartmentId == null) {
+    // RESIDENT이 아닌 경우 부서 선택 필수
+    if (_selectedTarget != 'RESIDENT' && _selectedDepartmentId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('부서를 선택해주세요'),
@@ -101,26 +105,50 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
       return;
     }
 
-    // TODO: API 연동
-    final noticeData = {
-      'title': _titleController.text.trim(),
-      'content': _contentController.text.trim(),
-      'target': _selectedTarget,
-      'departmentId': _selectedDepartmentId,
-      'imageUrl': null, // 이미지 업로드 기능 추가 시 구현
-    };
+    try {
+      final noticeDataSource = ref.read(noticeRemoteDataSourceProvider);
 
-    print('공지사항 등록: $noticeData');
+      // isEvent 플래그와 target 선택에 따라 다른 API 호출
+      if (widget.isEvent) {
+        // 이벤트 생성
+        await noticeDataSource.createEvent(
+          title: _titleController.text.trim(),
+          content: _contentController.text.trim(),
+          target: _selectedTarget,
+          departmentId: _selectedTarget == 'RESIDENT' ? null : _selectedDepartmentId,
+          imageUrl: null, // 이미지 업로드 기능 추가 시 구현
+        );
+      } else {
+        // 공지사항 생성
+        await noticeDataSource.createNotice(
+          title: _titleController.text.trim(),
+          content: _contentController.text.trim(),
+          target: _selectedTarget,
+          departmentId: _selectedTarget == 'RESIDENT' ? null : _selectedDepartmentId,
+          imageUrl: null, // 이미지 업로드 기능 추가 시 구현
+        );
+      }
 
-    // TODO: POST /api/v1/managers/notices API 호출
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${widget.isEvent ? '이벤트' : '공지사항'}이 등록되었습니다.'),
-        backgroundColor: Colors.green,
-      ),
-    );
-
-    context.pop();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${widget.isEvent ? '이벤트' : '공지사항'}이 등록되었습니다.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        context.pop();
+      }
+    } catch (e) {
+      print('${widget.isEvent ? '이벤트' : '공지사항'} 등록 실패: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('등록 실패: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -251,9 +279,9 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
                       ),
                     ),
 
-                    // 부서 드롭다운
+                    // 부서 드롭다운 (RESIDENT 선택 시 비활성화)
                     PopupMenuButton<String>(
-                      enabled: !_isDepartmentsLoading && _departments.isNotEmpty,
+                      enabled: !_isDepartmentsLoading && _departments.isNotEmpty && _selectedTarget != 'RESIDENT',
                       offset: const Offset(0, 48),
                       color: Colors.white,
                       surfaceTintColor: Colors.white,
@@ -288,11 +316,13 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           color: Colors.white,
                           border: Border(
                             bottom: BorderSide(
-                              color: Color(0xFFE8EEF2),
+                              color: _selectedTarget == 'RESIDENT'
+                                  ? const Color(0xFFE8EEF2)
+                                  : const Color(0xFFE8EEF2),
                               width: 1,
                             ),
                           ),
@@ -301,12 +331,16 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              _selectedDepartmentName,
-                              style: const TextStyle(
+                              _selectedTarget == 'RESIDENT'
+                                  ? '부서 선택 (유저 대상 시 불필요)'
+                                  : _selectedDepartmentName,
+                              style: TextStyle(
                                 fontFamily: 'Pretendard',
                                 fontWeight: FontWeight.w400,
                                 fontSize: 14,
-                                color: Color(0xFF17191A),
+                                color: _selectedTarget == 'RESIDENT'
+                                    ? const Color(0xFFA4ADB2)
+                                    : const Color(0xFF17191A),
                               ),
                             ),
                             _isDepartmentsLoading
@@ -315,10 +349,12 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
                                     height: 24,
                                     child: CircularProgressIndicator(strokeWidth: 2),
                                   )
-                                : const Icon(
+                                : Icon(
                                     Icons.keyboard_arrow_down,
                                     size: 24,
-                                    color: Color(0xFF17191A),
+                                    color: _selectedTarget == 'RESIDENT'
+                                        ? const Color(0xFFA4ADB2)
+                                        : const Color(0xFF17191A),
                                   ),
                           ],
                         ),
