@@ -52,19 +52,25 @@ class UploadRemoteDataSource {
       // Dio 인스턴스를 새로 생성 (interceptor 없이)
       final dio = Dio();
 
-      await dio.put(
+      // 요청 헤더 설정
+      final headers = {
+        'Content-Type': contentType,
+      };
+
+      print('📝 S3 업로드 URL: $uploadUrl');
+      print('📝 헤더: $headers');
+
+      final response = await dio.put(
         uploadUrl,
         data: fileBytes,
         options: Options(
-          headers: {
-            'Content-Type': contentType,
-          },
+          headers: headers,
           // S3 응답은 빈 응답일 수 있으므로 validateStatus 설정
           validateStatus: (status) => status! < 400,
         ),
       );
 
-      print('✅ S3 업로드 완료');
+      print('✅ S3 업로드 완료 - Status Code: ${response.statusCode}');
     } on DioException catch (e) {
       print('❌ S3 업로드 실패: ${e.message}');
       print('❌ 응답 데이터: ${e.response?.data}');
