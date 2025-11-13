@@ -336,27 +336,8 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
                                         ),
                                       ),
                                       const SizedBox(width: 12),
-                                      // 우측: 상태 배지
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: isResolved ? const Color(0xFFEEF5FF) : const Color(0xFFFEEEE6),
-                                          borderRadius: BorderRadius.circular(4),
-                                        ),
-                                        child: Text(
-                                          isResolved ? '처리완료' : '처리필요',
-                                          style: TextStyle(
-                                            fontFamily: 'Pretendard',
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 11,
-                                            color: isResolved ? const Color(0xFF006FFF) : const Color(0xFFFF6B35),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      // 우측: 확인 버튼
                                       SizedBox(
-                                        width: 60,
+                                        width: 40,
                                         height: 32,
                                         child: ElevatedButton(
                                           onPressed: () {
@@ -367,6 +348,7 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: Colors.white,
                                             foregroundColor: const Color(0xFF464A4D),
+                                            elevation: 0,
                                             side: const BorderSide(
                                               color: Color(0xFFE8EEF2),
                                               width: 1,
@@ -383,6 +365,23 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
                                               fontWeight: FontWeight.w600,
                                               fontSize: 12,
                                             ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: isResolved ? const Color(0xFFEEF5FF) : const Color(0xFFFEEEE6),
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          isResolved ? '처리완료' : '처리필요',
+                                          style: TextStyle(
+                                            fontFamily: 'Pretendard',
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 11,
+                                            color: isResolved ? const Color(0xFF006FFF) : const Color(0xFFFF6B35),
                                           ),
                                         ),
                                       ),
