@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:building_manage_front/modules/resident/data/datasources/complaint_remote_datasource.dart';
+import 'package:building_manage_front/modules/resident/presentation/providers/resident_providers.dart';
 import 'dart:io';
 
 class ComplaintCreateScreen extends ConsumerStatefulWidget {
@@ -77,12 +77,13 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
     if (!_isFormValid) return;
 
     try {
-      final dataSource = ref.read(complaintRemoteDataSourceProvider);
+      // UseCase를 통한 민원 생성 (비즈니스 로직 포함)
+      final createComplaintUseCase = ref.read(createComplaintUseCaseProvider);
 
       // TODO: 이미지 업로드 API가 있다면 먼저 이미지 업로드 후 imageUrl을 받아오기
       // 현재는 imageUrl을 null로 처리
 
-      await dataSource.createComplaint(
+      await createComplaintUseCase.execute(
         title: _titleController.text.trim(),
         content: _contentController.text.trim(),
         departmentId: widget.departmentId,
