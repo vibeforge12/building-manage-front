@@ -55,11 +55,13 @@ class ApiEndpoints {
   static const String managerComplaintsPending = '$managerComplaints/pending';
   static const String managerComplaintsResolved = '$managerComplaints/resolved';
 
-  // Staff Complaints - 담당자 미완료 민원
+  // Staff Complaints - 담당자 민원
   static const String staffComplaints = '/staffs/complaints';
   static const String staffComplaintsPendingHighlight = '$staffComplaints/pending/highlight';
   static const String staffComplaintsPending = '$staffComplaints/pending';
+  static const String staffComplaintsResolved = '$staffComplaints/resolved';
   static const String staffComplaintDetail = '$staffComplaints/{complaintId}';
+  static const String staffComplaintResolve = '$staffComplaints/{complaintId}/resolve';
 
   // Staff Notices - 담당자 공지사항
   static const String staffNotices = '/staffs/notices';

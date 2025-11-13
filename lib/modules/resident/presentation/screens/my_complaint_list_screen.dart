@@ -223,7 +223,14 @@ class _MyComplaintListScreenState extends ConsumerState<MyComplaintListScreen> {
       ),
       child: InkWell(
         onTap: () {
-          // TODO: 민원 상세 조회 화면으로 이동
+          // 민원 상세 조회 화면으로 이동 (전체 데이터 전달)
+          final complaintId = complaint['id'] as String?;
+          if (complaintId != null) {
+            context.push(
+              '/user/complaint/$complaintId',
+              extra: complaint,
+            );
+          }
         },
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

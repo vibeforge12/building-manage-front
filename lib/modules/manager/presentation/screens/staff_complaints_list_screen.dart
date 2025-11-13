@@ -34,7 +34,11 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
     try {
       final container = ProviderContainer();
       final dataSource = container.read(staffComplaintsRemoteDataSourceProvider);
-      final response = await dataSource.getPendingComplaints(page: page, limit: _pageSize);
+
+      // 탭에 따라 다른 API 호출
+      final response = _tabIndex == 0
+          ? await dataSource.getPendingComplaints(page: page, limit: _pageSize)
+          : await dataSource.getResolvedComplaints(page: page, limit: _pageSize);
 
       if (response['success'] == true && response['data'] != null) {
         final data = response['data'] as Map<String, dynamic>;
@@ -54,7 +58,8 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
         });
       }
     } catch (e) {
-      print('❌ 미완료 민원 목록 조회 실패: $e');
+      final tabName = _tabIndex == 0 ? '미완료' : '처리된';
+      print('❌ $tabName 민원 목록 조회 실패: $e');
       setState(() {
         _error = '민원 로드 중 오류가 발생했습니다.';
         _isLoading = false;
@@ -66,15 +71,15 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
     setState(() {
       _tabIndex = index;
       _currentPage = 1;
+      _allComplaints = []; // 탭 전환 시 기존 데이터 초기화
     });
+    // 새로운 탭의 데이터 로드
+    _loadComplaints();
   }
 
-  // 현재 탭에 맞는 민원 필터링
+  // 탭에 따른 민원 리스트 (필터링 제거, 직접 받아온 데이터 사용)
   List<Map<String, dynamic>> get _filteredComplaints {
-    return _allComplaints.where((complaint) {
-      final isResolved = complaint['isResolved'] as bool? ?? false;
-      return _tabIndex == 0 ? !isResolved : isResolved;
-    }).toList();
+    return _allComplaints;
   }
 
   String _formatDate(String? dateString) {
@@ -348,7 +353,19 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
                                         height: 32,
                                         child: ElevatedButton(
                                           onPressed: () {
-                                            // TODO: 민원 처리 기능 (API 추가 예정)
+                                            // 탭에 따라 다른 동작
+                                            if (complaintId != null) {
+                                              if (_tabIndex == 0) {
+                                                // 미완료 민원: 처리 등록 화면으로 이동
+                                                context.push(
+                                                  '/manager/complaint-resolve/$complaintId',
+                                                  extra: title,
+                                                );
+                                              } else {
+                                                // 처리된 민원: 상세 조회 화면으로 이동
+                                                context.push('/manager/complaint-detail/$complaintId');
+                                              }
+                                            }
                                           },
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: Colors.white,
@@ -363,9 +380,9 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
                                             ),
                                             padding: EdgeInsets.zero,
                                           ),
-                                          child: const Text(
-                                            '확인',
-                                            style: TextStyle(
+                                          child: Text(
+                                            _tabIndex == 0 ? '확인' : '보기',
+                                            style: const TextStyle(
                                               fontFamily: 'Pretendard',
                                               fontWeight: FontWeight.w600,
                                               fontSize: 12,
