@@ -31,6 +31,7 @@ import 'package:building_manage_front/modules/admin/presentation/screens/complai
 import 'package:building_manage_front/modules/manager/presentation/screens/manager_dashboard_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/manager_staff_login_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/attendance_history_screen.dart';
+import 'package:building_manage_front/modules/manager/presentation/screens/staff_complaint_detail_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/headquarters_login_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/headquarters_dashboard_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/building_management_screen.dart';
@@ -89,6 +90,7 @@ class RouterNotifier extends ChangeNotifier {
       '/admin/notice-detail',
       '/manager/dashboard',
       '/manager/attendance-history',
+      '/manager/complaint-detail/:complaintId',
       '/headquarters/dashboard',
       '/headquarters/building-management',
       '/headquarters/building-registration',
@@ -365,6 +367,16 @@ class RouterNotifier extends ChangeNotifier {
       path: '/manager/attendance-history',
       name: 'attendanceHistory',
       builder: (context, state) => const AttendanceHistoryScreen(),
+    ),
+
+    // 민원 상세 조회 (담당자 전용)
+    GoRoute(
+      path: '/manager/complaint-detail/:complaintId',
+      name: 'staffComplaintDetail',
+      builder: (context, state) {
+        final complaintId = state.pathParameters['complaintId']!;
+        return StaffComplaintDetailScreen(complaintId: complaintId);
+      },
     ),
 
     // 본사 대시보드 (보호된 경로)
