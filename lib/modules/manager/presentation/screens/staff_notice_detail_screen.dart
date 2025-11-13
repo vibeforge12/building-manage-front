@@ -169,40 +169,7 @@ class _StaffNoticeDetailScreenState extends State<StaffNoticeDetailScreen> {
                             ],
                           ),
                         ),
-                        // 이미지
-                        if (_noticeData?['imageUrl'] != null &&
-                            (_noticeData?['imageUrl'] as String?)?.isNotEmpty == true)
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(0),
-                            child: CachedNetworkImage(
-                              imageUrl: _noticeData!['imageUrl'] as String,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: 240,
-                              progressIndicatorBuilder: (context, url, downloadProgress) {
-                                return Container(
-                                  color: const Color(0xFFF2F8FC),
-                                  height: 240,
-                                  child: Center(
-                                    child: CircularProgressIndicator(
-                                      value: downloadProgress.progress,
-                                      color: const Color(0xFF006FFF),
-                                    ),
-                                  ),
-                                );
-                              },
-                              errorWidget: (context, url, error) => Container(
-                                color: const Color(0xFFF2F8FC),
-                                height: 240,
-                                child: const Center(
-                                  child: Icon(
-                                    Icons.error,
-                                    color: Color(0xFFA4ADB2),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
+                        // 콘텐츠 영역 (제목, 구분선, 이미지, 본문)
                         Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
@@ -221,28 +188,61 @@ class _StaffNoticeDetailScreenState extends State<StaffNoticeDetailScreen> {
                                   color: Color(0xFF000000),
                                 ),
                               ),
+                              const SizedBox(height: 12),
+                              // 제목 밑 구분선
+                              Container(
+                                height: 1,
+                                color: const Color(0xFFE8EEF2),
+                              ),
+                              const SizedBox(height: 16),
+                              // 본문 시작 부분
+                              Text(
+                                _noticeData?['content'] ?? '',
+                                style: const TextStyle(
+                                  fontFamily: 'Pretendard',
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 16,
+                                  color: Color(0xFF464A4D),
+                                  height: 1.8,
+                                ),
+                              ),
+                              // 이미지 (본문 안에)
+                              if (_noticeData?['imageUrl'] != null &&
+                                  (_noticeData?['imageUrl'] as String?)?.isNotEmpty == true) ...[
+                                const SizedBox(height: 16),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: CachedNetworkImage(
+                                    imageUrl: _noticeData!['imageUrl'] as String,
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    height: 240,
+                                    progressIndicatorBuilder: (context, url, downloadProgress) {
+                                      return Container(
+                                        color: const Color(0xFFF2F8FC),
+                                        height: 240,
+                                        child: Center(
+                                          child: CircularProgressIndicator(
+                                            value: downloadProgress.progress,
+                                            color: const Color(0xFF006FFF),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    errorWidget: (context, url, error) => Container(
+                                      color: const Color(0xFFF2F8FC),
+                                      height: 240,
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.error,
+                                          color: Color(0xFFA4ADB2),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ],
-                          ),
-                        ),
-                        // 제목 밑 구분선
-                        Container(
-                          height: 1,
-                          color: const Color(0xFFE8EEF2),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 16,
-                          ),
-                          child: Text(
-                            _noticeData?['content'] ?? '',
-                            style: const TextStyle(
-                              fontFamily: 'Pretendard',
-                              fontWeight: FontWeight.w400,
-                              fontSize: 16,
-                              color: Color(0xFF464A4D),
-                              height: 1.8,
-                            ),
                           ),
                         ),
                       ],
