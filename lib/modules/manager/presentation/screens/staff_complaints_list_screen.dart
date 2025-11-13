@@ -273,10 +273,10 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
                             ],
                           ),
                         )
-                      : _complaints.isEmpty
+                      : _filteredComplaints.isEmpty
                           ? const Center(
                               child: Text(
-                                '미완료 민원이 없습니다.',
+                                '민원이 없습니다.',
                                 style: TextStyle(
                                   fontFamily: 'Pretendard',
                                   fontWeight: FontWeight.w400,
