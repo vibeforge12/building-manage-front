@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:building_manage_front/modules/admin/data/datasources/staff_remote_datasource.dart';
+import 'package:building_manage_front/modules/admin/presentation/providers/admin_providers.dart';
 import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 
 /// 담당자 계정 발급 상태
@@ -33,11 +33,11 @@ class StaffAccountIssuanceState {
 
 /// 담당자 계정 발급 관리 Notifier
 class StaffAccountIssuanceNotifier extends StateNotifier<StaffAccountIssuanceState> {
-  final StaffRemoteDataSource _dataSource;
+  final Ref _ref;
 
-  StaffAccountIssuanceNotifier(this._dataSource) : super(StaffAccountIssuanceState());
+  StaffAccountIssuanceNotifier(this._ref) : super(StaffAccountIssuanceState());
 
-  /// 담당자 계정 발급
+  /// 담당자 계정 발급 (UseCase를 통한 비즈니스 로직 포함)
   Future<void> createStaffAccount({
     required String name,
     required String phoneNumber,
@@ -54,7 +54,9 @@ class StaffAccountIssuanceNotifier extends StateNotifier<StaffAccountIssuanceSta
       print('   - 부서 ID: $departmentId');
       print('   - 이미지 URL: ${imageUrl ?? "(없음)"}');
 
-      final response = await _dataSource.createStaff(
+      // UseCase를 통한 담당자 계정 생성 (비즈니스 로직 포함)
+      final createStaffUseCase = _ref.read(createStaffUseCaseProvider);
+      final staff = await createStaffUseCase.execute(
         name: name,
         phoneNumber: phoneNumber,
         departmentId: departmentId,
@@ -62,12 +64,12 @@ class StaffAccountIssuanceNotifier extends StateNotifier<StaffAccountIssuanceSta
       );
 
       print('✅ ========== 담당자 계정 발급 성공 ==========');
-      print('📦 서버 응답:');
-      print('   $response');
+      print('📦 생성된 Staff:');
+      print('   $staff');
 
       state = state.copyWith(
         isLoading: false,
-        createdStaff: response,
+        createdStaff: staff.toJson(),
         isSuccess: true,
       );
     } on ApiException catch (e) {
@@ -87,7 +89,7 @@ class StaffAccountIssuanceNotifier extends StateNotifier<StaffAccountIssuanceSta
 
       state = state.copyWith(
         isLoading: false,
-        error: '담당자 계정 발급 중 오류가 발생했습니다.',
+        error: e.toString(),
         isSuccess: false,
       );
     }
@@ -102,6 +104,5 @@ class StaffAccountIssuanceNotifier extends StateNotifier<StaffAccountIssuanceSta
 /// 담당자 계정 발급 Provider
 final staffAccountIssuanceProvider =
     StateNotifierProvider<StaffAccountIssuanceNotifier, StaffAccountIssuanceState>((ref) {
-  final dataSource = ref.watch(staffRemoteDataSourceProvider);
-  return StaffAccountIssuanceNotifier(dataSource);
+  return StaffAccountIssuanceNotifier(ref);
 });
