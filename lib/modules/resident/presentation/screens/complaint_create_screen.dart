@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:building_manage_front/modules/resident/presentation/providers/resident_providers.dart';
+import 'package:building_manage_front/modules/common/services/image_upload_service.dart';
 import 'dart:io';
 
 class ComplaintCreateScreen extends ConsumerStatefulWidget {
@@ -24,6 +26,8 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
   final TextEditingController _contentController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   XFile? _selectedImage;
+  String? _uploadedImageUrl;
+  bool _isUploadingImage = false;
 
   @override
   void initState() {
@@ -77,17 +81,55 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
     if (!_isFormValid) return;
 
     try {
+      String? imageUrl = _uploadedImageUrl;
+
+      // 이미지가 선택되었지만 아직 업로드되지 않았으면 업로드 처리
+      if (_selectedImage != null && _uploadedImageUrl == null) {
+        setState(() {
+          _isUploadingImage = true;
+        });
+
+        try {
+          final imageUploadService = ref.read(imageUploadServiceProvider);
+          final fileBytes = await _selectedImage!.readAsBytes();
+
+          imageUrl = await imageUploadService.uploadImage(
+            fileBytes: fileBytes,
+            fileName: _selectedImage!.name,
+            contentType: 'image/jpeg',
+            folder: 'complaints',
+          );
+
+          setState(() {
+            _uploadedImageUrl = imageUrl;
+            _isUploadingImage = false;
+          });
+        } catch (e) {
+          setState(() {
+            _isUploadingImage = false;
+          });
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('이미지 업로드 실패: $e'),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+          return;
+        }
+      }
+
       // UseCase를 통한 민원 생성 (비즈니스 로직 포함)
       final createComplaintUseCase = ref.read(createComplaintUseCaseProvider);
-
-      // TODO: 이미지 업로드 API가 있다면 먼저 이미지 업로드 후 imageUrl을 받아오기
-      // 현재는 imageUrl을 null로 처리
 
       await createComplaintUseCase.execute(
         title: _titleController.text.trim(),
         content: _contentController.text.trim(),
         departmentId: widget.departmentId,
-        imageUrl: null, // TODO: 이미지 업로드 후 URL 반환
+        imageUrl: imageUrl,
       );
 
       // 등록 완료 화면으로 이동
@@ -118,6 +160,202 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
         );
       }
     }
+  }
+
+  Widget _buildImagePreview() {
+    // 업로드 중일 때
+    if (_isUploadingImage) {
+      return Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF2F8FC),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 48,
+              height: 48,
+              child: CircularProgressIndicator(
+                color: Color(0xFF006FFF),
+                strokeWidth: 3,
+              ),
+            ),
+            SizedBox(height: 12),
+            Text(
+              '이미지 업로드 중...',
+              style: TextStyle(
+                fontFamily: 'Pretendard',
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+                color: Color(0xFF006FFF),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // 업로드된 이미지가 있을 때
+    if (_uploadedImageUrl != null) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: CachedNetworkImage(
+              imageUrl: _uploadedImageUrl!,
+              fit: BoxFit.cover,
+              progressIndicatorBuilder: (context, url, downloadProgress) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF2F8FC),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 48,
+                        height: 48,
+                        child: CircularProgressIndicator(
+                          value: downloadProgress.progress,
+                          color: const Color(0xFF006FFF),
+                          strokeWidth: 3,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+              errorWidget: (context, url, error) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFEBEE),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Color(0xFFFF6B6B),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        '이미지 로드 실패',
+                        style: TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                          color: Color(0xFFFF6B6B),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+          // 삭제 버튼
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.5),
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                iconSize: 20,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: 36,
+                  minHeight: 36,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _selectedImage = null;
+                    _uploadedImageUrl = null;
+                  });
+                },
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // 선택된 로컬 이미지가 있을 때 (미업로드 상태)
+    if (_selectedImage != null) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.file(
+              File(_selectedImage!.path),
+              fit: BoxFit.cover,
+            ),
+          ),
+          // 삭제 버튼
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.5),
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                iconSize: 20,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: 36,
+                  minHeight: 36,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _selectedImage = null;
+                  });
+                },
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // 이미지 미선택 상태
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF2F8FC),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.add_photo_alternate_outlined,
+            size: 48,
+            color: Color(0xFFA4ADB2),
+          ),
+          SizedBox(height: 8),
+          Text(
+            '사진 첨부',
+            style: TextStyle(
+              fontFamily: 'Pretendard',
+              fontWeight: FontWeight.w400,
+              fontSize: 14,
+              color: Color(0xFFA4ADB2),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -183,7 +421,7 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
 
             // 이미지 첨부 영역
             GestureDetector(
-              onTap: _pickImage,
+              onTap: _isUploadingImage ? null : _pickImage,
               child: Container(
                 width: double.infinity,
                 height: 245,
@@ -193,41 +431,7 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
                     bottom: BorderSide(color: Color(0xFFE8EEF2), width: 1),
                   ),
                 ),
-                child: _selectedImage == null
-                    ? Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF2F8FC),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.add_photo_alternate_outlined,
-                              size: 48,
-                              color: Color(0xFFA4ADB2),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              '사진 첨부',
-                              style: TextStyle(
-                                fontFamily: 'Pretendard',
-                                fontWeight: FontWeight.w400,
-                                fontSize: 14,
-                                color: Color(0xFFA4ADB2),
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.file(
-                          File(_selectedImage!.path),
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                        ),
-                      ),
+                child: _buildImagePreview(),
               ),
             ),
 
