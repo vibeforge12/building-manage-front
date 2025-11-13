@@ -19,8 +19,14 @@ class NoticeRemoteDataSource {
 
   /// 이벤트 하이라이트 조회
   Future<Map<String, dynamic>> getEventHighlights() async {
-    final response = await _apiClient.get('/users/events/highlight');
-    return response.data;
+    try {
+      final response = await _apiClient.get('/events/highlight');
+      print('✅ 이벤트 API 응답: ${response.data}');
+      return response.data;
+    } catch (e) {
+      print('❌ 이벤트 API 에러: $e');
+      rethrow;
+    }
   }
 
   /// 공지사항 목록 조회
@@ -36,8 +42,21 @@ class NoticeRemoteDataSource {
   }
 
   /// 공지사항 상세 조회
+  Future<Map<String, dynamic>> getNoticeDetail({required String noticeId}) async {
+    final response = await _apiClient.get('/notices/$noticeId');
+    return response.data;
+  }
+
+  /// 공지사항 상세 조회 (구 메서드)
+  @deprecated
   Future<Map<String, dynamic>> getNoticeById(String id) async {
     final response = await _apiClient.get('/users/notices/$id');
+    return response.data;
+  }
+
+  /// 이벤트 상세 조회
+  Future<Map<String, dynamic>> getEventDetail({required String eventId}) async {
+    final response = await _apiClient.get('/events/$eventId');
     return response.data;
   }
 }

@@ -10,6 +10,8 @@ import 'package:building_manage_front/modules/auth/presentation/screens/admin_lo
 import 'package:building_manage_front/modules/resident/presentation/screens/resident_signup_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/user_login_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/user_dashboard_screen.dart';
+import 'package:building_manage_front/modules/resident/presentation/screens/notice_detail_screen.dart';
+import 'package:building_manage_front/modules/resident/presentation/screens/event_detail_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/complaint_create_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/complaint_complete_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/resident_approval_pending_screen.dart';
@@ -23,6 +25,8 @@ import 'package:building_manage_front/modules/admin/presentation/screens/staff_e
 import 'package:building_manage_front/modules/admin/presentation/screens/resident_management_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/notice_management_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/notice_create_screen.dart';
+import 'package:building_manage_front/modules/admin/presentation/screens/complaint_management_screen.dart';
+import 'package:building_manage_front/modules/admin/presentation/screens/complaint_detail_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/manager_dashboard_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/manager_staff_login_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/attendance_history_screen.dart';
@@ -73,9 +77,13 @@ class RouterNotifier extends ChangeNotifier {
     // 인증이 필요한 경로들
     final protectedRoutes = [
       '/user/dashboard',
+      '/user/notice',
+      '/user/event',
       '/user/complaint-create',
       '/user/complaint-complete',
       '/admin/dashboard',
+      '/admin/complaint-management',
+      '/admin/complaint-detail',
       '/admin/notice-detail',
       '/manager/dashboard',
       '/manager/attendance-history',
@@ -192,6 +200,26 @@ class RouterNotifier extends ChangeNotifier {
       builder: (context, state) => const UserDashboardScreen(),
     ),
 
+    // 공지사항 상세 (보호된 경로) - 입주민용
+    GoRoute(
+      path: '/user/notice/:noticeId',
+      name: 'userNoticeDetail',
+      builder: (context, state) {
+        final noticeId = state.pathParameters['noticeId']!;
+        return NoticeDetailScreen(noticeId: noticeId);
+      },
+    ),
+
+    // 이벤트 상세 (보호된 경로) - 입주민용
+    GoRoute(
+      path: '/user/event/:eventId',
+      name: 'userEventDetail',
+      builder: (context, state) {
+        final eventId = state.pathParameters['eventId']!;
+        return EventDetailScreen(eventId: eventId);
+      },
+    ),
+
     // 민원 등록 (보호된 경로)
     GoRoute(
       path: '/user/complaint-create',
@@ -296,6 +324,23 @@ class RouterNotifier extends ChangeNotifier {
           noticeId: noticeId,
           isEvent: isEvent,
         );
+      },
+    ),
+
+    // 민원 관리 (보호된 경로)
+    GoRoute(
+      path: '/admin/complaint-management',
+      name: 'complaintManagement',
+      builder: (context, state) => const ComplaintManagementScreen(),
+    ),
+
+    // 민원 상세 (보호된 경로)
+    GoRoute(
+      path: '/admin/complaint-detail/:complaintId',
+      name: 'complaintDetail',
+      builder: (context, state) {
+        final complaintId = state.pathParameters['complaintId']!;
+        return ComplaintDetailScreen(complaintId: complaintId);
       },
     ),
 
