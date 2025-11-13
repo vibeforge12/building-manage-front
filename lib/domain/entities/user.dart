@@ -13,6 +13,7 @@ class User extends Equatable {
     this.phoneNumber,
     this.permissions = const {},
     this.profileImageUrl,
+    this.approvalStatus,
   });
 
   final String id;
@@ -25,6 +26,7 @@ class User extends Equatable {
   final String? phoneNumber;
   final Map<String, dynamic> permissions;
   final String? profileImageUrl;
+  final String? approvalStatus; // PENDING, APPROVED, REJECTED
 
   // API 응답에서 User 객체 생성
   factory User.fromJson(Map<String, dynamic> json) {
@@ -66,6 +68,7 @@ class User extends Equatable {
       phoneNumber: phoneNumber,
       permissions: (json['permissions'] as Map<String, dynamic>?) ?? {},
       profileImageUrl: json['profileImageUrl'] as String?,
+      approvalStatus: json['approvalStatus'] as String?,
     );
 
     print('✅ User.fromJson - Created user with phoneNumber: ${user.phoneNumber}');
@@ -85,6 +88,7 @@ class User extends Equatable {
       'phoneNumber': phoneNumber,
       'permissions': permissions,
       'profileImageUrl': profileImageUrl,
+      'approvalStatus': approvalStatus,
     };
   }
 
@@ -112,6 +116,7 @@ class User extends Equatable {
     String? phoneNumber,
     Map<String, dynamic>? permissions,
     String? profileImageUrl,
+    String? approvalStatus,
   }) {
     return User(
       id: id ?? this.id,
@@ -124,6 +129,7 @@ class User extends Equatable {
       phoneNumber: phoneNumber ?? this.phoneNumber,
       permissions: permissions ?? this.permissions,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
+      approvalStatus: approvalStatus ?? this.approvalStatus,
     );
   }
 
@@ -139,5 +145,6 @@ class User extends Equatable {
         phoneNumber,
         permissions,
         profileImageUrl,
+        approvalStatus,
       ];
 }
