@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:building_manage_front/modules/headquarters/domain/entities/building.dart';
 
 /// 건물 관리 Repository 인터페이스
@@ -9,7 +8,7 @@ abstract class BuildingRepository {
   ///
   /// [name] 건물 이름
   /// [address] 건물 주소
-  /// [image] 건물 이미지 (선택)
+  /// [imageUrl] 건물 이미지 URL (S3에 업로드된 URL, 선택)
   /// [memo] 메모 (선택)
   ///
   /// Returns: 생성된 Building 엔티티
@@ -17,7 +16,7 @@ abstract class BuildingRepository {
   Future<Building> createBuilding({
     required String name,
     required String address,
-    File? image,
+    String? imageUrl,
     String? memo,
   });
 

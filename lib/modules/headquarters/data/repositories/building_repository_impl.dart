@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:building_manage_front/modules/headquarters/domain/entities/building.dart';
 import 'package:building_manage_front/modules/headquarters/domain/repositories/building_repository.dart';
 import 'package:building_manage_front/modules/headquarters/data/datasources/building_remote_datasource.dart';
@@ -15,14 +14,14 @@ class BuildingRepositoryImpl implements BuildingRepository {
   Future<Building> createBuilding({
     required String name,
     required String address,
-    File? image,
+    String? imageUrl,
     String? memo,
   }) async {
     try {
       final response = await _dataSource.createBuilding(
         name: name,
         address: address,
-        image: image,
+        imageUrl: imageUrl,
         memo: memo,
       );
 
