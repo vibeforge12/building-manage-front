@@ -54,7 +54,7 @@ class BuildingRemoteDataSource {
   }) async {
     try {
       final response = await _apiClient.get(
-        ApiEndpoints.buildings,
+        ApiEndpoints.commonBuildings,
         queryParameters: {
           if (keyword != null && keyword.isNotEmpty) 'keyword': keyword,
           if (headquartersId != null) 'headquartersId': headquartersId,
