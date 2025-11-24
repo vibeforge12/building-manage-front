@@ -40,10 +40,13 @@ class ApiEndpoints {
 
   // Common endpoints - 공통
   static const String common = '/common';
-  static const String buildings = '$common/buildings';
+  static const String commonBuildings = '$common/buildings';
   static const String notifications = '/notifications';
   static const String announcements = '/announcements';
   static const String facilities = '/facilities';
+
+  // Headquarters buildings endpoints
+  static const String headquartersBuildings = '$headquarters/buildings';
 
   // Departments - 부서 관련
   static const String departments = '$common/departments';
