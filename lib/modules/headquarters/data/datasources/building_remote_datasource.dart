@@ -28,10 +28,10 @@ class BuildingRemoteDataSource {
         if (memo != null && memo.isNotEmpty) 'memo': memo,
       };
 
-      print('📤 API 호출: POST ${ApiEndpoints.buildings}');
+      print('📤 API 호출: POST ${ApiEndpoints.headquartersBuildings}');
 
       final response = await _apiClient.post(
-        ApiEndpoints.buildings,
+        ApiEndpoints.headquartersBuildings,
         data: requestData,
       );
 

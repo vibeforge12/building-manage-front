@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:building_manage_front/core/network/api_client.dart';
+import 'package:building_manage_front/core/constants/api_endpoints.dart';
 
 class BuildingListRemoteDataSource {
   final ApiClient _apiClient;
@@ -34,10 +35,10 @@ class BuildingListRemoteDataSource {
         queryParameters['status'] = status;
       }
 
-      print('📤 API 호출: GET /api/v1/common/buildings');
+      print('📤 API 호출: GET ${ApiEndpoints.commonBuildings}');
 
       final response = await _apiClient.get(
-        '/common/buildings',
+        ApiEndpoints.commonBuildings,
         queryParameters: queryParameters,
       );
 
@@ -59,11 +60,10 @@ class BuildingListRemoteDataSource {
   Future<Map<String, dynamic>> deleteBuilding(String buildingId) async {
     try {
       print('🗑️ 건물 삭제 시작 - buildingId: $buildingId');
-      print('📤 API 호출: DELETE /api/v1/headquarters/buildings/$buildingId');
+      final endpoint = '${ApiEndpoints.headquartersBuildings}/$buildingId';
+      print('📤 API 호출: DELETE $endpoint');
 
-      final response = await _apiClient.delete(
-        '/headquarters/buildings/$buildingId',
-      );
+      final response = await _apiClient.delete(endpoint);
 
       print('✅ 건물 삭제 응답: ${response.data}');
       return response.data as Map<String, dynamic>;
