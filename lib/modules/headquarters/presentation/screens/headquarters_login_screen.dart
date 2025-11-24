@@ -105,7 +105,7 @@ class _HeadquartersLoginScreenState extends ConsumerState<HeadquartersLoginScree
       ),
       isDense: true,
       filled: true,
-      fillColor: const Color(0xFFF8F9FA),
+      fillColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
