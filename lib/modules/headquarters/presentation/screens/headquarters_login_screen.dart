@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:building_manage_front/shared/widgets/page_header_text.dart';
 import 'package:building_manage_front/data/datasources/auth_remote_datasource.dart';
 import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
@@ -106,7 +105,7 @@ class _HeadquartersLoginScreenState extends ConsumerState<HeadquartersLoginScree
       ),
       isDense: true,
       filled: true,
-      fillColor: theme.colorScheme.surface,
+      fillColor: const Color(0xFFF8F9FA),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -155,7 +154,24 @@ class _HeadquartersLoginScreenState extends ConsumerState<HeadquartersLoginScree
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const PageHeaderText('로그인'),
+        title: const Text(
+          '로그인',
+          style: TextStyle(
+            fontFamily: 'Pretendard',
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+            color: Color(0xFF464A4D),
+          ),
+        ),
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(
+            height: 1,
+            thickness: 1,
+            color: Color(0xFFE8EEF2),
+            // margin: EdgeInsets.zero,
+          ),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
