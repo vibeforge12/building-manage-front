@@ -80,11 +80,21 @@ class _BuildingListScreenState extends ConsumerState<BuildingListScreen> {
       if (response['success'] == true) {
         // 성공 메시지 표시
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('건물이 삭제되었습니다.'),
-              backgroundColor: Colors.green,
+          await showCustomConfirmationDialog(
+            context: context,
+            title: '',
+            content: const Text(
+              '건물이 삭제되었습니다.',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
             ),
+            confirmText: '확인',
+            cancelText: '',
+            barrierDismissible: false,
+            confirmOnLeft: true,
           );
           // 건물 목록 새로고침 트리거
           ref.read(buildingRefreshTriggerProvider.notifier).state++;

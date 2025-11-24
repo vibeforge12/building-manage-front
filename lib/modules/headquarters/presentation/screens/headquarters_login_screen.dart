@@ -147,7 +147,9 @@ class _HeadquartersLoginScreenState extends ConsumerState<HeadquartersLoginScree
     final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
