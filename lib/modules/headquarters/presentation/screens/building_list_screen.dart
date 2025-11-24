@@ -260,6 +260,8 @@ class _BuildingItem extends StatelessWidget {
                     child: Image.network(
                       imageUrl,
                       fit: BoxFit.cover,
+                      width: 72,
+                      height: 72,
                       errorBuilder: (context, error, stackTrace) {
                         return const Icon(
                           Icons.business,
