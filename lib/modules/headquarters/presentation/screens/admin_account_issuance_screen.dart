@@ -100,17 +100,22 @@ class _AdminAccountIssuanceScreenState extends ConsumerState<AdminAccountIssuanc
         // 성공 다이얼로그 표시
         await showCustomConfirmationDialog(
           context: context,
-          title: '계정 발급 완료',
-          content: const Text('관리자 계정이 \n 발급 되었습니다.', style: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.w700),),
+          title: '',
+          content: const Text('관리자 계정이 발급 되었습니다.', style: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.w700),),
           confirmText: '확인',
           cancelText: '',
           barrierDismissible: false,
           confirmOnLeft: true,
         );
 
-        // 다이얼로그가 닫힌 후 화면 닫기
+        // 다이얼로그가 완전히 닫힌 후 본사 메인 화면으로 이동
         if (mounted) {
-          context.pop();
+          // 약간의 딜레이를 줘서 다이얼로그 닫기 애니메이션 완료 대기
+          await Future.delayed(const Duration(milliseconds: 200));
+          if (mounted) {
+            // 본사 대시보드로 명시적 이동
+            context.go('/headquarters/dashboard');
+          }
         }
       }
     } catch (e) {
@@ -167,12 +172,6 @@ class _AdminAccountIssuanceScreenState extends ConsumerState<AdminAccountIssuanc
           ),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.black),
-            onPressed: () {},
-          ),
-        ],
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(1),
           child: SectionDivider(),

@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:building_manage_front/shared/widgets/field_label.dart';
 import 'package:building_manage_front/shared/widgets/primary_action_button.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/providers/headquarters_providers.dart';
+import 'package:building_manage_front/modules/common/services/image_upload_service.dart';
 import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 
 class BuildingRegistrationScreen extends ConsumerStatefulWidget {
@@ -59,12 +60,44 @@ class _BuildingRegistrationScreenState extends ConsumerState<BuildingRegistratio
     });
 
     try {
+      String? imageUrl;
+
+      // 이미지가 선택되었으면 S3에 업로드하고 URL 받기
+      if (_selectedImage != null) {
+        try {
+          print('🖼️ 이미지 S3 업로드 시작');
+          final imageUploadService = ref.read(imageUploadServiceProvider);
+          final fileBytes = await _selectedImage!.readAsBytes();
+
+          imageUrl = await imageUploadService.uploadImage(
+            fileBytes: fileBytes,
+            fileName: _selectedImage!.path.split('/').last,
+            contentType: ImageUploadService.getContentType(_selectedImage!.path),
+            folder: 'buildings',
+          );
+
+          print('✅ 이미지 S3 업로드 완료: $imageUrl');
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('이미지 업로드 실패: $e'),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+          return;
+        }
+      }
+
+      // S3 URL을 포함하여 건물 등록 API 호출
       final buildingDataSource = ref.read(buildingRemoteDataSourceProvider);
 
       final response = await buildingDataSource.createBuilding(
         name: _nameController.text.trim(),
         address: _addressController.text.trim(),
-        image: _selectedImage,
+        imageUrl: imageUrl,
         memo: _memoController.text.trim().isEmpty ? null : _memoController.text.trim(),
       );
 
