@@ -179,6 +179,38 @@ class DepartmentRemoteDataSource {
       throw Exception('부서 생성 중 오류가 발생했습니다: $e');
     }
   }
+
+  /// 부서 삭제
+  /// DELETE /api/v1/headquarters/departments/:departmentId
+  Future<Map<String, dynamic>> deleteDepartment(String departmentId) async {
+    try {
+      print('🗑️ 부서 삭제 시작 - ID: $departmentId');
+
+      final response = await _apiClient.delete(
+        '${ApiEndpoints.headquarters}/departments/$departmentId',
+      );
+
+      print('✅ 부서 삭제 응답: ${response.data}');
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      print('❌ DioException 발생: ${e.message}');
+      print('❌ 응답 데이터: ${e.response?.data}');
+      print('❌ 상태 코드: ${e.response?.statusCode}');
+      throw ApiException(
+        message: '부서 삭제 중 오류가 발생했습니다.',
+        errorCode: 'DEPARTMENT_DELETE_FAILED',
+      );
+    } catch (e) {
+      if (e is ApiException) {
+        rethrow;
+      }
+      print('❌ 일반 예외 발생: $e');
+      throw ApiException(
+        message: '부서 삭제 중 오류가 발생했습니다.',
+        errorCode: 'DEPARTMENT_DELETE_FAILED',
+      );
+    }
+  }
 }
 
 // Riverpod Provider

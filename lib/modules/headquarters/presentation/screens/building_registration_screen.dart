@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:building_manage_front/shared/widgets/field_label.dart';
 import 'package:building_manage_front/shared/widgets/primary_action_button.dart';
-import 'package:building_manage_front/modules/headquarters/data/datasources/building_remote_datasource.dart';
+import 'package:building_manage_front/modules/headquarters/presentation/providers/headquarters_providers.dart';
 import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 
 class BuildingRegistrationScreen extends ConsumerStatefulWidget {
@@ -73,6 +73,8 @@ class _BuildingRegistrationScreenState extends ConsumerState<BuildingRegistratio
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('건물이 성공적으로 등록되었습니다.')),
           );
+          // 건물 목록 새로고침 트리거
+          ref.read(buildingRefreshTriggerProvider.notifier).state++;
           context.pop();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(

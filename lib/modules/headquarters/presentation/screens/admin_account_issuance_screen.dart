@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/shared/widgets/field_label.dart';
 import 'package:building_manage_front/shared/widgets/primary_action_button.dart';
 import 'package:building_manage_front/shared/widgets/section_divider.dart';
+import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
 import 'package:building_manage_front/modules/common/data/datasources/building_list_remote_datasource.dart';
 import 'package:building_manage_front/modules/headquarters/data/datasources/admin_account_remote_datasource.dart';
 
@@ -97,33 +98,20 @@ class _AdminAccountIssuanceScreenState extends ConsumerState<AdminAccountIssuanc
 
       if (mounted) {
         // 성공 다이얼로그 표시
-        showDialog(
+        await showCustomConfirmationDialog(
           context: context,
+          title: '계정 발급 완료',
+          content: const Text('관리자 계정이 \n 발급 되었습니다.', style: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.w700),),
+          confirmText: '확인',
+          cancelText: '',
           barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            icon: const Icon(Icons.check_circle, color: Colors.green, size: 48),
-            title: const Text('계정 발급 완료'),
-            content: const Text(
-              '관리자 계정이 발급되었습니다.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF17191A),
-              ),
-            ),
-
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // 다이얼로그 닫기
-                  context.pop(); // 화면 닫기
-                },
-                child: const Text('확인'),
-              ),
-            ],
-          ),
+          confirmOnLeft: true,
         );
+
+        // 다이얼로그가 닫힌 후 화면 닫기
+        if (mounted) {
+          context.pop();
+        }
       }
     } catch (e) {
       print('❌ 관리자 계정 발급 실패: $e');
@@ -257,19 +245,17 @@ class _AdminAccountIssuanceScreenState extends ConsumerState<AdminAccountIssuanc
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8F9FA),
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFFE8EEF2),
+                      width: 1,
+                    ),
                   ),
-                  child: const Row(
-                    children: [
-                      SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                      SizedBox(width: 12),
-                      Text('건물 목록을 불러오는 중...'),
-                    ],
+                  child: const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                 )
               else if (_errorMessage != null)
@@ -293,47 +279,90 @@ class _AdminAccountIssuanceScreenState extends ConsumerState<AdminAccountIssuanc
                   ),
                 )
               else
-                DropdownButtonFormField<Map<String, dynamic>>(
-                  value: _selectedBuilding,
-                  decoration: const InputDecoration(
-                    hintText: '건물을 선택해주세요',
-                    hintStyle: TextStyle(color: Colors.grey),
+                DropdownMenu<String>(
+                  initialSelection: _selectedBuilding?['id'] as String?,
+                  width: MediaQuery.of(context).size.width - 48,
+                  menuHeight: 300,
+                  requestFocusOnTap: true,
+                  enableFilter: false,
+                  menuStyle: MenuStyle(
+                    backgroundColor: WidgetStateProperty.all(Colors.white),
+                    surfaceTintColor: WidgetStateProperty.all(Colors.white),
+                    elevation: WidgetStateProperty.all(8),
+                    shape: WidgetStateProperty.all(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                  textStyle: const TextStyle(
+                    fontFamily: 'Pretendard',
+                    fontWeight: FontWeight.w400,
+                    fontSize: 16,
+                    color: Color(0xFF464A4D),
+                  ),
+                  inputDecorationTheme: InputDecorationTheme(
                     filled: true,
-                    fillColor: Color(0xFFF8F9FA),
-                    border: OutlineInputBorder(
+                    fillColor: const Color(0xFFF8F9FA),
+                    hintStyle: const TextStyle(
+                      fontFamily: 'Pretendard',
+                      fontWeight: FontWeight.w400,
+                      fontSize: 16,
+                      color: Colors.grey,
+                    ),
+                    border: const OutlineInputBorder(
                       borderRadius: BorderRadius.all(Radius.circular(12)),
                       borderSide: BorderSide.none,
                     ),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    enabledBorder: const OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF006FFF),
+                        width: 1.5,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
                   ),
-                  items: _buildings.map((building) {
-                    return DropdownMenuItem<Map<String, dynamic>>(
-                      value: building,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            building['name'] ?? '건물명 없음',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+                  trailingIcon: const Icon(
+                    Icons.keyboard_arrow_down,
+                    size: 20,
+                    color: Color(0xFF757B80),
+                  ),
+                  selectedTrailingIcon: const Icon(
+                    Icons.keyboard_arrow_up,
+                    size: 20,
+                    color: Color(0xFF006FFF),
+                  ),
+                  dropdownMenuEntries: _buildings.map((building) {
+                    return DropdownMenuEntry<String>(
+                      value: building['id'] as String,
+                      label: building['name'] as String,
+                      style: MenuItemButton.styleFrom(
+                        foregroundColor: const Color(0xFF464A4D),
+                        backgroundColor: Colors.white,
+                        textStyle: const TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontWeight: FontWeight.w400,
+                          fontSize: 16,
+                        ),
                       ),
                     );
                   }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedBuilding = value;
-                    });
-                  },
-                  validator: (value) {
-                    if (value == null) {
-                      return '건물을 선택해주세요';
+                  onSelected: (value) {
+                    if (value != null) {
+                      setState(() {
+                        _selectedBuilding = _buildings.firstWhere(
+                          (building) => building['id'] as String == value,
+                        );
+                      });
                     }
-                    return null;
                   },
                 ),
 

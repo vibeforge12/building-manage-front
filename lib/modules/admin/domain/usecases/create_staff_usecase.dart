@@ -45,8 +45,8 @@ class CreateStaffUseCase {
     }
 
     // 전화번호 형식 검증
-    final phoneRegex = RegExp(r'^\\d{10,11}$');
     final cleanedPhone = phoneNumber.replaceAll(RegExp(r'[^0-9]'), '');
+    final phoneRegex = RegExp(r'^\d{10,11}$');
     if (!phoneRegex.hasMatch(cleanedPhone)) {
       throw Exception('올바른 전화번호 형식이 아닙니다.');
     }

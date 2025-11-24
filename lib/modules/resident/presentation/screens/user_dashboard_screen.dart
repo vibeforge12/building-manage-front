@@ -537,7 +537,43 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
                 ),
               ),
             ),
-              const Spacer(),
+            // 메뉴 아이템 3: 로그아웃
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () async {
+                  // 로그아웃 처리
+                  final authStateNotifier = ref.read(authStateProvider.notifier);
+                  await authStateNotifier.logout();
+                  if (mounted) {
+                    context.go('/');
+                  }
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        '로그아웃',
+                        style: TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontWeight: FontWeight.w400,
+                          fontSize: 16,
+                          color: Color(0xFF17191A),
+                        ),
+                      ),
+                      const Icon(
+                        Icons.logout,
+                        size: 16,
+                        color: Color(0xFF757B80),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const Spacer(),
             ],
           ),
         ),
@@ -587,41 +623,44 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
   }
 
   Widget _buildDepartmentGrid() {
-    // 모든 부서를 표시 (필터링 제거)
-    return Column(
-      children: [
-        Row(
-          children: [
-            if (_departments.isNotEmpty)
-              Expanded(child: _buildDepartmentCard(_departments[0])),
-            if (_departments.length > 1) ...[
-              const SizedBox(width: 8),
-              Expanded(child: _buildDepartmentCard(_departments[1])),
-            ],
-            if (_departments.length > 2) ...[
-              const SizedBox(width: 8),
-              Expanded(child: _buildDepartmentCard(_departments[2])),
-            ],
-          ],
-        ),
-        if (_departments.length > 3) ...[
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(child: _buildDepartmentCard(_departments[3])),
-              if (_departments.length > 4) ...[
-                const SizedBox(width: 8),
-                Expanded(child: _buildDepartmentCard(_departments[4])),
-              ],
-              if (_departments.length > 5) ...[
-                const SizedBox(width: 8),
-                Expanded(child: _buildDepartmentCard(_departments[5])),
-              ],
-            ],
-          ),
-        ],
-      ],
-    );
+    // 모든 부서를 3개씩 행으로 표시 (동적으로 계속 생성)
+    List<Widget> rows = [];
+
+    for (int i = 0; i < _departments.length; i += 3) {
+      List<Widget> rowChildren = [];
+
+      // 첫 번째 부서
+      rowChildren.add(Expanded(child: _buildDepartmentCard(_departments[i])));
+
+      // 두 번째 부서 (있으면)
+      if (i + 1 < _departments.length) {
+        rowChildren.add(const SizedBox(width: 8));
+        rowChildren.add(Expanded(child: _buildDepartmentCard(_departments[i + 1])));
+      } else {
+        rowChildren.add(const SizedBox(width: 8));
+        rowChildren.add(const Expanded(child: SizedBox()));
+      }
+
+      // 세 번째 부서 (있으면)
+      if (i + 2 < _departments.length) {
+        rowChildren.add(const SizedBox(width: 8));
+        rowChildren.add(Expanded(child: _buildDepartmentCard(_departments[i + 2])));
+      } else {
+        rowChildren.add(const SizedBox(width: 8));
+        rowChildren.add(const Expanded(child: SizedBox()));
+      }
+
+      rows.add(
+        Row(children: rowChildren),
+      );
+
+      // 다음 행과의 간격
+      if (i + 3 < _departments.length) {
+        rows.add(const SizedBox(height: 8));
+      }
+    }
+
+    return Column(children: rows);
   }
 
   Widget _buildDepartmentCard(Map<String, dynamic> department) {

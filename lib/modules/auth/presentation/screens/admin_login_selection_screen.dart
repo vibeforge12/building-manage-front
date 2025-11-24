@@ -31,17 +31,21 @@ class AdminLoginSelectionScreen extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  const PageHeaderText('관리자 로그인'),
-                  const SizedBox(height: 8),
-                  Text(
-                    '본사, 관리자, 담당자를 구분해 로그인하세요.',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Colors.white.withValues(alpha: 0.85),
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        '관리자님 어서오세요',
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: Colors.white,
+                            fontSize: 36,
+                            fontWeight: FontWeight.w700
+                        ),
+                      ),
+                    ],
                   ),
-                  const Spacer(),
+                  const SizedBox(height: 60),
                   PrimaryActionButton(
                     label: '본사 로그인',
                     backgroundColor: const Color(0xFFEDF9FF),

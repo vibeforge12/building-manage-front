@@ -64,7 +64,16 @@ dependencies:
 
   # Environment Configuration
   flutter_dotenv: ^5.1.0
+
+  # Firebase & Cloud Messaging
   firebase_core: ^4.2.0
+  firebase_messaging: ^16.0.3
+
+  # Local & Remote Notifications
+  flutter_local_notifications: ^16.3.0
+
+  # Localization (for intl messages)
+  intl: ^0.20.0
 
 dev_dependencies:
   flutter_test:

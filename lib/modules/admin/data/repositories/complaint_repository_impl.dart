@@ -81,8 +81,10 @@ class ComplaintRepositoryImpl implements ComplaintRepository {
   @override
   Future<AdminComplaint> getComplaintDetail({required String complaintId}) async {
     try {
-      final json = await _dataSource.getComplaintDetail(complaintId: complaintId);
-      return AdminComplaint.fromJson(json);
+      final response = await _dataSource.getComplaintDetail(complaintId: complaintId);
+      // API 응답: { success, data: {...} }
+      final complaintData = response['data'] as Map<String, dynamic>? ?? response;
+      return AdminComplaint.fromJson(complaintData);
     } catch (e) {
       rethrow;
     }

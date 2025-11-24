@@ -164,7 +164,7 @@ class HeadquartersDashboardScreen extends ConsumerWidget {
                             child: InkWell(
                               borderRadius: BorderRadius.circular(16),
                               onTap: () {
-                                context.goNamed('buildingManagement');
+                                context.goNamed('managementSelection');
                               },
                               child: Padding(
                                 padding: EdgeInsets.all(12),

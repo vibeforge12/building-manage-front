@@ -19,16 +19,25 @@ class PaginatedComplaintResponse extends Equatable {
 
   /// JSON에서 생성
   factory PaginatedComplaintResponse.fromJson(Map<String, dynamic> json) {
-    final dataList = (json['data'] as List<dynamic>?)
+    // API 응답 구조: { success, data: { items, meta } }
+    final responseData = json['data'] as Map<String, dynamic>?;
+    final items = (responseData?['items'] as List<dynamic>?)
         ?.map((item) => AdminComplaint.fromJson(item as Map<String, dynamic>))
         .toList() ?? [];
 
+    final meta = responseData?['meta'] as Map<String, dynamic>? ?? {};
+
+    final page = meta['page'] as int? ?? 1;
+    final limit = meta['limit'] as int? ?? 20;
+    final total = meta['total'] as int? ?? 0;
+    final totalPages = (total / limit).ceil();
+
     return PaginatedComplaintResponse(
-      data: dataList,
-      page: json['page'] as int? ?? 1,
-      limit: json['limit'] as int? ?? 20,
-      total: json['total'] as int? ?? 0,
-      totalPages: json['totalPages'] as int? ?? 0,
+      data: items,
+      page: page,
+      limit: limit,
+      total: total,
+      totalPages: totalPages,
     );
   }
 

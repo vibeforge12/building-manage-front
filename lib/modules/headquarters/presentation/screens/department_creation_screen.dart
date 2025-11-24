@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:building_manage_front/shared/widgets/field_label.dart';
 import 'package:building_manage_front/shared/widgets/primary_action_button.dart';
 import 'package:building_manage_front/modules/headquarters/data/datasources/department_remote_datasource.dart';
+import 'package:building_manage_front/modules/headquarters/presentation/providers/headquarters_providers.dart';
 import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 
 class DepartmentCreationScreen extends ConsumerStatefulWidget {
@@ -66,6 +67,10 @@ class _DepartmentCreationScreenState extends ConsumerState<DepartmentCreationScr
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('부서가 성공적으로 생성되었습니다.')),
           );
+
+          // 부서 목록 새로고침 트리거 - BuildingManagementScreen의 부서 목록이 즉시 업데이트됨
+          ref.read(departmentRefreshTriggerProvider.notifier).state++;
+
           context.pop();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
