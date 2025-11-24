@@ -1,8 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:building_manage_front/app/app.dart';
 import 'package:building_manage_front/core/network/api_client.dart';
+import 'firebase_options.dart';
+
+/// 백그라운드에서 FCM 메시지 처리
+/// 앱이 종료되거나 백그라운드에 있을 때 실행
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Firebase 초기화 (백그라운드에서)
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  print('🔔 백그라운드 메시지 처리: ${message.notification?.title}');
+  print('📋 데이터: ${message.data}');
+
+  // 여기서 백그라운드 작업 처리 가능
+  // 예: 데이터베이스 저장, 상태 업데이트 등
+}
 
 void main() async {
   // Flutter 바인딩 보장
@@ -11,6 +28,14 @@ void main() async {
   try {
     // 환경 변수 로드
     await dotenv.load(fileName: ".env");
+
+    // Firebase 초기화
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+
+    // FCM 백그라운드 메시지 핸들러 등록
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
     // API 클라이언트 초기화
     ApiClient().initialize();

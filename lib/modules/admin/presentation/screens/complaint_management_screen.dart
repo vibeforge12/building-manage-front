@@ -27,6 +27,23 @@ class _ComplaintManagementScreenState extends ConsumerState<ComplaintManagementS
       _selectedTabIndex = index;
       _currentPage = 1;
     });
+    // 탭 변경 시 데이터 새로고침
+    _refreshComplaintData();
+  }
+
+  void _refreshComplaintData() {
+    // 탭에 따라 해당 provider를 무효화하여 새로운 데이터를 요청
+    switch (_selectedTabIndex) {
+      case 0:
+        ref.refresh(getAllComplaintsUseCaseProvider);
+        break;
+      case 1:
+        ref.refresh(getPendingComplaintsUseCaseProvider);
+        break;
+      case 2:
+        ref.refresh(getResolvedComplaintsUseCaseProvider);
+        break;
+    }
   }
 
   Future<void> _onComplaintTap(String complaintId) async {
@@ -78,25 +95,9 @@ class _ComplaintManagementScreenState extends ConsumerState<ComplaintManagementS
 
           // Tab Content
           Expanded(
-            child: IndexedStack(
-              index: _selectedTabIndex,
-              children: [
-                // 전체 민원
-                _buildComplaintList(
-                  useCase: ref.watch(getAllComplaintsUseCaseProvider),
-                  page: _currentPage,
-                ),
-                // 신규 민원
-                _buildComplaintList(
-                  useCase: ref.watch(getPendingComplaintsUseCaseProvider),
-                  page: _currentPage,
-                ),
-                // 완료된 민원
-                _buildComplaintList(
-                  useCase: ref.watch(getResolvedComplaintsUseCaseProvider),
-                  page: _currentPage,
-                ),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: _buildComplaintListForTab(_selectedTabIndex),
             ),
           ),
         ],
@@ -128,6 +129,30 @@ class _ComplaintManagementScreenState extends ConsumerState<ComplaintManagementS
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildComplaintListForTab(int tabIndex) {
+    // 탭 인덱스에 따라 적절한 useCase 선택
+    late dynamic useCase;
+
+    switch (tabIndex) {
+      case 0: // 전체 민원
+        useCase = ref.watch(getAllComplaintsUseCaseProvider);
+        break;
+      case 1: // 신규 민원
+        useCase = ref.watch(getPendingComplaintsUseCaseProvider);
+        break;
+      case 2: // 완료된 민원
+        useCase = ref.watch(getResolvedComplaintsUseCaseProvider);
+        break;
+      default:
+        useCase = ref.watch(getAllComplaintsUseCaseProvider);
+    }
+
+    return _buildComplaintList(
+      useCase: useCase,
+      page: _currentPage,
     );
   }
 
@@ -264,84 +289,55 @@ class _ComplaintListTile extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        margin: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: const Color(0xFFF2F8FC),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE8EEF2)),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            // Title and Status Row
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Text(
+            // 왼쪽 컨텐츠 영역
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 제목 (Label L: 16px, 700, #17191A)
+                  Text(
                     complaint.title,
                     style: const TextStyle(
                       fontFamily: 'Pretendard',
                       fontWeight: FontWeight.w700,
                       fontSize: 16,
+                      height: 1.5,
                       color: Color(0xFF17191A),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(complaint.status),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    complaint.statusLabel,
+                  const SizedBox(height: 6),
+                  // 입주민 이름 + 부서 + 동호수 한 줄로 (Caption M: 14px, 400, #464A4D)
+                  Text(
+                    '${complaint.residentName} · ${complaint.departmentName} · ${_formatUnit(complaint.residentUnit)}',
                     style: const TextStyle(
                       fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                      color: Colors.white,
+                      fontWeight: FontWeight.w400,
+                      fontSize: 14,
+                      height: 1.4285714285714286,
+                      color: Color(0xFF464A4D),
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            // Resident Info
-            Text(
-              '${complaint.residentUnit} · ${complaint.residentName}',
-              style: const TextStyle(
-                fontFamily: 'Pretendard',
-                fontWeight: FontWeight.w400,
-                fontSize: 12,
-                color: Color(0xFF757B80),
+                ],
               ),
             ),
-            const SizedBox(height: 6),
-            // Department Info
-            Text(
-              complaint.departmentName,
-              style: const TextStyle(
-                fontFamily: 'Pretendard',
-                fontWeight: FontWeight.w400,
-                fontSize: 12,
-                color: Color(0xFFA4ADB2),
-              ),
-            ),
-            const SizedBox(height: 6),
-            // Created Date
-            Text(
-              _formatDate(complaint.createdAt),
-              style: const TextStyle(
-                fontFamily: 'Pretendard',
-                fontWeight: FontWeight.w400,
-                fontSize: 12,
-                color: Color(0xFFA4ADB2),
-              ),
+            const SizedBox(width: 8),
+            // 오른쪽 화살표
+            const Icon(
+              Icons.chevron_right,
+              color: Color(0xFF757B80),
+              size: 24,
             ),
           ],
         ),
@@ -349,19 +345,14 @@ class _ComplaintListTile extends StatelessWidget {
     );
   }
 
-  Color _getStatusColor(String status) {
-    switch (status.toUpperCase()) {
-      case 'PENDING':
-        return const Color(0xFFFF6B6B);
-      case 'PROCESSING':
-        return const Color(0xFF006FFF);
-      case 'COMPLETED':
-        return const Color(0xFF52C41A);
-      case 'REJECTED':
-        return const Color(0xFF999999);
-      default:
-        return const Color(0xFFE8EEF2);
+  /// 동호수 포맷팅 (101-1003 → 101동 1003호)
+  String _formatUnit(String unit) {
+    if (unit.isEmpty) return '';
+    final parts = unit.split('-');
+    if (parts.length == 2) {
+      return '${parts[0]}동 ${parts[1]}호';
     }
+    return unit;
   }
 
   String _formatDate(DateTime dateTime) {

@@ -39,6 +39,7 @@ import 'package:building_manage_front/modules/manager/presentation/screens/compl
 import 'package:building_manage_front/modules/manager/presentation/screens/complaint_resolve_complete_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/headquarters_login_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/headquarters_dashboard_screen.dart';
+import 'package:building_manage_front/modules/headquarters/presentation/screens/management_selection_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/building_management_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/building_registration_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/building_list_screen.dart';
@@ -100,10 +101,12 @@ class RouterNotifier extends ChangeNotifier {
       '/manager/complaint-resolve/:complaintId',
       '/manager/complaint-resolve-complete',
       '/headquarters/dashboard',
+      '/headquarters/management-selection',
       '/headquarters/building-management',
       '/headquarters/building-registration',
       '/headquarters/building-list',
       '/headquarters/department-creation',
+      '/headquarters/department-management',
       '/headquarters/admin-account-issuance',
     ];
 
@@ -448,10 +451,24 @@ class RouterNotifier extends ChangeNotifier {
       builder: (context, state) => const HeadquartersDashboardScreen(),
     ),
 
-    // 건물 관리 (보호된 경로)
+    // 관리 선택 (보호된 경로) - 건물/부서 선택 페이지
+    GoRoute(
+      path: '/headquarters/management-selection',
+      name: 'managementSelection',
+      builder: (context, state) => const ManagementSelectionScreen(),
+    ),
+
+    // 건물 관리 (보호된 경로) - 건물 등록/관리 페이지
     GoRoute(
       path: '/headquarters/building-management',
       name: 'buildingManagement',
+      builder: (context, state) => const BuildingManagementScreen(),
+    ),
+
+    // 부서 관리 (보호된 경로) - 부서 생성/관리 페이지
+    GoRoute(
+      path: '/headquarters/department-management',
+      name: 'departmentManagement',
       builder: (context, state) => const BuildingManagementScreen(),
     ),
 

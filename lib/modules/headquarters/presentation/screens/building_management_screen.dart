@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:building_manage_front/modules/headquarters/presentation/providers/headquarters_providers.dart';
 import 'package:building_manage_front/modules/headquarters/data/datasources/department_remote_datasource.dart';
 import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
+import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
 
 class BuildingManagementScreen extends ConsumerStatefulWidget {
   const BuildingManagementScreen({super.key});
@@ -13,15 +15,6 @@ class BuildingManagementScreen extends ConsumerStatefulWidget {
 
 class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScreen> {
   final TextEditingController _searchController = TextEditingController();
-  List<Map<String, dynamic>> _departments = [];
-  bool _isLoading = false;
-  String? _errorMessage;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadDepartments();
-  }
 
   @override
   void dispose() {
@@ -29,45 +22,50 @@ class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScr
     super.dispose();
   }
 
-  Future<void> _loadDepartments() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+  Future<void> _deleteDepartment(String departmentId, String departmentName) async {
+    // 삭제 확인 다이얼로그
+    final confirmed = await showCustomConfirmationDialog(
+      context: context,
+      title: '삭제를 진행하시겠습니까?',
+      content: const SizedBox.shrink(),
+      confirmText: '예',
+      cancelText: '아니오',
+      confirmOnLeft: true,
+      barrierDismissible: false,
+    );
+
+    if (confirmed != true) return;
 
     try {
       final departmentDataSource = ref.read(departmentRemoteDataSourceProvider);
-      final response = await departmentDataSource.getDepartments(
-        keyword: _searchController.text.trim().isEmpty ? null : _searchController.text.trim(),
-        // headquartersId는 JWT 토큰에서 자동으로 인식되므로 전달하지 않음 (관리자와 동일)
-      );
+      final response = await departmentDataSource.deleteDepartment(departmentId);
 
-      if (response['success'] == true) {
-        final data = response['data'];
-        setState(() {
-          _departments = List<Map<String, dynamic>>.from(data['items'] ?? []);
-        });
+      if (mounted) {
+        if (response['success'] == true) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('부서가 삭제되었습니다.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // 부서 목록 새로고침 트리거
+          ref.read(departmentRefreshTriggerProvider.notifier).state++;
+        }
       }
     } catch (e) {
-      setState(() {
-        if (e is ApiException) {
-          _errorMessage = e.userFriendlyMessage;
-        } else {
-          _errorMessage = '부서 목록을 불러오는 중 오류가 발생했습니다.';
-        }
-      });
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              e is ApiException
+                  ? e.userFriendlyMessage
+                  : '부서 삭제 중 오류가 발생했습니다.',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
-  }
-
-  void _onSearchChanged() {
-    // 검색어 변경시 500ms 후 검색 실행 (디바운스)
-    Future.delayed(const Duration(milliseconds: 500), () {
-      _loadDepartments();
-    });
   }
 
   @override
@@ -88,13 +86,29 @@ class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScr
           },
         ),
         title: const Text(
-          '건물 등록',
+          '부서 관리',
           style: TextStyle(
             color: Color(0xFF464A4D),
             fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
         ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              context.push('/headquarters/department-creation');
+            },
+            child: const Text(
+              '등록',
+              style: TextStyle(
+                fontFamily: 'Pretendard',
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: Color(0xFF464A4D),
+              ),
+            ),
+          ),
+        ],
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(1),
           child: Divider(
@@ -104,172 +118,109 @@ class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScr
           ),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.menu, color: Colors.black),
-            onPressed: () {
-              context.push('/headquarters/building-list');
-            },
-          ),
-        ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 검색바와 건물 등록 버튼
-            Row(
-              children: [
-                // 검색바
-                Expanded(
-                  child: Container(
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (_) => _onSearchChanged(),
-                      decoration: const InputDecoration(
-                        hintText: '건물명을 입력해주세요',
-                        hintStyle: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 14,
-                        ),
-                        prefixIcon: Icon(Icons.search, color: Colors.grey),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
+      body: Consumer(
+        builder: (context, ref, child) {
+          final departmentsFuture = ref.watch(departmentsProvider(null));
 
-                // 건물 등록 버튼
-                Container(
-                  height: 48,
-                  child: FilledButton(
+          return departmentsFuture.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, stackTrace) => Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(error.toString(), style: const TextStyle(color: Colors.red)),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
                     onPressed: () {
-                      context.push('/headquarters/building-registration');
+                      ref.refresh(departmentsProvider(null));
                     },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF006FFF),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.add, size: 18),
-                        SizedBox(width: 4),
-                        Text('건물 등록', style: TextStyle(fontSize: 14)),
-                      ],
-                    ),
+                    child: const Text('다시 시도'),
                   ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 24),
-
-            // 부서 섹션과 부서 생성 버튼
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  '부서',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-                Container(
-                  height: 48,
-                  child: FilledButton(
-                    onPressed: () {
-                      context.push('/headquarters/department-creation');
-                    },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF006FFF),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.add, size: 18),
-                        SizedBox(width: 4),
-                        Text('부서 생성', style: TextStyle(fontSize: 14)),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            // 부서 태그들
-            if (_isLoading)
-              const Center(child: CircularProgressIndicator())
-            else if (_errorMessage != null)
-              Center(
-                child: Column(
-                  children: [
-                    Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: _loadDepartments,
-                      child: const Text('다시 시도'),
-                    ),
-                  ],
-                ),
-              )
-            else if (_departments.isEmpty)
-              const Center(
-                child: Text(
-                  '등록된 부서가 없습니다.',
-                  style: TextStyle(color: Colors.grey),
-                ),
-              )
-            else
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Wrap(
-                    spacing: 8.0,
-                    runSpacing: 8.0,
-                    children: _departments.map((department) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(36),
-                          border: Border.all(
-                            color: Color(0xFFE8EEF2),
-                            width: 1.5, // 두께(원하면 1로 내려도됨)
-                          ),
-                        ),
-                        child: Text(
-                          department['name'] ?? '부서명 없음',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF2D2D2D),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
+                ],
               ),
-          ],
-        ),
+            ),
+            data: (departments) {
+              if (departments.isEmpty) {
+                return const Center(
+                  child: Text(
+                    '등록된 부서가 없습니다.',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: departments.length,
+                itemBuilder: (context, index) {
+                  final department = departments[index];
+                  final departmentId = department['id']?.toString() ?? '';
+                  final departmentName = department['name'] ?? '부서명 없음';
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: const Color(0xFFE8EEF2),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        // 부서명
+                        Expanded(
+                          child: Text(
+                            departmentName,
+                            style: const TextStyle(
+                              fontFamily: 'Pretendard',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                              color: Color(0xFF17191A),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // 삭제 버튼
+                        InkWell(
+                          onTap: () {
+                            if (departmentId.isNotEmpty) {
+                              _deleteDepartment(departmentId, departmentName);
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: const Color(0xFFE8EEF2),
+                                width: 1,
+                              ),
+                            ),
+                            child: const Text(
+                              '삭제',
+                              style: TextStyle(
+                                fontFamily: 'Pretendard',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                                color: Color(0xFF464A4D),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          );
+        },
       ),
     );
   }

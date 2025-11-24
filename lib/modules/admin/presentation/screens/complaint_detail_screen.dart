@@ -18,90 +18,6 @@ class ComplaintDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
-  late TextEditingController _responseController;
-  String _selectedStatus = '';
-  bool _isUpdating = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _responseController = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _responseController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _updateComplaintStatus(String complaintId, String newStatus) async {
-    final useCase = ref.read(updateComplaintStatusUseCaseProvider);
-
-    setState(() => _isUpdating = true);
-
-    try {
-      await useCase.execute(
-        complaintId: complaintId,
-        status: newStatus,
-        response: _responseController.text.isEmpty ? null : _responseController.text,
-      );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('민원이 업데이트되었습니다.'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
-        context.pop();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('업데이트 실패: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isUpdating = false);
-      }
-    }
-  }
-
-  void _showStatusDialog(String currentStatus) {
-    final statusOptions = ['PENDING', 'PROCESSING', 'COMPLETED', 'REJECTED'];
-    final statusLabels = ['신규', '처리중', '완료', '반려'];
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('민원 상태 변경'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(
-            statusOptions.length,
-            (index) => RadioListTile(
-              title: Text(statusLabels[index]),
-              value: statusOptions[index],
-              groupValue: currentStatus,
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() => _selectedStatus = value);
-                  context.pop();
-                }
-              },
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final getComplaintDetailUseCase = ref.watch(getComplaintDetailUseCaseProvider);
@@ -111,6 +27,7 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        scrolledUnderElevation: 0, // 스크롤 시 색상 변화 방지
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF464A4D)),
           onPressed: () => context.pop(),
@@ -124,6 +41,14 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
             color: Color(0xFF464A4D),
           ),
         ),
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(
+            height: 1,
+            thickness: 1,
+            color: Color(0xFFE8EEF2),
+          ),
+        ),
       ),
       body: FutureBuilder(
         future: getComplaintDetailUseCase.execute(complaintId: widget.complaintId),
@@ -135,6 +60,7 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
           }
 
           if (snapshot.hasError) {
+            print('❌ 민원 상세 조회 에러: ${snapshot.error}');
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -146,6 +72,15 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
                   ),
                   const SizedBox(height: 16),
                   const Text('민원 정보를 불러올 수 없습니다.'),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      'Error: ${snapshot.error}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 12, color: Color(0xFFA4ADB2)),
+                    ),
+                  ),
                   const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () => setState(() {}),
@@ -161,9 +96,6 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
           }
 
           final complaint = snapshot.data as AdminComplaint;
-          if (_selectedStatus.isEmpty) {
-            _selectedStatus = complaint.status;
-          }
 
           return SingleChildScrollView(
             child: Column(
@@ -198,11 +130,11 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: _getStatusColor(_selectedStatus),
+                              color: _getStatusColor(complaint.status),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
-                              _getStatusLabel(_selectedStatus),
+                              _getStatusLabel(complaint.status),
                               style: const TextStyle(
                                 fontFamily: 'Pretendard',
                                 fontWeight: FontWeight.w600,
@@ -265,40 +197,15 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
                   ),
                 ),
 
-                // Image
-                if (complaint.imageUrl != null && complaint.imageUrl!.isNotEmpty) ...[
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: CachedNetworkImage(
-                        imageUrl: complaint.imageUrl!,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        height: 240,
-                        placeholder: (context, url) => Container(
-                          color: const Color(0xFFF2F8FC),
-                          child: const Center(
-                            child: CircularProgressIndicator(),
-                          ),
-                        ),
-                        errorWidget: (context, url, error) => Container(
-                          color: const Color(0xFFF2F8FC),
-                          child: const Icon(Icons.error, color: Color(0xFFA4ADB2)),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
 
-                // Content
+                // 댓글 섹션 (민원 작성자의 글 + 처리 내용)
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        '민원 내용',
+                        '내용',
                         style: TextStyle(
                           fontFamily: 'Pretendard',
                           fontWeight: FontWeight.w700,
@@ -306,157 +213,34 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
                           color: Color(0xFF17191A),
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        complaint.content,
-                        style: const TextStyle(
-                          fontFamily: 'Pretendard',
-                          fontWeight: FontWeight.w400,
-                          fontSize: 14,
-                          color: Color(0xFF464A4D),
-                          height: 1.6,
-                        ),
+                      const SizedBox(height: 16),
+
+                      // 민원 작성자 댓글
+                      _buildCommentItem(
+                        name: complaint.residentName,
+                        date: _formatDate(complaint.createdAt),
+                        content: complaint.content,
+                        imageUrl: complaint.imageUrl,
+                        isAuthor: true,
                       ),
+
+                      const SizedBox(height: 16),
+
+                      // 처리 내용 댓글들
+                      if (complaint.response != null && complaint.response!.isNotEmpty) ...[
+                        _buildCommentItem(
+                          name: '담당자',
+                          date: _formatDate(complaint.updatedAt ?? DateTime.now()),
+                          content: complaint.response!,
+                          imageUrl: complaint.responseImageUrl,
+                          isAuthor: false,
+                        ),
+                      ],
                     ],
                   ),
                 ),
 
                 const Divider(color: Color(0xFFE8EEF2), thickness: 1),
-
-                // Status Update Section
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        '처리 상태',
-                        style: TextStyle(
-                          fontFamily: 'Pretendard',
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                          color: Color(0xFF17191A),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      GestureDetector(
-                        onTap: () => _showStatusDialog(_selectedStatus),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: const Color(0xFFE8EEF2)),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                _getStatusLabel(_selectedStatus),
-                                style: const TextStyle(
-                                  fontFamily: 'Pretendard',
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 14,
-                                  color: Color(0xFF17191A),
-                                ),
-                              ),
-                              const Icon(Icons.arrow_drop_down, color: Color(0xFFA4ADB2)),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        '처리 내용',
-                        style: TextStyle(
-                          fontFamily: 'Pretendard',
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                          color: Color(0xFF17191A),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: _responseController,
-                        maxLines: 5,
-                        decoration: InputDecoration(
-                          hintText: '처리 내용을 입력하세요.',
-                          hintStyle: const TextStyle(
-                            fontFamily: 'Pretendard',
-                            fontWeight: FontWeight.w400,
-                            fontSize: 14,
-                            color: Color(0xFFA4ADB2),
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: Color(0xFFE8EEF2)),
-                          ),
-                          contentPadding: const EdgeInsets.all(12),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Action Buttons
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _isUpdating ? null : () => context.pop(),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFE8EEF2),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: const Text(
-                            '취소',
-                            style: TextStyle(
-                              fontFamily: 'Pretendard',
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                              color: Color(0xFF757B80),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _isUpdating ? null : () => _updateComplaintStatus(widget.complaintId, _selectedStatus),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF006FFF),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: _isUpdating
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                  ),
-                                )
-                              : const Text(
-                                  '저장',
-                                  style: TextStyle(
-                                    fontFamily: 'Pretendard',
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ],
             ),
           );
@@ -472,7 +256,7 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
       case 'PROCESSING':
         return const Color(0xFF006FFF);
       case 'COMPLETED':
-        return const Color(0xFF52C41A);
+        return const Color(0xFF006FFF);
       case 'REJECTED':
         return const Color(0xFF999999);
       default:
@@ -497,5 +281,141 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
 
   String _formatDate(DateTime dateTime) {
     return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  /// 댓글 형식의 아이템 빌드 - 사용자와 담당자 명확히 구분
+  Widget _buildCommentItem({
+    required String name,
+    required String date,
+    required String content,
+    String? imageUrl,
+    required bool isAuthor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isAuthor ? const Color(0xFFF2F8FC) : Colors.white,
+        border: Border.all(
+          color: const Color(0xFFE8EEF2),
+          width: 1,
+        ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 헤더: 구분 뱃지 + 이름 + 날짜
+          Row(
+            children: [
+              // 구분 뱃지
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isAuthor ? const Color(0xFFE8F4FF) : const Color(0xFFF0F0F0),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  isAuthor ? '민원자' : '담당자',
+                  style: TextStyle(
+                    fontFamily: 'Pretendard',
+                    fontWeight: FontWeight.w600,
+                    fontSize: 11,
+                    color: isAuthor ? const Color(0xFF006FFF) : const Color(0xFF757B80),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // 이름
+              Expanded(
+                child: Text(
+                  name,
+                  style: const TextStyle(
+                    fontFamily: 'Pretendard',
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: Color(0xFF17191A),
+                  ),
+                ),
+              ),
+              // 날짜
+              Text(
+                date,
+                style: const TextStyle(
+                  fontFamily: 'Pretendard',
+                  fontWeight: FontWeight.w400,
+                  fontSize: 12,
+                  color: Color(0xFFA4ADB2),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // 내용
+          Text(
+            content,
+            style: const TextStyle(
+              fontFamily: 'Pretendard',
+              fontWeight: FontWeight.w400,
+              fontSize: 14,
+              color: Color(0xFF464A4D),
+              height: 1.6,
+            ),
+          ),
+          // 이미지 (있을 경우)
+          if (imageUrl != null && imageUrl.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            // 이미지 레이블
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              decoration: BoxDecoration(
+                color: isAuthor ? const Color(0xFFF2F8FC) : const Color(0xFFF5F5F5),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.image,
+                    size: 14,
+                    color: isAuthor ? const Color(0xFF006FFF) : const Color(0xFF757B80),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    isAuthor ? '민원자 첨부 이미지' : '담당자 답변 이미지',
+                    style: TextStyle(
+                      fontFamily: 'Pretendard',
+                      fontWeight: FontWeight.w500,
+                      fontSize: 12,
+                      color: isAuthor ? const Color(0xFF006FFF) : const Color(0xFF757B80),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: CachedNetworkImage(
+                imageUrl: imageUrl,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: 200,
+                placeholder: (context, url) => Container(
+                  color: const Color(0xFFF2F8FC),
+                  height: 200,
+                  child: const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  color: const Color(0xFFF2F8FC),
+                  height: 200,
+                  child: const Icon(Icons.error, color: Color(0xFFA4ADB2)),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 }

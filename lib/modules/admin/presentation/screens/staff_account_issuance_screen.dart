@@ -76,7 +76,7 @@ class _StaffAccountIssuanceScreenState
 
                 // 담당부서 선택
                 _buildDepartmentSelect(),
-                const SizedBox(height: 300), // 드롭다운 메뉴 공간 확보
+                const SizedBox(height: 32),
 
                 // 계정발급 버튼
                 _buildSubmitButton(),
@@ -208,121 +208,119 @@ class _StaffAccountIssuanceScreenState
           ),
         ),
         const SizedBox(height: 4),
-        ButtonTheme(
-          alignedDropdown: true,
-          child: DropdownButtonFormField<String>(
-            value: _selectedDepartmentId,
-            decoration: InputDecoration(
-              hintText: '담당부서를 선택해주세요',
-              hintStyle: const TextStyle(
-                fontFamily: 'Pretendard',
-                fontWeight: FontWeight.w400,
-                fontSize: 16,
-                height: 1.5,
-                color: Color(0xFFA4ADB2),
-              ),
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(
-                  color: Color(0xFFE8EEF2),
-                  width: 1,
+        departmentState.isLoading
+            ? Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 14,
                 ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(
-                  color: Color(0xFFE8EEF2),
-                  width: 1,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(
+                    color: const Color(0xFFE8EEF2),
+                    width: 1,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(
-                  color: Color(0xFF006FFF),
-                  width: 1,
+                child: const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
                 ),
-              ),
-            ),
-            icon: const Padding(
-              padding: EdgeInsets.only(right: 4),
-              child: Icon(
-                Icons.keyboard_arrow_down,
-                size: 20,
-                color: Color(0xFF464A4D),
-              ),
-            ),
-            isExpanded: true,
-            dropdownColor: Colors.white,
-            menuMaxHeight: 250,
-            elevation: 2,
-            style: const TextStyle(
-              fontFamily: 'Pretendard',
-              fontWeight: FontWeight.w400,
-              fontSize: 16,
-              height: 1.5,
-              color: Color(0xFF464A4D),
-            ),
-            selectedItemBuilder: (BuildContext context) {
-              return departmentState.departments.map((dept) {
-                return Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    dept['name'] ?? '',
-                    style: const TextStyle(
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w400,
-                      fontSize: 16,
-                      height: 1.5,
-                      color: Color(0xFF464A4D),
+              )
+            : DropdownMenu<String>(
+                initialSelection: _selectedDepartmentId,
+                width: MediaQuery.of(context).size.width - 32,
+                menuHeight: 300,
+                requestFocusOnTap: true,
+                enableFilter: false,
+                menuStyle: MenuStyle(
+                  backgroundColor: WidgetStateProperty.all(Colors.white),
+                  surfaceTintColor: WidgetStateProperty.all(Colors.white),
+                  elevation: WidgetStateProperty.all(8),
+                  shape: WidgetStateProperty.all(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                );
-              }).toList();
-            },
-            items: departmentState.isLoading
-                ? []
-                : departmentState.departments.map((dept) {
-                    return DropdownMenuItem<String>(
-                      value: dept['id'],
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        child: Text(
-                          dept['name'] ?? '',
-                          style: const TextStyle(
-                            fontFamily: 'Pretendard',
-                            fontWeight: FontWeight.w400,
-                            fontSize: 16,
-                            height: 1.5,
-                            color: Color(0xFF464A4D),
-                          ),
-                        ),
+                ),
+                textStyle: const TextStyle(
+                  fontFamily: 'Pretendard',
+                  fontWeight: FontWeight.w400,
+                  fontSize: 16,
+                  color: Color(0xFF464A4D),
+                ),
+                inputDecorationTheme: InputDecorationTheme(
+                  filled: true,
+                  fillColor: Colors.white,
+                  hintStyle: const TextStyle(
+                    fontFamily: 'Pretendard',
+                    fontWeight: FontWeight.w400,
+                    fontSize: 16,
+                    color: Color(0xFFA4ADB2),
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFE8EEF2),
+                      width: 1,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFE8EEF2),
+                      width: 1,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF006FFF),
+                      width: 1,
+                    ),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 14,
+                  ),
+                ),
+                trailingIcon: const Icon(
+                  Icons.keyboard_arrow_down,
+                  size: 20,
+                  color: Color(0xFF464A4D),
+                ),
+                selectedTrailingIcon: const Icon(
+                  Icons.keyboard_arrow_up,
+                  size: 20,
+                  color: Color(0xFF006FFF),
+                ),
+                dropdownMenuEntries: departmentState.departments.map((dept) {
+                  return DropdownMenuEntry<String>(
+                    value: dept['id'] as String,
+                    label: dept['name'] as String,
+                    style: MenuItemButton.styleFrom(
+                      foregroundColor: const Color(0xFF464A4D),
+                      backgroundColor: Colors.white,
+                      textStyle: const TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w400,
+                        fontSize: 16,
                       ),
-                    );
-                  }).toList(),
-            onChanged: (value) {
-              setState(() {
-                _selectedDepartmentId = value;
-                _selectedDepartment = departmentState.departments
-                    .firstWhere((dept) => dept['id'] == value)['name'];
-              });
-            },
-          ),
-        ),
-        if (departmentState.isLoading)
-          const Padding(
-            padding: EdgeInsets.only(top: 8.0),
-            child: Text(
-              '부서 목록을 불러오는 중...',
-              style: TextStyle(
-                fontFamily: 'Pretendard',
-                fontSize: 12,
-                color: Color(0xFFA4ADB2),
+                    ),
+                  );
+                }).toList(),
+                onSelected: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _selectedDepartmentId = value;
+                      _selectedDepartment = departmentState.departments
+                          .firstWhere((dept) => dept['id'] == value)['name'];
+                    });
+                  }
+                },
               ),
-            ),
-          ),
         if (departmentState.error != null)
           Padding(
             padding: const EdgeInsets.only(top: 8.0),

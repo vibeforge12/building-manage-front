@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/common/data/datasources/building_list_remote_datasource.dart';
+import 'package:building_manage_front/modules/headquarters/presentation/providers/headquarters_providers.dart';
 import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
 
@@ -85,8 +86,8 @@ class _BuildingListScreenState extends ConsumerState<BuildingListScreen> {
               backgroundColor: Colors.green,
             ),
           );
-          // 목록 새로고침
-          _loadBuildings();
+          // 건물 목록 새로고침 트리거
+          ref.read(buildingRefreshTriggerProvider.notifier).state++;
         }
       }
     } catch (e) {
@@ -152,50 +153,62 @@ class _BuildingListScreenState extends ConsumerState<BuildingListScreen> {
           ),
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _loadBuildings,
-                        child: const Text('다시 시도'),
-                      ),
-                    ],
-                  ),
-                )
-              : _buildings.isEmpty
-                  ? const Center(
-                      child: Text(
-                        '등록된 건물이 없습니다.',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _buildings.length,
-                      itemBuilder: (context, index) {
-                        final building = _buildings[index];
-                        final buildingId = building['id']?.toString() ?? '';
-                        final buildingName = building['name'] ?? '건물명 없음';
+      body: Consumer(
+        builder: (context, ref, child) {
+          final buildingsFuture = ref.watch(buildingsProvider(null));
 
-                        return _BuildingItem(
-                          building: building,
-                          onDelete: () {
-                            if (buildingId.isNotEmpty) {
-                              _deleteBuilding(buildingId, buildingName);
-                            }
-                          },
-                          onEdit: () {
-                            // TODO: 등록(수정) 기능
-                          },
-                        );
-                      },
-                    ),
+          return buildingsFuture.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, stackTrace) => Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(error.toString(), style: const TextStyle(color: Colors.red)),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      ref.refresh(buildingsProvider(null));
+                    },
+                    child: const Text('다시 시도'),
+                  ),
+                ],
+              ),
+            ),
+            data: (buildings) {
+              if (buildings.isEmpty) {
+                return const Center(
+                  child: Text(
+                    '등록된 건물이 없습니다.',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: buildings.length,
+                itemBuilder: (context, index) {
+                  final building = buildings[index];
+                  final buildingId = building['id']?.toString() ?? '';
+                  final buildingName = building['name'] ?? '건물명 없음';
+
+                  return _BuildingItem(
+                    building: building,
+                    onDelete: () {
+                      if (buildingId.isNotEmpty) {
+                        _deleteBuilding(buildingId, buildingName);
+                      }
+                    },
+                    onEdit: () {
+                      // TODO: 등록(수정) 기능
+                    },
+                  );
+                },
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }

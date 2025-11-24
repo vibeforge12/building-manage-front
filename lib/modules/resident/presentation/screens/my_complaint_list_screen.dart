@@ -86,9 +86,36 @@ class _MyComplaintListScreenState extends ConsumerState<MyComplaintListScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // 네비게이션 바
-            _buildNavigationBar(),
-            // 콘텐츠
+            // 고정 헤더 (스크롤되지 않음)
+            Container(
+              height: 48,
+              color: Colors.white,
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, size: 24),
+                    onPressed: () => context.pop(),
+                    padding: const EdgeInsets.all(12),
+                  ),
+                  const Expanded(
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: Text(
+                        '내 민원 보기',
+                        style: TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: Color(0xFF17191A),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 48),
+                ],
+              ),
+            ),
+            // 콘텐츠 (스크롤 가능)
             Expanded(
               child: _isLoading
                   ? const Center(
@@ -165,45 +192,6 @@ class _MyComplaintListScreenState extends ConsumerState<MyComplaintListScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildNavigationBar() {
-    return Container(
-      height: 48,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: Color(0xFFE8EEF2),
-            width: 1,
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, size: 24),
-            onPressed: () => context.pop(),
-            padding: const EdgeInsets.all(12),
-          ),
-          const Expanded(
-            child: Align(
-              alignment: Alignment.center,
-              child: Text(
-                '내 민원 보기',
-                style: TextStyle(
-                  fontFamily: 'Pretendard',
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                  color: Color(0xFF17191A),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 48),
-        ],
       ),
     );
   }

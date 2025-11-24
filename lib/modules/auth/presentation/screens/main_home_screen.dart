@@ -30,22 +30,51 @@ class MainHomeScreen extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const _LandingHeader(),
-                  const Spacer(),
+                  const SizedBox(height: 60),
                   PrimaryActionButton(
                     label: '유저 로그인',
                     backgroundColor: const Color(0xFFEDF9FF),
-                    foregroundColor: const Color(0xFF006FFF),
+                    foregroundColor: Colors.black,
                     onPressed: () => _openUserLogin(context),
                   ),
                   const SizedBox(height: 16),
                   PrimaryActionButton(
                     label: '관리자 로그인',
                     backgroundColor: const Color(0xFFEDF9FF),
-                    foregroundColor: const Color(0xFF006FFF),
+                    foregroundColor: Colors.black,
                     onPressed: () => _openAdminSelection(context),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Divider(
+                          color: Color(0xffBBC5CC),
+                          thickness: 1,
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          '또는',
+                          style: TextStyle(
+                            color: Color(0xffBBC5CC),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Divider(
+                          color: Color(0xffBBC5CC),
+                          thickness: 1,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
                   PrimaryActionButton(
@@ -71,17 +100,19 @@ class _LandingHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start, // ← 요거 추가
       children: [
-        const PageHeaderText('빌딩 관리 시스템'),
-        const SizedBox(height: 8),
         Text(
-          '하나의 앱에서 본사부터 입주자까지 연결되는\n통합 관리 경험을 시작하세요.',
+          '안녕하세요 \n엄지 입니다.',
+          textAlign: TextAlign.left, // ← 이것도 확실하게
           style: theme.textTheme.bodyLarge?.copyWith(
-            color: Colors.white.withValues(alpha: 0.85),
+            color: Colors.white,
+            fontSize: 36,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ],
     );
   }
 }
+

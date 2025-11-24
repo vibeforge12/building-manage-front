@@ -20,6 +20,7 @@ class ApiEndpoints {
   static const String user = '/user';
   static const String userProfile = '$user/profile';
   static const String userDashboard = '$user/dashboard';
+  static const String userPushToken = '/users/push-token';  // FCM 토큰 등록 (입주민)
 
   // Admin endpoints - 관리자 관련
   static const String admin = '/admin';
@@ -30,19 +31,22 @@ class ApiEndpoints {
   static const String manager = '/manager';
   static const String managerDashboard = '$manager/dashboard';
   static const String tasks = '$manager/tasks';
+  static const String staffPushToken = '/staffs/push-token';      // FCM 토큰 등록 (담당자)
+  static const String managerPushToken = '/managers/push-token';  // FCM 토큰 등록 (관리자)
 
   // Headquarters endpoints - 본사 관련
   static const String headquarters = '/headquarters';
   static const String headquartersDashboard = '$headquarters/dashboard';
-  static const String buildings = '$headquarters/buildings';
 
   // Common endpoints - 공통
+  static const String common = '/common';
+  static const String buildings = '$common/buildings';
   static const String notifications = '/notifications';
   static const String announcements = '/announcements';
   static const String facilities = '/facilities';
 
   // Departments - 부서 관련
-  static const String departments = '/common/departments';
+  static const String departments = '$common/departments';
 
   // Notice & Event - 공지사항 및 이벤트
   static const String notices = '/notices';

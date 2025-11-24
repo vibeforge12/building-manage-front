@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class PageHeaderText extends StatelessWidget {
-  const PageHeaderText(
+  const   PageHeaderText(
     this.text, {
     super.key,
     this.textAlign,
@@ -14,7 +14,7 @@ class PageHeaderText extends StatelessWidget {
   final int? maxLines;
   final TextOverflow? overflow;
 
-  static const _headerColor = Color(0xFF464A4D);
+  static const _headerColor = Colors.white;
 
   @override
   Widget build(BuildContext context) {

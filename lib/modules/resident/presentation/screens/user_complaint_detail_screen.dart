@@ -41,76 +41,93 @@ class _UserComplaintDetailScreenState extends State<UserComplaintDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF17191A)),
-          onPressed: () => context.pop(),
-        ),
-        title: const Text(
-          '내 민원 보기',
-          style: TextStyle(
-            fontFamily: 'Pretendard',
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-            color: Color(0xFF17191A),
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
+      body: SafeArea(
         child: Column(
           children: [
-            // 원본 민원 댓글
-            _buildComplaintComment(_complaint),
-
-            // 처리 결과가 있을 경우
-            if (_complaint['isResolved'] == true &&
-                (_complaint['results'] as List?)?.isNotEmpty == true)
-              ...[
-                // 진행 라인
-                _buildProgressLine(),
-
-                // 처리 결과 댓글들
-                ...(_complaint['results'] as List<dynamic>)
-                    .map((result) => _buildResultComment(result))
-                    .toList(),
-              ]
-            else if (_complaint['isResolved'] != true)
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFEEEE6),
-                    borderRadius: BorderRadius.circular(6),
+            // 고정 헤더 (스크롤되지 않음)
+            Container(
+              height: 48,
+              color: Colors.white,
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, size: 24, color: Color(0xFF17191A)),
+                    onPressed: () => context.pop(),
+                    padding: const EdgeInsets.all(12),
                   ),
-                  child: const Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline,
-                        size: 16,
-                        color: Color(0xFFFF6B35),
+                  const Expanded(
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: Text(
+                        '내 민원 보기',
+                        style: TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: Color(0xFF17191A),
+                        ),
                       ),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          '처리 중입니다. 곧 결과를 알려드리겠습니다.',
-                          style: TextStyle(
-                            fontFamily: 'Pretendard',
-                            fontWeight: FontWeight.w400,
-                            fontSize: 12,
-                            color: Color(0xFFFF6B35),
+                    ),
+                  ),
+                  const SizedBox(width: 48),
+                ],
+              ),
+            ),
+            // 콘텐츠 (스크롤 가능)
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    // 원본 민원 댓글
+                    _buildComplaintComment(_complaint),
+
+                    // 처리 결과가 있을 경우
+                    if (_complaint['isResolved'] == true &&
+                        (_complaint['results'] as List?)?.isNotEmpty == true)
+                      ...[
+                        // 처리 결과 댓글들
+                        ...(_complaint['results'] as List<dynamic>)
+                            .map((result) => _buildResultComment(result))
+                            .toList(),
+                      ]
+                    else if (_complaint['isResolved'] != true)
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEEEE6),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                size: 16,
+                                color: Color(0xFFFF6B35),
+                              ),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  '처리 중입니다. 곧 결과를 알려드리겠습니다.',
+                                  style: TextStyle(
+                                    fontFamily: 'Pretendard',
+                                    fontWeight: FontWeight.w400,
+                                    fontSize: 12,
+                                    color: Color(0xFFFF6B35),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                    ],
-                  ),
+
+                    const SizedBox(height: 22),
+                  ],
                 ),
               ),
-
-            const SizedBox(height: 24),
+            ),
           ],
         ),
       ),
@@ -157,13 +174,6 @@ class _UserComplaintDetailScreenState extends State<UserComplaintDetailScreen> {
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 12),
-
-          // 구분선
-          Container(
-            height: 1,
-            color: const Color(0xFFE8EEF2),
           ),
           const SizedBox(height: 12),
 
@@ -311,13 +321,6 @@ class _UserComplaintDetailScreenState extends State<UserComplaintDetailScreen> {
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 12),
-
-          // 구분선
-          Container(
-            height: 1,
-            color: const Color(0xFFE8EEF2),
           ),
           const SizedBox(height: 12),
 

@@ -13,6 +13,7 @@ class AdminComplaint extends Equatable {
   final String residentName; // 민원자 이름
   final String residentUnit; // 민원자 동/호
   final String? response; // 처리 내용
+  final String? responseImageUrl; // 담당자가 첨부한 응답 이미지
   final String? handledBy; // 처리자 ID
   final DateTime createdAt;
   final DateTime? updatedAt;
@@ -30,6 +31,7 @@ class AdminComplaint extends Equatable {
     required this.residentName,
     required this.residentUnit,
     this.response,
+    this.responseImageUrl,
     this.handledBy,
     required this.createdAt,
     this.updatedAt,
@@ -37,26 +39,63 @@ class AdminComplaint extends Equatable {
   });
 
   /// JSON에서 엔티티 생성
+  /// API 응답 구조: { id, title, content, imageUrl, isResolved, department, resident, results, createdAt, updatedAt }
   factory AdminComplaint.fromJson(Map<String, dynamic> json) {
+    // 중첩된 department 객체에서 정보 추출
+    final department = json['department'] as Map<String, dynamic>? ?? {};
+    final departmentId = department['id'] as String? ?? '';
+    final departmentName = department['name'] as String? ?? '';
+
+    // 중첩된 resident 객체에서 정보 추출
+    final resident = json['resident'] as Map<String, dynamic>? ?? {};
+    final residentId = resident['id'] as String? ?? '';
+    final residentName = resident['name'] as String? ?? '';
+
+    // 동/호수 조합 (dong: "101", hosu: "1003" → "101-1003")
+    final dong = resident['dong'] as String? ?? '';
+    final hosu = resident['hosu'] as String? ?? '';
+    final residentUnit = [dong, hosu].where((e) => e.isNotEmpty).join('-');
+
+    // isResolved 값으로 status 결정
+    final isResolved = json['isResolved'] as bool? ?? false;
+    final status = isResolved ? 'COMPLETED' : 'PENDING';
+
+    // results 배열에서 처리 내용 추출 (가장 최신 것)
+    final results = json['results'] as List<dynamic>? ?? [];
+    String? response;
+    String? responseImageUrl;
+    if (results.isNotEmpty) {
+      final latestResult = results.last as Map<String, dynamic>?;
+      response = latestResult?['content'] as String?;
+      responseImageUrl = latestResult?['imageUrl'] as String?;
+    }
+
+    print('✅ AdminComplaint.fromJson() 파싱 성공');
+    print('   ID: ${json['id']}');
+    print('   Title: ${json['title']}');
+    print('   IsResolved: ${json['isResolved']}');
+    print('   Response: $response');
+
     return AdminComplaint(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      content: json['content'] as String,
+      id: json['id'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      content: json['content'] as String? ?? '',
       imageUrl: json['imageUrl'] as String?,
-      status: json['status'] as String? ?? 'PENDING',
-      departmentId: json['departmentId'] as String,
-      departmentName: json['departmentName'] as String? ?? '',
-      residentId: json['residentId'] as String,
-      residentName: json['residentName'] as String? ?? '',
-      residentUnit: json['residentUnit'] as String? ?? '',
-      response: json['response'] as String?,
-      handledBy: json['handledBy'] as String?,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      status: status,
+      departmentId: departmentId,
+      departmentName: departmentName,
+      residentId: residentId,
+      residentName: residentName,
+      residentUnit: residentUnit,
+      response: response,
+      responseImageUrl: responseImageUrl,
+      handledBy: null, // API 응답에 없음
+      createdAt: DateTime.parse(json['createdAt'] as String? ?? DateTime.now().toIso8601String()),
       updatedAt: json['updatedAt'] != null
           ? DateTime.parse(json['updatedAt'] as String)
           : null,
-      completedAt: json['completedAt'] != null
-          ? DateTime.parse(json['completedAt'] as String)
+      completedAt: isResolved && json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'] as String)
           : null,
     );
   }
@@ -75,6 +114,7 @@ class AdminComplaint extends Equatable {
       'residentName': residentName,
       'residentUnit': residentUnit,
       'response': response,
+      'responseImageUrl': responseImageUrl,
       'handledBy': handledBy,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
@@ -114,6 +154,7 @@ class AdminComplaint extends Equatable {
     String? residentName,
     String? residentUnit,
     String? response,
+    String? responseImageUrl,
     String? handledBy,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -131,6 +172,7 @@ class AdminComplaint extends Equatable {
       residentName: residentName ?? this.residentName,
       residentUnit: residentUnit ?? this.residentUnit,
       response: response ?? this.response,
+      responseImageUrl: responseImageUrl ?? this.responseImageUrl,
       handledBy: handledBy ?? this.handledBy,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -151,6 +193,7 @@ class AdminComplaint extends Equatable {
         residentName,
         residentUnit,
         response,
+        responseImageUrl,
         handledBy,
         createdAt,
         updatedAt,
