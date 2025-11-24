@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:building_manage_front/modules/headquarters/domain/repositories/building_repository.dart';
 import 'package:building_manage_front/modules/headquarters/domain/entities/building.dart';
 
@@ -17,7 +16,7 @@ class CreateBuildingUseCase {
   ///
   /// [name] 건물 이름
   /// [address] 건물 주소
-  /// [image] 건물 이미지 (선택)
+  /// [imageUrl] 건물 이미지 URL (S3에 업로드된 URL, 선택)
   /// [memo] 메모 (선택)
   ///
   /// Returns: 생성된 Building 엔티티
@@ -25,7 +24,7 @@ class CreateBuildingUseCase {
   Future<Building> execute({
     required String name,
     required String address,
-    File? image,
+    String? imageUrl,
     String? memo,
   }) async {
     // 비즈니스 규칙: 유효성 검증
@@ -41,7 +40,7 @@ class CreateBuildingUseCase {
       final building = await _repository.createBuilding(
         name: name.trim(),
         address: address.trim(),
-        image: image,
+        imageUrl: imageUrl,
         memo: memo?.trim(),
       );
       return building;
