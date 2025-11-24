@@ -54,15 +54,22 @@ class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScr
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              e is ApiException
-                  ? e.userFriendlyMessage
-                  : '부서 삭제 중 오류가 발생했습니다.',
+        // 에러 팝업 표시
+        await showCustomConfirmationDialog(
+          context: context,
+          title: '',
+          content: Text(
+            '삭제되지 않은 \n 담당자 계정이 존재합니다.',
+            style: const TextStyle(
+              color: Colors.black,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
             ),
-            backgroundColor: Colors.red,
           ),
+          confirmText: '확인',
+          cancelText: '',
+          barrierDismissible: false,
+          confirmOnLeft: true,
         );
       }
     }
