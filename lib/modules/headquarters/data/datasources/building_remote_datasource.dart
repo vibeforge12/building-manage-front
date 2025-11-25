@@ -68,6 +68,43 @@ class BuildingRemoteDataSource {
       throw Exception('건물 목록을 불러오는 중 오류가 발생했습니다: $e');
     }
   }
+
+  Future<Map<String, dynamic>> updateBuilding({
+    required String buildingId,
+    required String name,
+    required String address,
+    String? imageUrl,
+    String? memo,
+  }) async {
+    try {
+      print('✏️ 건물 수정 시작 - ID: $buildingId, 이름: $name');
+
+      final requestData = {
+        'name': name,
+        'address': address,
+        'imageUrl': imageUrl ?? '',
+        if (memo != null && memo.isNotEmpty) 'memo': memo,
+      };
+
+      print('📤 API 호출: PATCH ${ApiEndpoints.headquartersBuildings}/$buildingId');
+
+      final response = await _apiClient.patch(
+        '${ApiEndpoints.headquartersBuildings}/$buildingId',
+        data: requestData,
+      );
+
+      print('✅ 건물 수정 응답: ${response.data}');
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      print('❌ DioException 발생: ${e.message}');
+      print('❌ 응답 데이터: ${e.response?.data}');
+      print('❌ 상태 코드: ${e.response?.statusCode}');
+      throw Exception('건물 수정 중 오류가 발생했습니다: ${e.message}');
+    } catch (e) {
+      print('❌ 일반 예외 발생: $e');
+      throw Exception('건물 수정 중 오류가 발생했습니다: $e');
+    }
+  }
 }
 
 // Riverpod Provider

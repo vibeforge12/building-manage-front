@@ -180,6 +180,46 @@ class DepartmentRemoteDataSource {
     }
   }
 
+  /// 부서 이름 수정
+  /// PATCH /api/v1/headquarters/departments/:departmentId
+  Future<Map<String, dynamic>> updateDepartment({
+    required String departmentId,
+    required String name,
+  }) async {
+    try {
+      print('✏️ 부서 수정 시작 - ID: $departmentId, 이름: $name');
+
+      final data = {
+        'name': name,
+      };
+
+      final response = await _apiClient.patch(
+        '${ApiEndpoints.headquarters}/departments/$departmentId',
+        data: data,
+      );
+
+      print('✅ 부서 수정 응답: ${response.data}');
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      print('❌ DioException 발생: ${e.message}');
+      print('❌ 응답 데이터: ${e.response?.data}');
+      print('❌ 상태 코드: ${e.response?.statusCode}');
+      throw ApiException(
+        message: '부서 수정 중 오류가 발생했습니다.',
+        errorCode: 'DEPARTMENT_UPDATE_FAILED',
+      );
+    } catch (e) {
+      if (e is ApiException) {
+        rethrow;
+      }
+      print('❌ 일반 예외 발생: $e');
+      throw ApiException(
+        message: '부서 수정 중 오류가 발생했습니다.',
+        errorCode: 'DEPARTMENT_UPDATE_FAILED',
+      );
+    }
+  }
+
   /// 부서 삭제
   /// DELETE /api/v1/headquarters/departments/:departmentId
   Future<Map<String, dynamic>> deleteDepartment(String departmentId) async {

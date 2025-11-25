@@ -122,7 +122,7 @@ class AuthRemoteDataSource {
         rethrow;
       }
       throw ApiException(
-        message: '관리자 로그인 중 오류가 발생했습니다.',
+        message: '관리자 코드가 일치하지 않습니다.',
         errorCode: 'MANAGER_LOGIN_FAILED',
       );
     }

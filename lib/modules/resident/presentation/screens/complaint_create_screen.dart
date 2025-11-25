@@ -51,7 +51,7 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
 
   bool get _isFormValid {
     return _titleController.text.trim().length >= 3 &&
-        _contentController.text.trim().length >= 10;
+        _contentController.text.trim().isNotEmpty;
   }
 
   bool get _hasImage {
@@ -504,7 +504,7 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
                       height: 1.8,
                     ),
                     decoration: const InputDecoration(
-                      hintText: '내용을 입력하세요. (최소 10자)',
+                      hintText: '내용을 입력하세요.',
                       hintStyle: TextStyle(
                         fontFamily: 'Pretendard',
                         fontWeight: FontWeight.w400,

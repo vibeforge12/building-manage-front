@@ -74,8 +74,9 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
         '$staffName 담당자를 삭제하시겠습니까?',
         style: const TextStyle(
           fontFamily: 'Pretendard',
-          fontSize: 14,
-          color: Color(0xFF464A4D),
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          color: Colors.black,
         ),
       ),
       confirmText: '삭제',

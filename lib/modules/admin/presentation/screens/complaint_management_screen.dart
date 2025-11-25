@@ -57,6 +57,7 @@ class _ComplaintManagementScreenState extends ConsumerState<ComplaintManagementS
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF464A4D)),
           onPressed: () => context.pop(),

@@ -94,11 +94,12 @@ class _CustomConfirmationDialog extends StatelessWidget {
     );
 
     // 버튼 배치: cancelText가 비어있으면 confirmBtn만, 아니면 두 개 버튼
+    // 기본 순서: 왼쪽에 취소(cancelBtn), 오른쪽에 확인(confirmBtn)
     final buttons = cancelText.trim().isEmpty
         ? <Widget>[Expanded(child: confirmBtn)]
         : confirmOnLeft
-            ? <Widget>[Expanded(child: confirmBtn), const SizedBox(width: 16), Expanded(child: cancelBtn)]
-            : <Widget>[Expanded(child: cancelBtn), const SizedBox(width: 16), Expanded(child: confirmBtn)];
+            ? <Widget>[Expanded(child: cancelBtn), const SizedBox(width: 16), Expanded(child: confirmBtn)]
+            : <Widget>[Expanded(child: confirmBtn), const SizedBox(width: 16), Expanded(child: cancelBtn)];
 
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),

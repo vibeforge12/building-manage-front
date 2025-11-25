@@ -63,6 +63,7 @@ class _ManagerListScreenState extends ConsumerState<ManagerListScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => context.pop(),
@@ -170,34 +171,34 @@ class _ManagerListScreenState extends ConsumerState<ManagerListScreen> {
     final name = manager['name'] ?? '이름 없음';
     final managerId = manager['id']?.toString() ?? '';
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-      child: Row(
-        children: [
-          // 관리자 이름
-          Expanded(
-            child: Text(
-              name,
-              style: const TextStyle(
-                fontFamily: 'Pretendard',
-                fontWeight: FontWeight.w700,
-                fontSize: 12,
-                color: Color(0xFF17191A),
+    return GestureDetector(
+      onTap: () {
+        context.push('/headquarters/manager-detail/$managerId');
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        child: Row(
+          children: [
+            // 관리자 이름
+            Expanded(
+              child: Text(
+                name,
+                style: const TextStyle(
+                  fontFamily: 'Pretendard',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  color: Color(0xFF17191A),
+                ),
               ),
             ),
-          ),
-          // 상세보기 아이콘
-          GestureDetector(
-            onTap: () {
-              context.push('/headquarters/manager-detail/$managerId');
-            },
-            child: const Icon(
+            // 상세보기 아이콘
+            const Icon(
               Icons.chevron_right,
               size: 24,
               color: Color(0xFF464A4D),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

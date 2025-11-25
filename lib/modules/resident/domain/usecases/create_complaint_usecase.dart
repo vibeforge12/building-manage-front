@@ -36,24 +36,16 @@ class CreateComplaintUseCase {
       throw Exception('제목을 입력해 주세요.');
     }
 
-    if (title.length < 5) {
-      throw Exception('제목은 최소 5자 이상이어야 합니다.');
+    if (title.length < 3) {
+      throw Exception('제목은 최소 3자 이상이어야 합니다.');
     }
 
-    if (title.length > 100) {
-      throw Exception('제목은 100자를 초과할 수 없습니다.');
+    if (title.length > 500) {
+      throw Exception('제목은 500자를 초과할 수 없습니다.');
     }
 
     if (content.trim().isEmpty) {
       throw Exception('내용을 입력해 주세요.');
-    }
-
-    if (content.length < 10) {
-      throw Exception('내용은 최소 10자 이상이어야 합니다.');
-    }
-
-    if (content.length > 1000) {
-      throw Exception('내용은 1000자를 초과할 수 없습니다.');
     }
 
     // Repository를 통한 민원 생성

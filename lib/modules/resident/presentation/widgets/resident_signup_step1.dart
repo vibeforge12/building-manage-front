@@ -26,6 +26,16 @@ class _ResidentSignupStep1State extends ConsumerState<ResidentSignupStep1> {
   bool _isPasswordVisible = false;
   bool _isPasswordConfirmVisible = false;
 
+  // 다음 버튼 활성화 여부 확인
+  bool get _isFormValid {
+    return _dongController.text.trim().isNotEmpty &&
+        _hosuController.text.trim().isNotEmpty &&
+        _usernameController.text.trim().isNotEmpty &&
+        _passwordController.text.isNotEmpty &&
+        _passwordConfirmController.text.isNotEmpty &&
+        (_formKey.currentState?.validate() ?? false);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -36,6 +46,15 @@ class _ResidentSignupStep1State extends ConsumerState<ResidentSignupStep1> {
     _passwordController.text = formData.password ?? '';
     _passwordConfirmController.text = formData.passwordConfirm ?? '';
     _usernameController.text = formData.username ?? '';
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 화면이 다시 표시될 때 상태 업데이트 (이전 단계로 돌아올 때)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {});
+    });
   }
 
   @override
@@ -96,6 +115,7 @@ class _ResidentSignupStep1State extends ConsumerState<ResidentSignupStep1> {
                 }
                 return null;
               },
+              onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 16),
 
@@ -113,6 +133,7 @@ class _ResidentSignupStep1State extends ConsumerState<ResidentSignupStep1> {
                 }
                 return null;
               },
+              onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 16),
 
@@ -132,6 +153,7 @@ class _ResidentSignupStep1State extends ConsumerState<ResidentSignupStep1> {
                 }
                 return null;
               },
+              onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 16),
 
@@ -161,11 +183,9 @@ class _ResidentSignupStep1State extends ConsumerState<ResidentSignupStep1> {
                 return null;
               },
               onChanged: (value) {
-                if (_passwordConfirmController.text.isNotEmpty) {
-                  setState(() {
-                    _formKey.currentState?.validate();
-                  });
-                }
+                setState(() {
+                  _formKey.currentState?.validate();
+                });
               },
             ),
             const SizedBox(height: 16),
@@ -191,25 +211,27 @@ class _ResidentSignupStep1State extends ConsumerState<ResidentSignupStep1> {
                 }
                 return null;
               },
-              onFieldSubmitted: (_) => _handleNext(),
+              onChanged: (_) => setState(() {}),
+              onFieldSubmitted: (_) => _isFormValid ? _handleNext() : null,
             ),
             const SizedBox(height: 32),
 
             // 다음 단계 버튼
             ElevatedButton(
-              onPressed: _handleNext,
+              onPressed: _isFormValid ? _handleNext : null,
               style: ElevatedButton.styleFrom(
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                backgroundColor: Color(0xffE8EEF2)
+                backgroundColor: _isFormValid ? const Color(0xFF006FFF) : const Color(0xFFE8EEF2),
+                disabledBackgroundColor: const Color(0xFFE8EEF2),
               ),
-              child: const Text(
+              child: Text(
                 '다음',
                 style: TextStyle(
-                  color: Color(0xffA4ADB2),
+                  color: _isFormValid ? Colors.white : const Color(0xFFA4ADB2),
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),

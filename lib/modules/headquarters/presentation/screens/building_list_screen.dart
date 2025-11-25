@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/common/data/datasources/building_list_remote_datasource.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/providers/headquarters_providers.dart';
+import 'package:building_manage_front/modules/headquarters/presentation/screens/building_edit_screen.dart';
 import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
 
@@ -130,6 +131,7 @@ class _BuildingListScreenState extends ConsumerState<BuildingListScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => context.pop(),
@@ -217,7 +219,11 @@ class _BuildingListScreenState extends ConsumerState<BuildingListScreen> {
                       }
                     },
                     onEdit: () {
-                      // TODO: 등록(수정) 기능
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => BuildingEditScreen(building: building),
+                        ),
+                      );
                     },
                   );
                 },
@@ -247,129 +253,111 @@ class _BuildingItem extends StatelessWidget {
     final address = building['address'] ?? '주소 없음';
     final imageUrl = building['imageUrl'];
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // 이미지
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8F9FA),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: const Color(0xFFE8EEF2),
-                width: 1,
+    return GestureDetector(
+      onTap: onEdit,
+      behavior: HitTestBehavior.translucent,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // 이미지
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8F9FA),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: const Color(0xFFE8EEF2),
+                  width: 1,
+                ),
+              ),
+              child: imageUrl != null && imageUrl.isNotEmpty
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        width: 72,
+                        height: 72,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(
+                            Icons.business,
+                            size: 32,
+                            color: Color(0xFFBDBDBD),
+                          );
+                        },
+                      ),
+                    )
+                  : const Icon(
+                      Icons.business,
+                      size: 32,
+                      color: Color(0xFFBDBDBD),
+                    ),
+            ),
+            const SizedBox(width: 16),
+            // 건물명과 주소
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontFamily: 'Pretendard',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: Color(0xFF17191A),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    address,
+                    style: const TextStyle(
+                      fontFamily: 'Pretendard',
+                      fontWeight: FontWeight.w400,
+                      fontSize: 12,
+                      color: Color(0xFF757B80),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
-            child: imageUrl != null && imageUrl.isNotEmpty
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      imageUrl,
-                      fit: BoxFit.cover,
-                      width: 72,
-                      height: 72,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(
-                          Icons.business,
-                          size: 32,
-                          color: Color(0xFFBDBDBD),
-                        );
-                      },
-                    ),
-                  )
-                : const Icon(
-                    Icons.business,
-                    size: 32,
-                    color: Color(0xFFBDBDBD),
-                  ),
-          ),
-          const SizedBox(width: 16),
-          // 건물명과 주소
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            // 버튼들
+            Row(
               children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontFamily: 'Pretendard',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                    color: Color(0xFF17191A),
+                // 삭제 버튼
+                InkWell(
+                  onTap: onDelete,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: const Color(0xFFE8EEF2),
+                        width: 1,
+                      ),
+                    ),
+                    child: const Text(
+                      '삭제',
+                      style: TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                        color: Color(0xFF464A4D),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  address,
-                  style: const TextStyle(
-                    fontFamily: 'Pretendard',
-                    fontWeight: FontWeight.w400,
-                    fontSize: 12,
-                    color: Color(0xFF757B80),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
-          ),
-          // 버튼들
-          Row(
-            children: [
-              // 삭제 버튼
-              InkWell(
-                onTap: onDelete,
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: const Color(0xFFE8EEF2),
-                      width: 1,
-                    ),
-                  ),
-                  child: const Text(
-                    '삭제',
-                    style: TextStyle(
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
-                      color: Color(0xFF464A4D),
-                    ),
-                  ),
-                ),
-              ),
-              // const SizedBox(width: 8),
-              // // 등록 버튼
-              // InkWell(
-              //   onTap: onEdit,
-              //   borderRadius: BorderRadius.circular(8),
-              //   child: Container(
-              //     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              //     decoration: BoxDecoration(
-              //       color: const Color(0xFFEDF9FF),
-              //       borderRadius: BorderRadius.circular(8),
-              //     ),
-              //     child: const Text(
-              //       '등록',
-              //       style: TextStyle(
-              //         fontFamily: 'Pretendard',
-              //         fontWeight: FontWeight.w700,
-              //         fontSize: 12,
-              //         color: Color(0xFF0683FF),
-              //       ),
-              //     ),
-              //   ),
-              // ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -82,6 +82,16 @@ class RouterNotifier extends ChangeNotifier {
 
     print('🔄 ROUTER REDIRECT - path: $path, authState: $authState, userType: ${currentUser?.userType}');
 
+    // 승인이 거부된 사용자는 모든 경로 접근 차단 (거부 화면으로만 접근 가능)
+    if (authState == AuthState.authenticated &&
+        currentUser != null &&
+        currentUser.userType == UserType.user &&
+        currentUser.approvalStatus == 'REJECTED' &&
+        path != '/resident-approval-rejected') {
+      print('❌ REJECTED USER - Blocking all access except rejection screen');
+      return '/resident-approval-rejected';
+    }
+
     // 인증이 필요한 경로들
     final protectedRoutes = [
       '/user/dashboard',

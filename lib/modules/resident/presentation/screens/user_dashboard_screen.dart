@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/resident/data/datasources/notice_remote_datasource.dart';
 import 'package:building_manage_front/modules/resident/data/datasources/department_remote_datasource.dart';
 import 'package:building_manage_front/modules/headquarters/data/datasources/department_remote_datasource.dart';
-import 'package:building_manage_front/shared/widgets/custom_dialog.dart';
+import 'package:building_manage_front/shared/widgets/confirmation_dialog.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 
 class UserDashboardScreen extends ConsumerStatefulWidget {
@@ -667,52 +667,80 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
     final deptName = department['name'] as String;
     final deptId = department['id'] as String;
     final iconPath = _departmentIcons[deptName];
+    final currentUser = ref.read(currentUserProvider);
 
     return InkWell(
       onTap: () async {
-        // 유저 부서 API로 isActive 확인
-        try {
-          final residentDeptDataSource = ref.read(residentDepartmentRemoteDataSourceProvider);
-          final response = await residentDeptDataSource.getDepartments();
+        // 1️⃣ 먼저 사용자 승인 상태 확인
+        final approvalStatus = currentUser?.approvalStatus;
 
-          if (response['success'] == true) {
-            final userDepartments = List<Map<String, dynamic>>.from(response['data'] ?? []);
-
-            // 현재 부서의 isActive 찾기
-            final matchedDept = userDepartments.firstWhere(
-              (dept) => dept['id'] == deptId,
-              orElse: () => {'isActive': false},
+        // PENDING 상태: 회원가입 승인 대기 중
+        if (approvalStatus == 'PENDING') {
+          if (mounted) {
+            await InfoDialog.show(
+              context,
+              title: '승인 대기 중',
+              content: '회원가입 승인 대기 중입니다.',
             );
+          }
+          return;
+        }
 
-            final isActive = matchedDept['isActive'] as bool? ?? false;
+        // REJECTED 상태: 승인 거부
+        if (approvalStatus == 'REJECTED') {
+          if (mounted) {
+            await InfoDialog.show(
+              context,
+              title: '승인 거부',
+              content: '아직 승인되지 않았습니다.',
+            );
+          }
+          return;
+        }
 
-            // 담당자가 없는 부서인 경우 팝업 표시
-            if (!isActive) {
-              if (mounted) {
-                showDialog(
-                  context: context,
-                  builder: (context) => const CustomDialog(
+        // APPROVED 상태만 진행: 부서의 담당자 배정 여부 확인
+        if (approvalStatus == 'APPROVED') {
+          try {
+            final residentDeptDataSource = ref.read(residentDepartmentRemoteDataSourceProvider);
+            final response = await residentDeptDataSource.getDepartments();
+
+            if (response['success'] == true) {
+              final userDepartments = List<Map<String, dynamic>>.from(response['data'] ?? []);
+
+              // 현재 부서의 isActive 찾기
+              final matchedDept = userDepartments.firstWhere(
+                (dept) => dept['id'] == deptId,
+                orElse: () => {'isActive': false},
+              );
+
+              final isActive = matchedDept['isActive'] as bool? ?? false;
+
+              // 담당자가 없는 부서인 경우 팝업 표시
+              if (!isActive) {
+                if (mounted) {
+                  await InfoDialog.show(
+                    context,
                     title: '담당자 미배정',
-                    message: '해당 담당자는 아직 배정되지 않았습니다.',
-                  ),
+                    content: '해당 부서의 담당자가 아직 배정되지 않았습니다.',
+                  );
+                }
+                return;
+              }
+
+              // 담당자가 있는 경우 민원 등록 화면으로 이동
+              if (mounted) {
+                context.pushNamed(
+                  'complaintCreate',
+                  queryParameters: {
+                    'departmentId': deptId,
+                    'departmentName': deptName,
+                  },
                 );
               }
-              return;
             }
-
-            // 담당자가 있는 경우 민원 등록 화면으로 이동
-            if (mounted) {
-              context.pushNamed(
-                'complaintCreate',
-                queryParameters: {
-                  'departmentId': deptId,
-                  'departmentName': deptName,
-                },
-              );
-            }
+          } catch (e) {
+            print('부서 상태 확인 실패: $e');
           }
-        } catch (e) {
-          print('부서 상태 확인 실패: $e');
         }
       },
       child: Container(
