@@ -5,26 +5,41 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:building_manage_front/shared/widgets/field_label.dart';
 import 'package:building_manage_front/shared/widgets/primary_action_button.dart';
+import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/providers/headquarters_providers.dart';
 import 'package:building_manage_front/modules/common/services/image_upload_service.dart';
 import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
-class BuildingRegistrationScreen extends ConsumerStatefulWidget {
-  const BuildingRegistrationScreen({super.key});
+class BuildingEditScreen extends ConsumerStatefulWidget {
+  final Map<String, dynamic> building;
+
+  const BuildingEditScreen({
+    super.key,
+    required this.building,
+  });
 
   @override
-  ConsumerState<BuildingRegistrationScreen> createState() => _BuildingRegistrationScreenState();
+  ConsumerState<BuildingEditScreen> createState() => _BuildingEditScreenState();
 }
 
-class _BuildingRegistrationScreenState extends ConsumerState<BuildingRegistrationScreen> {
+class _BuildingEditScreenState extends ConsumerState<BuildingEditScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _addressController = TextEditingController();
-  final _memoController = TextEditingController();
+  late final TextEditingController _nameController;
+  late final TextEditingController _addressController;
+  late final TextEditingController _memoController;
 
   File? _selectedImage;
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.building['name'] ?? '');
+    _addressController = TextEditingController(text: widget.building['address'] ?? '');
+    _memoController = TextEditingController(text: widget.building['memo'] ?? '');
+  }
 
   @override
   void dispose() {
@@ -35,7 +50,6 @@ class _BuildingRegistrationScreenState extends ConsumerState<BuildingRegistratio
   }
 
   Future<void> _pickImage() async {
-
     try {
       final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
       if (image != null) {
@@ -62,7 +76,7 @@ class _BuildingRegistrationScreenState extends ConsumerState<BuildingRegistratio
     try {
       String? imageUrl;
 
-      // 이미지가 선택되었으면 S3에 업로드하고 URL 받기
+      // 새로운 이미지가 선택되었으면 S3에 업로드하고 URL 받기
       if (_selectedImage != null) {
         try {
           print('🖼️ 이미지 S3 업로드 시작');
@@ -91,33 +105,52 @@ class _BuildingRegistrationScreenState extends ConsumerState<BuildingRegistratio
         }
       }
 
-      // S3 URL을 포함하여 건물 등록 API 호출
+      // S3 URL 또는 기존 URL을 포함하여 건물 수정 API 호출
       final buildingDataSource = ref.read(buildingRemoteDataSourceProvider);
 
-      final response = await buildingDataSource.createBuilding(
+      final response = await buildingDataSource.updateBuilding(
+        buildingId: widget.building['id'].toString(),
         name: _nameController.text.trim(),
         address: _addressController.text.trim(),
-        imageUrl: imageUrl,
+        imageUrl: imageUrl ?? widget.building['imageUrl'],
         memo: _memoController.text.trim().isEmpty ? null : _memoController.text.trim(),
       );
 
       if (mounted) {
         if (response['success'] == true) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('건물이 성공적으로 등록되었습니다.')),
-          );
           // 건물 목록 새로고침 트리거
           ref.read(buildingRefreshTriggerProvider.notifier).state++;
-          context.pop();
+
+          // 수정 완료 모달 표시
+          await showCustomConfirmationDialog(
+            context: context,
+            title: '',
+            content: const Text(
+              '수정이 완료되었습니다.',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            confirmText: '확인',
+            cancelText: '',
+            barrierDismissible: false,
+            confirmOnLeft: true,
+          );
+
+          if (mounted) {
+            context.pop();
+          }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(response['message'] ?? '건물 등록에 실패했습니다.')),
+            SnackBar(content: Text(response['message'] ?? '건물 수정에 실패했습니다.')),
           );
         }
       }
     } catch (e) {
       if (mounted) {
-        String errorMessage = '건물 등록 중 오류가 발생했습니다.';
+        String errorMessage = '건물 수정 중 오류가 발생했습니다.';
         if (e is ApiException) {
           errorMessage = e.userFriendlyMessage;
         } else if (e is Exception) {
@@ -139,6 +172,8 @@ class _BuildingRegistrationScreenState extends ConsumerState<BuildingRegistratio
 
   @override
   Widget build(BuildContext context) {
+    final currentImageUrl = widget.building['imageUrl'];
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -150,7 +185,7 @@ class _BuildingRegistrationScreenState extends ConsumerState<BuildingRegistratio
           onPressed: () => context.pop(),
         ),
         title: const Text(
-          '건물 등록',
+          '건물 수정',
           style: TextStyle(
             fontFamily: 'Pretendard',
             fontWeight: FontWeight.w700,
@@ -255,24 +290,53 @@ class _BuildingRegistrationScreenState extends ConsumerState<BuildingRegistratio
                             fit: BoxFit.cover,
                           ),
                         )
-                      : const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.add_photo_alternate,
-                              size: 48,
-                              color: Colors.grey,
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              '이미지를 선택해주세요',
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 14,
+                      : currentImageUrl != null && currentImageUrl.isNotEmpty
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: CachedNetworkImage(
+                                imageUrl: currentImageUrl,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                                errorWidget: (context, url, error) => const Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.add_photo_alternate,
+                                      size: 48,
+                                      color: Colors.grey,
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      '이미지를 선택해주세요',
+                                      style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
+                            )
+                          : const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.add_photo_alternate,
+                                  size: 48,
+                                  color: Colors.grey,
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  '이미지를 선택해주세요',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
                 ),
               ),
 
@@ -299,11 +363,11 @@ class _BuildingRegistrationScreenState extends ConsumerState<BuildingRegistratio
 
               const SizedBox(height: 40),
 
-              // 등록 버튼
+              // 수정 버튼
               SizedBox(
                 width: double.infinity,
                 child: PrimaryActionButton(
-                  label: _isLoading ? '등록 중...' : '건물 등록',
+                  label: _isLoading ? '수정 중...' : '건물 수정',
                   backgroundColor: const Color(0xFF006FFF),
                   foregroundColor: Colors.white,
                   onPressed: _isLoading ? () {} : _submitForm,

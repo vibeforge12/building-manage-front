@@ -22,12 +22,28 @@ class _ResidentSignupStep3State extends ConsumerState<ResidentSignupStep3> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
 
+  // 다음 버튼 활성화 여부 확인
+  bool get _isFormValid {
+    return _nameController.text.trim().isNotEmpty &&
+        _phoneController.text.trim().isNotEmpty &&
+        (_formKey.currentState?.validate() ?? false);
+  }
+
   @override
   void initState() {
     super.initState();
     final formData = ref.read(signupFormProvider);
     _nameController.text = formData.name ?? '';
     _phoneController.text = formData.phoneNumber ?? '';
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 화면이 다시 표시될 때 상태 업데이트 (이전 단계로 돌아올 때)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {});
+    });
   }
 
   @override
@@ -73,6 +89,7 @@ class _ResidentSignupStep3State extends ConsumerState<ResidentSignupStep3> {
                 }
                 return null;
               },
+              onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 16),
 
@@ -91,6 +108,7 @@ class _ResidentSignupStep3State extends ConsumerState<ResidentSignupStep3> {
                 }
                 return null;
               },
+              onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 32),
 
@@ -99,15 +117,15 @@ class _ResidentSignupStep3State extends ConsumerState<ResidentSignupStep3> {
               width: double.infinity,
               height: 60,
               decoration: BoxDecoration(
-                color: const Color(0xFFE8EEF2),
+                color: _isFormValid ? const Color(0xFF006FFF) : const Color(0xFFE8EEF2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: TextButton(
-                onPressed: _handleComplete,
-                child: const Text(
+                onPressed: _isFormValid ? _handleComplete : null,
+                child: Text(
                   '다음',
                   style: TextStyle(
-                    color: Color(0xFFA4ADB2),
+                    color: _isFormValid ? Colors.white : const Color(0xFFA4ADB2),
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),

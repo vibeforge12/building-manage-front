@@ -8,6 +8,7 @@ import 'dart:io';
 import 'package:building_manage_front/modules/headquarters/data/datasources/department_remote_datasource.dart';
 import 'package:building_manage_front/modules/admin/data/datasources/notice_remote_datasource.dart';
 import 'package:building_manage_front/modules/common/services/image_upload_service.dart';
+import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
 
 class NoticeCreateScreen extends ConsumerStatefulWidget {
   final bool isEvent;
@@ -62,16 +63,40 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
   @override
   void initState() {
     super.initState();
-    _loadDepartments();
-
-    // 수정 모드라면 공지사항 상세 정보 로드
-    if (widget.noticeId != null) {
-      _loadNoticeDetail();
-    }
 
     // 텍스트 변경 시 UI 업데이트
     _titleController.addListener(_updateFormState);
     _contentController.addListener(_updateFormState);
+
+    // 비동기 작업 수행
+    _initializeAsync();
+  }
+
+  Future<void> _initializeAsync() async {
+    // 부서 목록 먼저 로드
+    await _loadDepartments();
+
+    // 부서 로드 완료 후 UI 업데이트
+    if (mounted) {
+      setState(() {
+        print('✅ 부서 로드 완료: $_departments');
+      });
+    }
+
+    // 부서 로드 완료 후 수정 모드라면 공지사항 상세 정보 로드
+    if (widget.noticeId != null && mounted) {
+      print('🔄 공지사항 상세 로드 시작: ${widget.noticeId}');
+      await _loadNoticeDetail();
+
+      print('✅ 공지사항 로드 완료: selectedTarget=$_selectedTarget, deptName=$_selectedDepartmentName');
+
+      // 공지사항 로드 완료 후 한 번 더 UI 업데이트
+      if (mounted) {
+        setState(() {
+          // UI 재빌드하여 부서명이 제대로 표시되도록 함
+        });
+      }
+    }
   }
 
   Future<void> _loadNoticeDetail() async {
@@ -85,8 +110,15 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
           ? await noticeDataSource.getEventDetail(widget.noticeId!)
           : await noticeDataSource.getNoticeDetail(widget.noticeId!);
 
-      final data = response['data'];
-      print('📋 API 응답 데이터: $data');
+      print('📋 전체 API 응답: $response');
+
+      // 응답 구조 처리: { success, data: { data: {...} } } 또는 { success, data: {...} }
+      final responseData = response['data'];
+      final data = responseData is Map && responseData.containsKey('data')
+          ? responseData['data']
+          : responseData;
+
+      print('📋 파싱된 공지/이벤트 데이터: $data');
 
       if (mounted) {
         setState(() {
@@ -103,10 +135,49 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
           // 이벤트가 아닌 경우만 target과 department 로드
           if (!widget.isEvent) {
             _selectedTarget = data['target'] as String? ?? 'BOTH';
-            if (data['departmentId'] != null) {
-              _selectedDepartmentId = data['departmentId'] as String;
-              _selectedDepartmentName = data['department']?['name'] as String? ?? '부서 선택';
+            print('🎯 선택된 target: $_selectedTarget');
+
+            // 부서 객체에서 직접 추출 (API 응답에 department 객체가 있음)
+            final departmentObj = data['department'];
+            print('📦 department 객체: $departmentObj');
+
+            if (departmentObj != null && departmentObj is Map) {
+              // department 객체가 있으면 id와 name 추출
+              final deptId = departmentObj['id'] as String?;
+              final deptName = departmentObj['name'] as String?;
+
+              print('✅ department에서 추출 - ID: $deptId, Name: $deptName');
+
+              if (deptId != null) {
+                _selectedDepartmentId = deptId;
+                _selectedDepartmentName = deptName ?? '부서 선택';
+                print('✅ 부서 설정 완료: $_selectedDepartmentName');
+              }
             }
+            // departmentId 필드가 있으면 그것도 지원 (호환성)
+            else if (data['departmentId'] != null) {
+              _selectedDepartmentId = data['departmentId'] as String;
+              print('🔄 departmentId 필드 사용: $_selectedDepartmentId');
+
+              // 부서명을 _departments에서 찾기
+              if (_departments.isNotEmpty) {
+                try {
+                  final dept = _departments.firstWhere(
+                    (d) => d['id'].toString() == _selectedDepartmentId,
+                  );
+                  _selectedDepartmentName = dept['name'] as String?? '부서 선택';
+                  print('✅ _departments에서 부서명 찾음: $_selectedDepartmentName');
+                } catch (e) {
+                  print('⚠️ 부서명 찾기 실패: $e');
+                  _selectedDepartmentName = '부서 선택';
+                }
+              }
+            } else {
+              print('⚠️ department 객체와 departmentId 필드 모두 null');
+              _selectedDepartmentName = '부서 선택';
+            }
+
+            print('✅ 최종 부서 설정: ID=$_selectedDepartmentId, Name=$_selectedDepartmentName');
           }
         });
       }
@@ -338,14 +409,28 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
         }
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${widget.isEvent ? '이벤트' : '공지사항'}이 수정되었습니다.'),
-              backgroundColor: Colors.green,
+          // 수정 완료 모달 표시
+          await showCustomConfirmationDialog(
+            context: context,
+            title: '',
+            content: Text(
+              '${widget.isEvent ? '이벤트' : '공지사항'}이 수정되었습니다.',
+              style: const TextStyle(
+                color: Colors.black,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
             ),
+            confirmText: '확인',
+            cancelText: '',
+            barrierDismissible: false,
+            confirmOnLeft: true,
           );
-          // 수정 성공 시 true를 반환하여 부모 화면에서 새로고침하도록 함
-          context.pop(true);
+
+          if (mounted) {
+            // 수정 성공 시 true를 반환하여 부모 화면에서 새로고침하도록 함
+            context.pop(true);
+          }
         }
       } else {
         // 생성 모드: POST API 호출
@@ -368,14 +453,28 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
         }
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${widget.isEvent ? '이벤트' : '공지사항'}이 등록되었습니다.'),
-              backgroundColor: Colors.green,
+          // 등록 완료 모달 표시
+          await showCustomConfirmationDialog(
+            context: context,
+            title: '',
+            content: Text(
+              '${widget.isEvent ? '이벤트' : '공지사항'}이 등록되었습니다.',
+              style: const TextStyle(
+                color: Colors.black,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
             ),
+            confirmText: '확인',
+            cancelText: '',
+            barrierDismissible: false,
+            confirmOnLeft: true,
           );
-          // 등록 성공 시 true를 반환하여 부모 화면에서 새로고침하도록 함
-          context.pop(true);
+
+          if (mounted) {
+            // 등록 성공 시 true를 반환하여 부모 화면에서 새로고침하도록 함
+            context.pop(true);
+          }
         }
       }
     } catch (e) {
@@ -427,8 +526,8 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
         ),
         title: Text(
           _isEditing
-              ? (widget.isEvent ? '이벤트 수정' : '공지 수정')
-              : (widget.isEvent ? '이벤트 등록' : '공지 등록'),
+              ? (widget.isEvent ? '이벤트 수정' : '공지사항 수정')
+              : (widget.isEvent ? '이벤트 등록' : '공지사항 등록'),
           style: const TextStyle(
             fontFamily: 'Pretendard',
             fontWeight: FontWeight.w700,

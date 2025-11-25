@@ -7,6 +7,7 @@ import '../widgets/resident_signup_step1.dart';
 import '../widgets/resident_signup_step2.dart';
 import '../widgets/resident_signup_step3.dart';
 import 'package:building_manage_front/shared/widgets/app_bar.dart';
+import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
 
 class ResidentSignupScreen extends ConsumerWidget {
   const ResidentSignupScreen({super.key});
@@ -17,7 +18,37 @@ class ResidentSignupScreen extends ConsumerWidget {
     final formNotifier = ref.read(signupFormProvider.notifier);
 
     return Scaffold(
-      appBar: commonAppBar('입주민 회원가입'),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: formState.currentStep == 1
+            ? null // Step 1에서는 뒤로가기 버튼 없음
+            : IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.black),
+                onPressed: () {
+                  formNotifier.previousStep();
+                },
+              ),
+        title: const Text(
+          '입주민 회원가입',
+          style: TextStyle(
+            fontFamily: 'Pretendard',
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+            color: Color(0xFF464A4D),
+          ),
+        ),
+        centerTitle: true,
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(
+            height: 1,
+            thickness: 1,
+            color: Color(0xFFE8EEF2),
+          ),
+        ),
+      ),
       body: Column(
         children: [
           // Form content
@@ -86,53 +117,63 @@ class ResidentSignupScreen extends ConsumerWidget {
       // 로딩 다이얼로그 닫기
       if (context.mounted) {
         Navigator.of(context).pop();
-        _showSuccessDialog(context, ref);
+        await _showSuccessDialog(context, ref);
       }
     } catch (e) {
       // 로딩 다이얼로그 닫기
       if (context.mounted) {
         Navigator.of(context).pop();
-        _showErrorDialog(context, e.toString());
+        await _showErrorDialog(context, ref, e.toString());
       }
     }
   }
 
-  void _showSuccessDialog(BuildContext context, WidgetRef ref) {
-    showDialog(
+  Future<void> _showSuccessDialog(BuildContext context, WidgetRef ref) async {
+    await showCustomConfirmationDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        icon: const Icon(Icons.check_circle, color: Colors.green, size: 48),
-        title: const Text('회원가입 완료'),
-        content: const Text('회원가입이 성공적으로 완료되었습니다.\n로그인 화면으로 이동합니다.'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              ref.read(signupFormProvider.notifier).reset();
-              context.go('/user-login');
-            },
-            child: const Text('확인'),
-          ),
-        ],
+      title: '회원가입 완료',
+      content: const Text(
+        '회원가입이 성공적으로 완료되었습니다.',
+        style: TextStyle(
+          color: Colors.black,
+          fontSize: 16,
+          fontWeight: FontWeight.w400,
+        ),
       ),
+      confirmText: '확인',
+      cancelText: '',
+      barrierDismissible: false,
+      confirmOnLeft: true,
     );
+
+    if (context.mounted) {
+      ref.read(signupFormProvider.notifier).reset();
+      context.go('/user-login');
+    }
   }
 
-  void _showErrorDialog(BuildContext context, String errorMessage) {
-    showDialog(
+  Future<void> _showErrorDialog(BuildContext context, WidgetRef ref, String errorMessage) async {
+    await showCustomConfirmationDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        icon: const Icon(Icons.error, color: Colors.red, size: 48),
-        title: const Text('회원가입 실패'),
-        content: Text(errorMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('확인'),
-          ),
-        ],
+      title: '회원가입 실패',
+      content: Text(
+        errorMessage,
+        style: const TextStyle(
+          color: Colors.black,
+          fontSize: 16,
+          fontWeight: FontWeight.w400,
+        ),
       ),
+      confirmText: '확인',
+      cancelText: '',
+      isDestructive: true,
+      barrierDismissible: false,
+      confirmOnLeft: true,
     );
+
+    if (context.mounted) {
+      // 에러 다이얼로그 닫을 때 폼 상태 reset (Step 1로 돌아가기)
+      ref.read(signupFormProvider.notifier).reset();
+    }
   }
 }

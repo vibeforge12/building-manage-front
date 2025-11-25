@@ -107,6 +107,7 @@ class _DepartmentCreationScreenState extends ConsumerState<DepartmentCreationScr
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => context.pop(),
@@ -114,18 +115,21 @@ class _DepartmentCreationScreenState extends ConsumerState<DepartmentCreationScr
         title: const Text(
           '부서 생성',
           style: TextStyle(
-            color: Colors.black,
+            fontFamily: 'Pretendard',
+            fontWeight: FontWeight.w700,
             fontSize: 16,
-            fontWeight: FontWeight.bold,
+            color: Color(0xFF464A4D),
           ),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.black),
-            onPressed: () {},
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(
+            height: 1,
+            thickness: 1,
+            color: Color(0xFFE8EEF2),
           ),
-        ],
+        ),
       ),
       body: Form(
         key: _formKey,

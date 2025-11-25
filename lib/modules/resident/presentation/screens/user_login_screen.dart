@@ -258,7 +258,7 @@ class _UserLoginScreenState extends ConsumerState<UserLoginScreen> {
                     ),
                     backgroundColor: Color(0xFF006FFF),
                   ),
-                  child: const Text('회원가입'),
+                  child: const Text('회원가입', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),),
                 ),
               ],
             ),

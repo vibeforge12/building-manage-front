@@ -97,7 +97,7 @@ class _ResidentApprovalPendingScreenState
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
-                        '건물 관리자의 승인을 기다리고 있습니다.\n\n승인 시 입주민 서비스를 이용할 수 있습니다.',
+                        '회원가입 승인 대기 중입니다.\n\n승인 시 입주민 서비스를 이용할 수 있습니다.',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w400,

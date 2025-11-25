@@ -39,6 +39,15 @@ class _ResidentSignupStep2State extends ConsumerState<ResidentSignupStep2> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 화면이 다시 표시될 때 상태 업데이트 (이전 단계로 돌아올 때)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {});
+    });
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -268,15 +277,15 @@ class _ResidentSignupStep2State extends ConsumerState<ResidentSignupStep2> {
             width: double.infinity,
             height: 60,
             decoration: BoxDecoration(
-              color: const Color(0xFFE8EEF2),
+              color: _selectedBuilding != null ? const Color(0xFF006FFF) : const Color(0xFFE8EEF2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: TextButton(
-              onPressed: _handleComplete,
-              child: const Text(
+              onPressed: _selectedBuilding != null ? _handleComplete : null,
+              child: Text(
                 '다음',
                 style: TextStyle(
-                  color: Color(0xFFA4ADB2),
+                  color: _selectedBuilding != null ? Colors.white : const Color(0xFFA4ADB2),
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),

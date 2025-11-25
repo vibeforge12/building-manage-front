@@ -34,6 +34,7 @@ class _AttendanceHistoryScreenState extends ConsumerState<AttendanceHistoryScree
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.white,
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF464A4D)),
           onPressed: () => context.pop(),

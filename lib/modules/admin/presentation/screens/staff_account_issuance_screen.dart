@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/admin/presentation/providers/department_provider.dart';
 import 'package:building_manage_front/modules/admin/presentation/providers/staff_provider.dart';
+import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
 
 /// 담당자 계정발급 화면
 class StaffAccountIssuanceScreen extends ConsumerStatefulWidget {
@@ -405,22 +406,28 @@ class _StaffAccountIssuanceScreenState
     final staffState = ref.read(staffAccountIssuanceProvider);
 
     if (staffState.isSuccess) {
-      // 성공 메시지 표시
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '담당자 계정이 성공적으로 발급되었습니다.\n담당자 ${_nameController.text.trim()}',
-          ),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-
-      // 잠시 후 대시보드로 이동
-      await Future.delayed(const Duration(milliseconds: 500));
-
+      // 성공 모달 표시
       if (mounted) {
-        context.go('/admin/dashboard');
+        await showCustomConfirmationDialog(
+          context: context,
+          title: '',
+          content: const Text(
+            '담당자 계정이 발급되었습니다.',
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          confirmText: '확인',
+          cancelText: '',
+          barrierDismissible: false,
+          confirmOnLeft: true,
+        );
+
+        if (mounted) {
+          context.go('/admin/dashboard');
+        }
       }
     } else if (staffState.error != null) {
       // 에러 메시지 표시

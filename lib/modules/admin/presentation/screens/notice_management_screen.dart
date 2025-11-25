@@ -122,6 +122,7 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        scrolledUnderElevation: 1,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => context.pop(),
@@ -467,7 +468,6 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
       confirmText: '예',
       cancelText: '아니요',
       isDestructive: true,
-      confirmOnLeft: false,
     );
 
     if (result == true) {
@@ -514,7 +514,15 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
 
   Widget _buildNoticeItem(Map<String, dynamic> notice, {bool isEvent = false}) {
     final id = notice['id'] as String? ?? '';
-    final title = notice['title'] as String? ?? '제목 없음';
+    final rawTitle = notice['title'] as String? ?? '제목 없음';
+    final target = notice['target'] as String? ?? 'BOTH';
+    final departmentName = notice['department']?['name'] as String?;
+
+    // 담당자 대상인 경우 앞에 부서명 추가
+    final title = target == 'STAFF' && departmentName != null
+        ? '[$departmentName] $rawTitle'
+        : rawTitle;
+
     final content = notice['content'] as String? ?? '';
     final createdAt = notice['createdAt'] as String? ?? '';
 
