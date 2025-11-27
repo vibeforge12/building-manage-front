@@ -19,6 +19,9 @@ import 'package:building_manage_front/modules/resident/presentation/screens/resi
 import 'package:building_manage_front/modules/resident/presentation/screens/resident_approval_completed_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/resident_approval_rejected_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/user_complaint_detail_screen.dart';
+import 'package:building_manage_front/modules/resident/presentation/screens/user_profile_screen.dart';
+import 'package:building_manage_front/modules/resident/presentation/screens/change_password_screen.dart';
+import 'package:building_manage_front/modules/resident/presentation/screens/password_reset_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/admin_login_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/admin_dashboard_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/staff_account_issuance_screen.dart';
@@ -47,6 +50,8 @@ import 'package:building_manage_front/modules/headquarters/presentation/screens/
 import 'package:building_manage_front/modules/headquarters/presentation/screens/admin_account_issuance_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/manager_list_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/manager_detail_screen.dart';
+import 'package:building_manage_front/modules/headquarters/presentation/screens/headquarters_profile_screen.dart';
+import 'package:building_manage_front/modules/headquarters/presentation/screens/headquarters_change_password_screen.dart';
 
 class RouterNotifier extends ChangeNotifier {
   final Ref _ref;
@@ -95,6 +100,8 @@ class RouterNotifier extends ChangeNotifier {
     // 인증이 필요한 경로들
     final protectedRoutes = [
       '/user/dashboard',
+      '/user/profile',
+      '/user/change-password',
       '/user/notice',
       '/user/event',
       '/user/complaint-create',
@@ -118,6 +125,8 @@ class RouterNotifier extends ChangeNotifier {
       '/headquarters/department-creation',
       '/headquarters/department-management',
       '/headquarters/admin-account-issuance',
+      '/headquarters/profile',
+      '/headquarters/change-password',
     ];
 
     final isProtectedRoute = protectedRoutes.any((route) => path?.startsWith(route) == true);
@@ -197,6 +206,13 @@ class RouterNotifier extends ChangeNotifier {
       builder: (context, state) => const UserLoginScreen(),
     ),
 
+    // 비밀번호 찾기 (공개 경로)
+    GoRoute(
+      path: '/password-reset',
+      name: 'passwordReset',
+      builder: (context, state) => const PasswordResetScreen(),
+    ),
+
     // 관리자 로그인
     GoRoute(
       path: '/admin-login',
@@ -223,6 +239,20 @@ class RouterNotifier extends ChangeNotifier {
       path: '/user/dashboard',
       name: 'userDashboard',
       builder: (context, state) => const UserDashboardScreen(),
+    ),
+
+    // 내 정보 (보호된 경로)
+    GoRoute(
+      path: '/user/profile',
+      name: 'userProfile',
+      builder: (context, state) => const UserProfileScreen(),
+    ),
+
+    // 비밀번호 변경 (보호된 경로)
+    GoRoute(
+      path: '/user/change-password',
+      name: 'changePassword',
+      builder: (context, state) => const ChangePasswordScreen(),
     ),
 
     // 공지사항 상세 (보호된 경로) - 입주민용
@@ -525,6 +555,20 @@ class RouterNotifier extends ChangeNotifier {
       path: '/headquarters/admin-account-issuance',
       name: 'adminAccountIssuance',
       builder: (context, state) => const AdminAccountIssuanceScreen(),
+    ),
+
+    // 본사 마이페이지 (보호된 경로)
+    GoRoute(
+      path: '/headquarters/profile',
+      name: 'headquartersProfile',
+      builder: (context, state) => const HeadquartersProfileScreen(),
+    ),
+
+    // 본사 비밀번호 수정 (보호된 경로)
+    GoRoute(
+      path: '/headquarters/change-password',
+      name: 'headquartersChangePassword',
+      builder: (context, state) => const HeadquartersChangePasswordScreen(),
     ),
 
     // 담당자 계정 발급 (관리자 전용)

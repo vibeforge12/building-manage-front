@@ -1,13 +1,14 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:building_manage_front/core/network/api_client.dart';
+import 'package:building_manage_front/core/constants/api_endpoints.dart';
 
 class UploadRemoteDataSource {
   final ApiClient _apiClient;
 
   UploadRemoteDataSource(this._apiClient);
 
-  /// Presigned URL 생성
+  /// Presigned URL 생성 (단일 파일)
   /// POST /api/v1/upload/presigned-url
   Future<Map<String, dynamic>> getPresignedUrl({
     required String fileName,
@@ -18,7 +19,7 @@ class UploadRemoteDataSource {
       print('📤 Presigned URL 요청 - fileName: $fileName, contentType: $contentType, folder: $folder');
 
       final response = await _apiClient.post(
-        '/upload/presigned-url',
+        ApiEndpoints.uploadPresignedUrl,
         data: {
           'fileName': fileName,
           'contentType': contentType,
@@ -27,6 +28,39 @@ class UploadRemoteDataSource {
       );
 
       print('✅ Presigned URL 응답: ${response.data}');
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      print('❌ DioException 발생: ${e.message}');
+      print('❌ 응답 데이터: ${e.response?.data}');
+      print('❌ 상태 코드: ${e.response?.statusCode}');
+      throw Exception('Presigned URL을 받아오는 중 오류가 발생했습니다: ${e.message}');
+    } catch (e) {
+      print('❌ 일반 예외 발생: $e');
+      throw Exception('Presigned URL을 받아오는 중 오류가 발생했습니다: $e');
+    }
+  }
+
+  /// 여러 Presigned URL 생성 (다중 파일)
+  /// POST /api/v1/upload/presigned-urls
+  ///
+  /// [files]: 업로드할 파일 정보 리스트
+  /// 각 파일은 { fileName, contentType, folder } 형태
+  ///
+  /// Returns: { success: true, data: { urls: [{ uploadUrl, fileUrl }, ...] } }
+  Future<Map<String, dynamic>> getMultiplePresignedUrls({
+    required List<Map<String, String>> files,
+  }) async {
+    try {
+      print('📤 다중 Presigned URL 요청 - ${files.length}개 파일');
+
+      final response = await _apiClient.post(
+        ApiEndpoints.uploadPresignedUrls,
+        data: {
+          'files': files,
+        },
+      );
+
+      print('✅ 다중 Presigned URL 응답: ${response.data}');
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
       print('❌ DioException 발생: ${e.message}');

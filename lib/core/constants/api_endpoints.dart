@@ -16,6 +16,13 @@ class ApiEndpoints {
   static const String refreshToken = '$auth/refresh';
   static const String logout = '$auth/logout';
 
+  // 비밀번호 변경
+  static const String residentChangePassword = '$auth/resident/change-password';
+
+  // 비밀번호 재설정 (비밀번호 찾기)
+  static const String passwordResetRequest = '$auth/password-reset/request';
+  static const String passwordResetVerify = '$auth/password-reset/verify';
+
   // User endpoints - 유저 관련
   static const String user = '/user';
   static const String userProfile = '$user/profile';
@@ -37,6 +44,7 @@ class ApiEndpoints {
   // Headquarters endpoints - 본사 관련
   static const String headquarters = '/headquarters';
   static const String headquartersDashboard = '$headquarters/dashboard';
+  static const String headquartersMe = '$headquarters/me';  // 본사 정보 조회/수정
 
   // Common endpoints - 공통
   static const String common = '/common';
@@ -73,4 +81,8 @@ class ApiEndpoints {
   // Staff Notices - 담당자 공지사항
   static const String staffNotices = '/staffs/notices';
   static const String staffNoticeDetail = '$staffNotices/{noticeId}';
+
+  // Upload - 파일 업로드
+  static const String uploadPresignedUrl = '/upload/presigned-url';
+  static const String uploadPresignedUrls = '/upload/presigned-urls';  // 다중 파일용
 }

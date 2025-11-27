@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 import 'package:building_manage_front/modules/manager/presentation/providers/attendance_provider.dart';
 import 'package:building_manage_front/modules/manager/data/datasources/staff_complaints_remote_datasource.dart';
-import 'package:building_manage_front/shared/widgets/confirmation_dialog.dart';
+import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
+import 'package:building_manage_front/modules/resident/presentation/widgets/consent_detail_sheet.dart';
+import 'package:building_manage_front/shared/constants/legal_documents.dart';
 
 class ManagerDashboardScreen extends ConsumerStatefulWidget {
   const ManagerDashboardScreen({super.key});
@@ -116,30 +118,33 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
       body: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
-            child: Container(
-              color: const Color(0xFFEFF6FF),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 24),
-                  Center(
-                    child: Column(
-                      children: [
-                        Icon(Icons.camera_alt_outlined, size: 48, color: theme.colorScheme.primary.withOpacity(0.6)),
-                        const SizedBox(height: 8),
-                        Text('Placeholder', style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.primary.withOpacity(0.6))),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  // Text(
-                  //   '담당자님\n안녕하세요:)',
-                  //   style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
-                  // ),
-                  const SizedBox(height: 24),
-                ],
-              ),
+            child: Builder(
+              builder: (context) {
+                final currentUser = ref.watch(currentUserProvider);
+                final buildingImageUrl = currentUser?.buildingImageUrl;
+
+                return buildingImageUrl != null && buildingImageUrl.isNotEmpty
+                    ? Image.network(
+                        buildingImageUrl,
+                        width: double.infinity,
+                        height: 220,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Image.asset(
+                            'assets/home.png',
+                            width: double.infinity,
+                            height: 220,
+                            fit: BoxFit.cover,
+                          );
+                        },
+                      )
+                    : Image.asset(
+                        'assets/home.png',
+                        width: double.infinity,
+                        height: 220,
+                        fit: BoxFit.cover,
+                      );
+              },
             ),
           ),
           SliverToBoxAdapter(
@@ -338,10 +343,13 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
     // 이미 퇴근한 경우 (출근과 퇴근을 모두 완료한 경우)
     if (attendanceState.isCheckedOut) {
       print('🔴 이미 퇴근한 상태');
-      await InfoDialog.show(
-        context,
+      await showCustomConfirmationDialog(
+        context: context,
         title: '이미 퇴근 하셨습니다',
-        content: '금일 근무가 완료되었습니다.',
+        content: const Text('금일 근무가 완료되었습니다.'),
+        confirmText: '확인',
+        cancelText: '',
+        barrierDismissible: false,
       );
       return;
     }
@@ -349,25 +357,31 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
     // 이미 출근한 경우
     if (attendanceState.isCheckedIn) {
       print('🔴 이미 출근한 상태');
-      await InfoDialog.show(
-        context,
-        title: '이미 출근하셨습니다',
-        content: '출근 처리가 완료되었습니다.',
+      await showCustomConfirmationDialog(
+        context: context,
+        title: '',
+        content: const Text('이미 출근 처리가 완료되었습니다.', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20),),
+        confirmText: '확인',
+        cancelText: '',
+        barrierDismissible: false,
       );
       return;
     }
 
     // 출근 확인 다이얼로그
     print('🟢 다이얼로그 표시');
-    final confirmed = await ConfirmationDialog.show(
-      context,
+    final confirmed = await showCustomConfirmationDialog(
+      context: context,
       title: '출근 등록 하시겠습니까?',
-      content: '(한번 등록하면 재출근 처리가 불가 합니다)',
+      content: const Text('(한번 등록하면 재출근 처리가 불가 합니다)', style: TextStyle(color: Colors.red),),
+      confirmText: '예',
+      cancelText: '아니오',
+      barrierDismissible: false,
     );
 
     print('🟢 다이얼로그 결과: $confirmed');
 
-    if (!confirmed || !context.mounted) return;
+    if (confirmed != true || !context.mounted) return;
 
     // Provider를 통한 출근 처리
     print('🟢 출근 처리 API 호출');
@@ -394,10 +408,13 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
       // 서버에서 "이미 출근"이라고 응답하여 상태가 동기화된 경우
       if (updatedState.isCheckedIn && error?.contains('이미 출근') == true) {
         print('🔄 서버 상태 동기화 완료 - InfoDialog 표시');
-        await InfoDialog.show(
-          context,
+        await showCustomConfirmationDialog(
+          context: context,
           title: '이미 출근하셨습니다',
-          content: '출근 처리가 완료되었습니다.',
+          content: const Text('출근 처리가 완료되었습니다.'),
+          confirmText: '확인',
+          cancelText: '',
+          barrierDismissible: false,
         );
       } else {
         // 일반 에러의 경우 SnackBar 표시
@@ -422,10 +439,13 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
     // 이미 퇴근한 경우
     if (attendanceState.isCheckedOut) {
       print('🔴 이미 퇴근한 상태');
-      await InfoDialog.show(
-        context,
+      await showCustomConfirmationDialog(
+        context: context,
         title: '이미 퇴근하였습니다',
-        content: '퇴근 처리가 완료되었습니다.',
+        content: const Text('퇴근 처리가 완료되었습니다.'),
+        confirmText: '확인',
+        cancelText: '',
+        barrierDismissible: false,
       );
       return;
     }
@@ -433,25 +453,31 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
     // 출근하지 않은 경우
     if (!attendanceState.isCheckedIn) {
       print('🔴 출근하지 않은 상태');
-      await InfoDialog.show(
-        context,
-        title: '출근하지 않았습니다',
-        content: '출근 처리 후 퇴근이 가능합니다.',
+      await showCustomConfirmationDialog(
+        context: context,
+        title: '',
+        content: const Text('출근 처리 후 퇴근이 가능합니다.', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20),),
+        confirmText: '확인',
+        cancelText: '',
+        barrierDismissible: false,
       );
       return;
     }
 
     // 퇴근 확인 다이얼로그
     print('🟢 퇴근 다이얼로그 표시');
-    final confirmed = await ConfirmationDialog.show(
-      context,
+    final confirmed = await showCustomConfirmationDialog(
+      context: context,
       title: '퇴근 하시겠습니까?',
-      content: '(퇴근 처리하면 더이상 처리가 안됩니다)',
+      content: const Text('(퇴근 처리하면 더이상 처리가 안됩니다)', style: TextStyle(color: Colors.red),),
+      confirmText: '예',
+      cancelText: '아니오',
+      barrierDismissible: false,
     );
 
     print('🟢 퇴근 다이얼로그 결과: $confirmed');
 
-    if (!confirmed || !context.mounted) return;
+    if (confirmed != true || !context.mounted) return;
 
     // Provider를 통한 퇴근 처리
     print('🟢 퇴근 처리 API 호출');
@@ -604,7 +630,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
                   title: '민원 관리',
                   onTap: () {
                     Navigator.pop(context);
-                    // TODO: Navigate to complaint management
+                    context.push('/manager/complaints');
                   },
                 ),
                 _buildMenuItem(
@@ -612,6 +638,41 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
                   onTap: () {
                     Navigator.pop(context);
                     context.push('/manager/attendance-history');
+                  },
+                ),
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: Color(0xFFE8EEF2),
+                ),
+                _buildMenuItem(
+                  title: '서비스 이용약관',
+                  onTap: () {
+                    _scaffoldKey.currentState?.closeEndDrawer();
+                    Future.delayed(const Duration(milliseconds: 300), () {
+                      if (_scaffoldKey.currentContext != null) {
+                        ConsentDetailSheet.show(
+                          _scaffoldKey.currentContext!,
+                          title: '서비스 이용약관',
+                          content: LegalDocuments.termsOfService,
+                        );
+                      }
+                    });
+                  },
+                ),
+                _buildMenuItem(
+                  title: '개인정보 처리방침',
+                  onTap: () {
+                    _scaffoldKey.currentState?.closeEndDrawer();
+                    Future.delayed(const Duration(milliseconds: 300), () {
+                      if (_scaffoldKey.currentContext != null) {
+                        ConsentDetailSheet.show(
+                          _scaffoldKey.currentContext!,
+                          title: '개인정보 처리방침',
+                          content: LegalDocuments.privacyPolicy,
+                        );
+                      }
+                    });
                   },
                 ),
                 const Divider(

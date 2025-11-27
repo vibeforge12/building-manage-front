@@ -101,9 +101,7 @@ class _UserLoginScreenState extends ConsumerState<UserLoginScreen> {
   }
 
   void _recoverPassword() {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('비밀번호 찾기 흐름은 아직 구현되지 않았습니다.')));
+    context.pushNamed('passwordReset');
   }
 
   void _openSignUp() {

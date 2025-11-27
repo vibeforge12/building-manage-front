@@ -75,6 +75,9 @@ dependencies:
   # Localization (for intl messages)
   intl: ^0.20.0
 
+  # Splash Screen
+  flutter_native_splash: ^2.4.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -109,6 +112,8 @@ flutter:
     - assets/home.png
     - assets/headQuartersHome.png
     - assets/icons/
+    - assets/legal/
+    - assets/splash/
     - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
@@ -136,3 +141,29 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# Flutter Native Splash Configuration
+flutter_native_splash:
+  # Background color (white)
+  color: "#ffffff"
+
+  # Splash image for both platforms (centered, smaller logo)
+  image: assets/splash/appleSplash.png
+
+  # Android specific settings
+  android: true
+  android_12:
+    image: assets/splash/googleSplash.png
+    color: "#ffffff"
+    icon_background_color: "#ffffff"
+    # Android 12에서 아이콘은 자동으로 중앙에 작게 표시됨 (108dp 내 66dp 영역)
+
+  # iOS specific settings
+  ios: true
+  ios_content_mode: center
+
+  # Web specific (disabled)
+  web: false
+
+  # Fullscreen mode
+  fullscreen: true

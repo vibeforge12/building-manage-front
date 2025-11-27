@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:building_manage_front/modules/resident/data/models/consent_agreement.dart';
 
 class SignupFormState {
   final String? dong;
@@ -15,6 +16,9 @@ class SignupFormState {
   final int currentStep;
   final bool isLoading;
 
+  /// 약관 동의 정보
+  final ConsentAgreement? consentAgreement;
+
   const SignupFormState({
     this.dong,
     this.hosu,
@@ -26,6 +30,7 @@ class SignupFormState {
     this.buildingId,
     this.currentStep = 1,
     this.isLoading = false,
+    this.consentAgreement,
   });
 
   SignupFormState copyWith({
@@ -39,6 +44,7 @@ class SignupFormState {
     String? buildingId,
     int? currentStep,
     bool? isLoading,
+    ConsentAgreement? consentAgreement,
   }) {
     return SignupFormState(
       dong: dong ?? this.dong,
@@ -51,8 +57,13 @@ class SignupFormState {
       buildingId: buildingId ?? this.buildingId,
       currentStep: currentStep ?? this.currentStep,
       isLoading: isLoading ?? this.isLoading,
+      consentAgreement: consentAgreement ?? this.consentAgreement,
     );
   }
+
+  /// 약관 동의 완료 여부 (필수 항목 모두 동의)
+  bool get isConsentComplete =>
+      consentAgreement != null && consentAgreement!.isRequiredComplete;
 
   bool get isStep1Valid =>
       dong != null && dong!.isNotEmpty &&
@@ -80,6 +91,8 @@ class SignupFormState {
       'dong': dong,
       'hosu': hosu,
       'buildingId': buildingId,
+      // 약관 동의 정보 추가
+      if (consentAgreement != null) 'agreements': consentAgreement!.toJson(),
     };
   }
 }
@@ -87,7 +100,12 @@ class SignupFormState {
 class SignupFormNotifier extends StateNotifier<SignupFormState> {
   SignupFormNotifier() : super(const SignupFormState());
 
-  // ✅ Step1에서 username까지 함께 저장
+  /// 약관 동의 정보 저장 (Step 1)
+  void setConsentAgreement(ConsentAgreement agreement) {
+    state = state.copyWith(consentAgreement: agreement);
+  }
+
+  // ✅ Step2에서 username까지 함께 저장 (기존 Step1 → Step2로 변경)
   void updateStep1Data({
     required String username,
     required String dong,
@@ -104,7 +122,7 @@ class SignupFormNotifier extends StateNotifier<SignupFormState> {
     );
   }
 
-  // ✅ Step2/3에서 나머지 정보만 저장 (username은 유지)
+  // ✅ Step3/4에서 나머지 정보만 저장 (username은 유지)
   void updateStep2Data({
     required String name,
     required String phoneNumber,
@@ -118,20 +136,19 @@ class SignupFormNotifier extends StateNotifier<SignupFormState> {
   }
 
   void nextStep() {
-    if (state.currentStep < 3) {
+    if (state.currentStep < 4) {  // 4단계로 변경
       state = state.copyWith(currentStep: state.currentStep + 1);
     }
   }
 
   void previousStep() {
-    // ✅ 버그 수정: >3 이 아니라 >1 이어야 뒤로가기가 됨
     if (state.currentStep > 1) {
       state = state.copyWith(currentStep: state.currentStep - 1);
     }
   }
 
   void setStep(int step) {
-    if (step >= 1 && step <= 3) {
+    if (step >= 1 && step <= 4) {  // 4단계로 변경
       state = state.copyWith(currentStep: step);
     }
   }

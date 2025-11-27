@@ -61,6 +61,76 @@ class ImageUploadService {
     }
   }
 
+  /// 여러 이미지 파일을 S3에 업로드하고 최종 URL 리스트 반환
+  ///
+  /// [files]: 업로드할 파일 정보 리스트 (각 항목: { bytes, fileName, contentType })
+  /// [folder]: S3 폴더 경로 (기본값: 'notices')
+  ///
+  /// Returns: S3에 업로드된 파일들의 최종 URL 리스트
+  Future<List<String>> uploadMultipleImages({
+    required List<Map<String, dynamic>> files,
+    String folder = 'notices',
+  }) async {
+    if (files.isEmpty) return [];
+
+    try {
+      print('🖼️ 다중 이미지 업로드 시작: ${files.length}개 파일');
+
+      // 1단계: 모든 파일에 대한 Presigned URL 한 번에 받기
+      final fileInfoList = files.map((file) => {
+        'fileName': file['fileName'] as String,
+        'contentType': file['contentType'] as String,
+        'folder': folder,
+      }).toList();
+
+      final presignedResponse = await _uploadDataSource.getMultiplePresignedUrls(
+        files: fileInfoList,
+      );
+
+      if (presignedResponse['success'] != true) {
+        throw Exception('다중 Presigned URL 생성 실패');
+      }
+
+      // API 응답: { success: true, data: [{ uploadUrl, fileUrl, ... }, ...] }
+      // data가 직접 배열로 반환됨
+      final urlsList = presignedResponse['data'] as List<dynamic>;
+
+      print('📝 ${urlsList.length}개의 Presigned URL 수신 완료');
+
+      // 2단계: 각 파일을 병렬로 S3에 업로드
+      final List<String> uploadedUrls = [];
+
+      final uploadFutures = <Future<void>>[];
+      for (int i = 0; i < files.length; i++) {
+        final file = files[i];
+        final urlInfo = urlsList[i] as Map<String, dynamic>;
+        final uploadUrl = urlInfo['uploadUrl'] as String;
+        final fileUrl = urlInfo['fileUrl'] as String;
+
+        uploadFutures.add(
+          _uploadDataSource.uploadToS3(
+            uploadUrl: uploadUrl,
+            fileBytes: file['bytes'] as List<int>,
+            contentType: file['contentType'] as String,
+          ).then((_) {
+            uploadedUrls.add(fileUrl);
+            print('✅ 이미지 ${i + 1}/${files.length} 업로드 완료: $fileUrl');
+          }),
+        );
+      }
+
+      // 모든 업로드 완료 대기
+      await Future.wait(uploadFutures);
+
+      print('✅ 전체 다중 이미지 업로드 완료: ${uploadedUrls.length}개');
+
+      return uploadedUrls;
+    } catch (e) {
+      print('❌ 다중 이미지 업로드 실패: $e');
+      rethrow;
+    }
+  }
+
   /// 파일 확장자로부터 Content-Type 추출
   static String getContentType(String fileName) {
     final extension = fileName.toLowerCase().split('.').last;

@@ -96,6 +96,126 @@ class ResidentAuthRemoteDataSource {
       throw Exception('회원가입 중 오류가 발생했습니다: $e');
     }
   }
+
+  /// 입주민 비밀번호 변경
+  /// POST /api/v1/auth/resident/change-password
+  Future<Map<String, dynamic>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      print('🔐 입주민 비밀번호 변경 시작');
+
+      final requestData = {
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+      };
+
+      print('📤 API 호출: POST /api/v1/auth/resident/change-password');
+
+      final response = await _apiClient.post(
+        '/auth/resident/change-password',
+        data: requestData,
+      );
+
+      print('✅ 비밀번호 변경 응답: ${response.data}');
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      print('❌ DioException 발생: ${e.message}');
+      print('❌ 응답 데이터: ${e.response?.data}');
+      print('❌ 상태 코드: ${e.response?.statusCode}');
+
+      if (e.response?.statusCode == 401 || e.response?.statusCode == 400) {
+        throw Exception('CURRENT_PASSWORD_WRONG');
+      }
+
+      throw Exception('비밀번호 변경 중 오류가 발생했습니다: ${e.message}');
+    } catch (e) {
+      print('❌ 일반 예외 발생: $e');
+      throw Exception('비밀번호 변경 중 오류가 발생했습니다: $e');
+    }
+  }
+
+  /// 비밀번호 재설정 인증번호 요청
+  /// POST /api/v1/auth/password-reset/request
+  Future<Map<String, dynamic>> requestPasswordReset({
+    required String username,
+    required String phoneNumber,
+  }) async {
+    try {
+      print('🔐 비밀번호 재설정 인증번호 요청 시작');
+
+      final requestData = {
+        'username': username,
+        'phoneNumber': phoneNumber,
+      };
+
+      print('📤 API 호출: POST /api/v1/auth/password-reset/request');
+
+      final response = await _apiClient.post(
+        '/auth/password-reset/request',
+        data: requestData,
+      );
+
+      print('✅ 인증번호 요청 응답: ${response.data}');
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      print('❌ DioException 발생: ${e.message}');
+      print('❌ 응답 데이터: ${e.response?.data}');
+      print('❌ 상태 코드: ${e.response?.statusCode}');
+
+      if (e.response?.statusCode == 404) {
+        throw Exception('USER_NOT_FOUND');
+      }
+      if (e.response?.statusCode == 400) {
+        throw Exception('INVALID_REQUEST');
+      }
+
+      throw Exception('인증번호 요청 중 오류가 발생했습니다: ${e.message}');
+    } catch (e) {
+      print('❌ 일반 예외 발생: $e');
+      throw Exception('인증번호 요청 중 오류가 발생했습니다: $e');
+    }
+  }
+
+  /// 비밀번호 재설정 인증번호 확인
+  /// POST /api/v1/auth/password-reset/verify
+  Future<Map<String, dynamic>> verifyPasswordReset({
+    required String phoneNumber,
+    required String code,
+  }) async {
+    try {
+      print('🔐 비밀번호 재설정 인증번호 확인 시작');
+
+      final requestData = {
+        'phoneNumber': phoneNumber,
+        'code': code,
+      };
+
+      print('📤 API 호출: POST /api/v1/auth/password-reset/verify');
+
+      final response = await _apiClient.post(
+        '/auth/password-reset/verify',
+        data: requestData,
+      );
+
+      print('✅ 인증번호 확인 응답: ${response.data}');
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      print('❌ DioException 발생: ${e.message}');
+      print('❌ 응답 데이터: ${e.response?.data}');
+      print('❌ 상태 코드: ${e.response?.statusCode}');
+
+      if (e.response?.statusCode == 400) {
+        throw Exception('INVALID_CODE');
+      }
+
+      throw Exception('인증번호 확인 중 오류가 발생했습니다: ${e.message}');
+    } catch (e) {
+      print('❌ 일반 예외 발생: $e');
+      throw Exception('인증번호 확인 중 오류가 발생했습니다: $e');
+    }
+  }
 }
 
 // Riverpod Provider

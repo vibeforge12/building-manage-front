@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:building_manage_front/modules/resident/data/datasources/notice_remote_datasource.dart';
 import 'package:building_manage_front/modules/resident/data/datasources/department_remote_datasource.dart';
 import 'package:building_manage_front/modules/headquarters/data/datasources/department_remote_datasource.dart';
 import 'package:building_manage_front/shared/widgets/confirmation_dialog.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
+
+import '../../../../shared/widgets/custom_confirmation_dialog.dart';
 
 class UserDashboardScreen extends ConsumerStatefulWidget {
   const UserDashboardScreen({super.key});
@@ -182,7 +185,7 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
   @override
   Widget build(BuildContext context) {
     final currentItems = _tabController.index == 0 ? _notices : _events;
-
+    final currentUser = ref.watch(currentUserProvider);
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.white,
@@ -206,7 +209,7 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
                       child: Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          '건물명',
+                          currentUser?.buildingName ?? '-',
                           style: const TextStyle(
                             fontFamily: 'Pretendard',
                             fontWeight: FontWeight.w700,
@@ -474,11 +477,44 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
               height: 1,
               color: const Color(0xFFE8EEF2),
             ),
-            // 메뉴 아이템 1: 내 민원 보기
+            // 메뉴 아이템 1: 내 정보
             Material(
               color: Colors.transparent,
               child: InkWell(
                 onTap: () {
+                  Navigator.pop(context);
+                  context.pushNamed('userProfile');
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        '내 정보',
+                        style: TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontWeight: FontWeight.w400,
+                          fontSize: 16,
+                          color: Color(0xFF17191A),
+                        ),
+                      ),
+                      const Icon(
+                        Icons.arrow_forward_ios,
+                        size: 16,
+                        color: Color(0xFF757B80),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // 메뉴 아이템 2: 내 민원 보기
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  Navigator.pop(context);
                   context.pushNamed('myComplaints');
                 },
                 child: Padding(
@@ -505,7 +541,7 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
                 ),
               ),
             ),
-            // 메뉴 아이템 2: 알림함
+            // 메뉴 아이템 3: 알림함
             Material(
               color: Colors.transparent,
               child: InkWell(
@@ -537,7 +573,7 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
                 ),
               ),
             ),
-            // 메뉴 아이템 3: 로그아웃
+            // 메뉴 아이템 4: 로그아웃
             Material(
               color: Colors.transparent,
               child: InkWell(
@@ -582,19 +618,47 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
   }
 
   Widget _buildHeaderImage() {
+    final currentUser = ref.watch(currentUserProvider);
+    final buildingImageUrl = currentUser?.buildingImageUrl;
+
     return Container(
       width: double.infinity,
       height: 338,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            const Color(0xFFE3F2FD),
-            Colors.white.withOpacity(0.5),
-          ],
-        ),
-      ),
+      child: buildingImageUrl != null && buildingImageUrl.isNotEmpty
+          ? CachedNetworkImage(
+              imageUrl: buildingImageUrl,
+              fit: BoxFit.cover,
+              placeholder: (context, url) => Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      const Color(0xFFE3F2FD),
+                      Colors.white.withValues(alpha: 0.5),
+                    ],
+                  ),
+                ),
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF006FFF)),
+                  ),
+                ),
+              ),
+              errorWidget: (context, url, error) => Image.asset(
+                'assets/home.png',
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: 338,
+              ),
+            )
+          : Image.asset(
+              'assets/home.png',
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: 338,
+            ),
     );
   }
 
@@ -677,10 +741,21 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
         // PENDING 상태: 회원가입 승인 대기 중
         if (approvalStatus == 'PENDING') {
           if (mounted) {
-            await InfoDialog.show(
-              context,
-              title: '승인 대기 중',
-              content: '회원가입 승인 대기 중입니다.',
+            await showCustomConfirmationDialog(
+              context: context,
+              title: '',
+              content: Text(
+                '회원가입 승인 대기중 입니다.',
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              confirmText: '확인',
+              cancelText: '',
+              barrierDismissible: false,
+              confirmOnLeft: true,
             );
           }
           return;
@@ -718,11 +793,24 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
               // 담당자가 없는 부서인 경우 팝업 표시
               if (!isActive) {
                 if (mounted) {
-                  await InfoDialog.show(
-                    context,
-                    title: '담당자 미배정',
-                    content: '해당 부서의 담당자가 아직 배정되지 않았습니다.',
-                  );
+                  if (mounted) {
+                    await showCustomConfirmationDialog(
+                      context: context,
+                      title: '',
+                      content: Text(
+                        '해당 부서의 담당자가 배정되지 않았습니다.',
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      confirmText: '확인',
+                      cancelText: '',
+                      barrierDismissible: false,
+                      confirmOnLeft: true,
+                    );
+                  }
                 }
                 return;
               }

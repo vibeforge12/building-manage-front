@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/signup_form_provider.dart';
 import '../providers/resident_providers.dart';
+import '../widgets/resident_signup_consent.dart';
 import '../widgets/resident_signup_step1.dart';
 import '../widgets/resident_signup_step2.dart';
 import '../widgets/resident_signup_step3.dart';
-import 'package:building_manage_front/shared/widgets/app_bar.dart';
 import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
 
 class ResidentSignupScreen extends ConsumerWidget {
@@ -17,19 +17,25 @@ class ResidentSignupScreen extends ConsumerWidget {
     final formState = ref.watch(signupFormProvider);
     final formNotifier = ref.read(signupFormProvider.notifier);
 
+    // Step 1(약관 동의)에서는 앱바 없이 표시
+    if (formState.currentStep == 1) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: _buildCurrentStep(context, ref, formState, formNotifier),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
-        leading: formState.currentStep == 1
-            ? null // Step 1에서는 뒤로가기 버튼 없음
-            : IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.black),
-                onPressed: () {
-                  formNotifier.previousStep();
-                },
-              ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            formNotifier.previousStep();
+          },
+        ),
         title: const Text(
           '입주민 회원가입',
           style: TextStyle(
@@ -51,35 +57,60 @@ class ResidentSignupScreen extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          // Form content
+          // Form content - 4단계로 변경
           Expanded(
-            child: formState.currentStep == 1
-                ? ResidentSignupStep1(
-                    onNext: () {
-                      formNotifier.nextStep();
-                    },
-                  )
-                : formState.currentStep == 2
-                    ? ResidentSignupStep2(
-                        onPrevious: () {
-                          formNotifier.previousStep();
-                        },
-                        onComplete: () {
-                          formNotifier.nextStep();
-                        },
-                      )
-                    : ResidentSignupStep3(
-                        onPrevious: () {
-                          formNotifier.previousStep();
-                        },
-                        onComplete: () {
-                          _submitSignup(context, ref);
-                        },
-                      ),
+            child: _buildCurrentStep(context, ref, formState, formNotifier),
           ),
         ],
       ),
     );
+  }
+
+  /// 현재 단계에 맞는 위젯 반환 (4단계)
+  Widget _buildCurrentStep(
+    BuildContext context,
+    WidgetRef ref,
+    SignupFormState formState,
+    SignupFormNotifier formNotifier,
+  ) {
+    switch (formState.currentStep) {
+      case 1:
+        // Step 1: 약관 동의 (신규)
+        return ResidentSignupConsent(
+          onNext: () {
+            formNotifier.nextStep();
+          },
+        );
+      case 2:
+        // Step 2: 동/호수, 아이디, 비밀번호 (기존 Step 1)
+        return ResidentSignupStep1(
+          onNext: () {
+            formNotifier.nextStep();
+          },
+        );
+      case 3:
+        // Step 3: 건물 선택 (기존 Step 2)
+        return ResidentSignupStep2(
+          onPrevious: () {
+            formNotifier.previousStep();
+          },
+          onComplete: () {
+            formNotifier.nextStep();
+          },
+        );
+      case 4:
+        // Step 4: 이름, 휴대폰 번호 (기존 Step 3)
+        return ResidentSignupStep3(
+          onPrevious: () {
+            formNotifier.previousStep();
+          },
+          onComplete: () {
+            _submitSignup(context, ref);
+          },
+        );
+      default:
+        return const SizedBox.shrink();
+    }
   }
 
   Future<void> _submitSignup(BuildContext context, WidgetRef ref) async {
