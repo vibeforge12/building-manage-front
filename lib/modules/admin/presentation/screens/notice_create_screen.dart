@@ -784,9 +784,9 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
+                                const Text(
                                   '첨부 이미지',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontFamily: 'Pretendard',
                                     fontWeight: FontWeight.w600,
                                     fontSize: 14,

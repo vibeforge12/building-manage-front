@@ -8,6 +8,8 @@ class User extends Equatable {
     required this.name,
     required this.userType,
     this.buildingId,
+    this.buildingName,
+    this.buildingImageUrl,
     this.dong,
     this.ho,
     this.phoneNumber,
@@ -21,6 +23,8 @@ class User extends Equatable {
   final String name;
   final UserType userType;
   final String? buildingId;
+  final String? buildingName;
+  final String? buildingImageUrl;
   final String? dong;
   final String? ho;
   final String? phoneNumber;
@@ -57,12 +61,25 @@ class User extends Equatable {
     final phoneNumber = json['phoneNumber'] as String?;
     print('📞 User.fromJson - Extracted phoneNumber: $phoneNumber');
 
+    // building 객체에서 buildingId, buildingName, buildingImageUrl 추출
+    String? buildingId = json['buildingId'] as String?;
+    String? buildingName;
+    String? buildingImageUrl;
+    if (json['building'] is Map<String, dynamic>) {
+      final building = json['building'] as Map<String, dynamic>;
+      buildingId ??= building['id'] as String?;
+      buildingName = building['name'] as String?;
+      buildingImageUrl = building['imageUrl'] as String?;
+    }
+
     final user = User(
       id: json['id'] as String,
       email: json['email'] as String? ?? '',
       name: json['name'] as String,
       userType: userType,
-      buildingId: json['buildingId'] as String?,
+      buildingId: buildingId,
+      buildingName: buildingName,
+      buildingImageUrl: buildingImageUrl,
       dong: json['dong'] as String?,
       ho: json['ho'] as String?,
       phoneNumber: phoneNumber,
@@ -83,6 +100,8 @@ class User extends Equatable {
       'name': name,
       'role': _userTypeToString(userType),
       'buildingId': buildingId,
+      'buildingName': buildingName,
+      'buildingImageUrl': buildingImageUrl,
       'dong': dong,
       'ho': ho,
       'phoneNumber': phoneNumber,
@@ -111,6 +130,8 @@ class User extends Equatable {
     String? name,
     UserType? userType,
     String? buildingId,
+    String? buildingName,
+    String? buildingImageUrl,
     String? dong,
     String? ho,
     String? phoneNumber,
@@ -124,6 +145,8 @@ class User extends Equatable {
       name: name ?? this.name,
       userType: userType ?? this.userType,
       buildingId: buildingId ?? this.buildingId,
+      buildingName: buildingName ?? this.buildingName,
+      buildingImageUrl: buildingImageUrl ?? this.buildingImageUrl,
       dong: dong ?? this.dong,
       ho: ho ?? this.ho,
       phoneNumber: phoneNumber ?? this.phoneNumber,
@@ -140,6 +163,8 @@ class User extends Equatable {
         name,
         userType,
         buildingId,
+        buildingName,
+        buildingImageUrl,
         dong,
         ho,
         phoneNumber,

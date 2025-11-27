@@ -534,7 +534,7 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
               // 시안은 "105호"만 보이지만, 필요하면 '$dong동 $hosu호'로 바꿔도 됨
               final subText = (dong.isEmpty)
                   ? hosu
-                  : '$dong $hosu';
+                  : '$dong동 $hosu호';
 
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.center,

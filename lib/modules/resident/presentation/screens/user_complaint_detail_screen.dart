@@ -176,10 +176,45 @@ class _UserComplaintDetailScreenState extends State<UserComplaintDetailScreen> {
             ],
           ),
           const SizedBox(height: 12),
+          // 부서 정보
+          Row(
+            children: [
+              const Icon(Icons.business, size: 16, color: Color(0xFF757B80)),
+              const SizedBox(width: 8),
+              Text(
+                '부서: $departmentName',
+                style: const TextStyle(
+                  fontFamily: 'Pretendard',
+                  fontWeight: FontWeight.w400,
+                  fontSize: 12,
+                  color: Color(0xFF757B80),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // 상태 배지
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isResolved ? const Color(0xFFEEF5FF) : const Color(0xFFFEEEE6),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  isResolved ? '처리완료' : '처리필요',
+                  style: TextStyle(
+                    fontFamily: 'Pretendard',
+                    fontWeight: FontWeight.w600,
+                    fontSize: 11,
+                    color: isResolved ? const Color(0xFF006FFF) : const Color(0xFFFF6B35),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
 
           // 제목
           Text(
-            title,
+            '제목: $title',
             style: const TextStyle(
               fontFamily: 'Pretendard',
               fontWeight: FontWeight.w700,
@@ -242,44 +277,6 @@ class _UserComplaintDetailScreenState extends State<UserComplaintDetailScreen> {
                 },
               ),
             ),
-
-          const SizedBox(height: 16),
-
-          // 부서 정보
-          Row(
-            children: [
-              const Icon(Icons.business, size: 16, color: Color(0xFF757B80)),
-              const SizedBox(width: 8),
-              Text(
-                '부서: $departmentName',
-                style: const TextStyle(
-                  fontFamily: 'Pretendard',
-                  fontWeight: FontWeight.w400,
-                  fontSize: 12,
-                  color: Color(0xFF757B80),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-
-          // 상태 배지
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: isResolved ? const Color(0xFFEEF5FF) : const Color(0xFFFEEEE6),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              isResolved ? '처리완료' : '처리필요',
-              style: TextStyle(
-                fontFamily: 'Pretendard',
-                fontWeight: FontWeight.w600,
-                fontSize: 11,
-                color: isResolved ? const Color(0xFF006FFF) : const Color(0xFFFF6B35),
-              ),
-            ),
-          ),
         ],
       ),
     );

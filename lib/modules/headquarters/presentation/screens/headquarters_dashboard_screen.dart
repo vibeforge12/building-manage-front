@@ -25,18 +25,22 @@ class HeadquartersDashboardScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 상단 로그아웃 버튼 (필요시)
+                  // 상단 버튼들 (마이페이지, 로그아웃)
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      const Text(
-                        '관리자 홈',
-                        style: TextStyle(
-                          color: Colors.transparent,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                      // 마이페이지 버튼
+                      IconButton(
+                        onPressed: () {
+                          context.push('/headquarters/profile');
+                        },
+                        icon: const Icon(
+                          Icons.person,
+                          color: Colors.white,
+                          size: 24,
                         ),
                       ),
+                      // 로그아웃 버튼
                       IconButton(
                         onPressed: () async {
                           await authNotifier.logout();
