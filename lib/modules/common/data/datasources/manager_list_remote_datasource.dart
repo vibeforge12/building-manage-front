@@ -81,6 +81,45 @@ class ManagerListRemoteDataSource {
       throw Exception('관리자 상세 정보를 불러오는 중 오류가 발생했습니다: $e');
     }
   }
+
+  /// 관리자 정보 수정
+  /// PATCH /api/v1/headquarters/managers/{managerId}
+  Future<Map<String, dynamic>> updateManager({
+    required String managerId,
+    String? name,
+    String? phoneNumber,
+    String? imageUrl,
+    String? status,
+  }) async {
+    try {
+      print('✏️ 관리자 정보 수정 시작 - managerId: $managerId');
+
+      final data = <String, dynamic>{};
+      if (name != null) data['name'] = name;
+      if (phoneNumber != null) data['phoneNumber'] = phoneNumber;
+      if (imageUrl != null) data['imageUrl'] = imageUrl;
+      if (status != null) data['status'] = status;
+
+      print('📤 API 호출: PATCH /api/v1/headquarters/managers/$managerId');
+      print('📝 요청 데이터: $data');
+
+      final response = await _apiClient.patch(
+        '/headquarters/managers/$managerId',
+        data: data,
+      );
+
+      print('✅ 관리자 수정 응답: ${response.data}');
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      print('❌ DioException 발생: ${e.message}');
+      print('❌ 응답 데이터: ${e.response?.data}');
+      print('❌ 상태 코드: ${e.response?.statusCode}');
+      throw Exception('관리자 정보 수정 중 오류가 발생했습니다: ${e.message}');
+    } catch (e) {
+      print('❌ 일반 예외 발생: $e');
+      throw Exception('관리자 정보 수정 중 오류가 발생했습니다: $e');
+    }
+  }
 }
 
 // Riverpod Provider

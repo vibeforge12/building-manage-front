@@ -100,11 +100,18 @@ class _LandingHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start, // ← 요거 추가
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Transform.translate(
+          offset: const Offset(-40, 0),
+          child: Image.asset(
+            'assets/splash/whiteLogo.png',
+            height: 200,
+          ),
+        ),
         Text(
           '안녕하세요 \n엄지 입니다.',
-          textAlign: TextAlign.left, // ← 이것도 확실하게
+          textAlign: TextAlign.left,
           style: theme.textTheme.bodyLarge?.copyWith(
             color: Colors.white,
             fontSize: 36,

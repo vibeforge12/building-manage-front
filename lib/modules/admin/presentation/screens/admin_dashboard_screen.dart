@@ -261,7 +261,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             height: 56,
             child: FilledButton(
               onPressed: () {
-                // Navigate to attendance list
+                context.push('/admin/staff-attendance-list');
               },
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFFEDF9FF),
@@ -412,21 +412,18 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 _buildMenuItem(
                   title: '입주민 관리',
                   onTap: () {
-                    Navigator.pop(context);
                     context.push('/admin/resident-management');
                   },
                 ),
                 _buildMenuItem(
                   title: '민원 관리',
                   onTap: () {
-                    Navigator.pop(context);
                     context.push('/admin/complaint-management');
                   },
                 ),
                 _buildMenuItem(
                   title: '담당자 관리',
                   onTap: () {
-                    Navigator.pop(context);
                     context.push('/admin/staff-management');
                   },
                 ),
@@ -438,8 +435,6 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 _buildMenuItem(
                   title: '로그아웃',
                   onTap: () async {
-                    Navigator.pop(context);
-
                     // 로그아웃 처리
                     await ref.read(authStateProvider.notifier).logout();
 

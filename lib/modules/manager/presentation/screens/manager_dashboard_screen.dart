@@ -629,14 +629,12 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
                 _buildMenuItem(
                   title: '민원 관리',
                   onTap: () {
-                    Navigator.pop(context);
                     context.push('/manager/complaints');
                   },
                 ),
                 _buildMenuItem(
                   title: '출근 / 퇴근 조회',
                   onTap: () {
-                    Navigator.pop(context);
                     context.push('/manager/attendance-history');
                   },
                 ),
@@ -683,8 +681,6 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
                 _buildMenuItem(
                   title: '로그아웃',
                   onTap: () async {
-                    Navigator.pop(context);
-
                     // 로그아웃 처리
                     await ref.read(authStateProvider.notifier).logout();
 
