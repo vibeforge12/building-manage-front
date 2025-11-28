@@ -9,12 +9,14 @@ class CommonNavigationBar extends StatelessWidget {
   final int notificationCount;
   final VoidCallback? onNotificationTap;
   final VoidCallback? onMenuTap;
+  final bool showNotification;
 
   const CommonNavigationBar({
     super.key,
     this.notificationCount = 0,
     this.onNotificationTap,
     this.onMenuTap,
+    this.showNotification = true,
   });
 
   @override
@@ -36,9 +38,9 @@ class CommonNavigationBar extends StatelessWidget {
           const Spacer(),
 
           // Notification bell with badge
-          _buildNotificationIcon(),
+          // _buildNotificationIcon(),
 
-          const SizedBox(width: 20),
+          // const SizedBox(width: 20),
 
           // Menu icon
           IconButton(

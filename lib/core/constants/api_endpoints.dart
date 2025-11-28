@@ -40,6 +40,7 @@ class ApiEndpoints {
   static const String tasks = '$manager/tasks';
   static const String staffPushToken = '/staffs/push-token';      // FCM 토큰 등록 (담당자)
   static const String managerPushToken = '/managers/push-token';  // FCM 토큰 등록 (관리자)
+  static const String managerDashboardAlerts = '/managers/dashboard/alerts';  // 출퇴근/민원 알림 조회
 
   // Headquarters endpoints - 본사 관련
   static const String headquarters = '/headquarters';

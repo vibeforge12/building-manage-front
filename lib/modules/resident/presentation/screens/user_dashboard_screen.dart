@@ -316,39 +316,6 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          Stack(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.notifications_none, size: 24),
-                onPressed: () {
-                  // TODO: 알림 화면으로 이동
-                },
-              ),
-              Positioned(
-                right: 8,
-                top: 8,
-                child: Container(
-                  width: 18,
-                  height: 18,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF006FFF),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Text(
-                      '2',
-                      style: TextStyle(
-                        fontFamily: 'Pretendard',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
           IconButton(
             icon: const Icon(Icons.menu, size: 24),
             onPressed: () {
@@ -482,7 +449,6 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
               color: Colors.transparent,
               child: InkWell(
                 onTap: () {
-                  Navigator.pop(context);
                   context.pushNamed('userProfile');
                 },
                 child: Padding(
@@ -514,7 +480,6 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
               color: Colors.transparent,
               child: InkWell(
                 onTap: () {
-                  Navigator.pop(context);
                   context.pushNamed('myComplaints');
                 },
                 child: Padding(
@@ -547,7 +512,6 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
               child: InkWell(
                 onTap: () {
                   // TODO: 알림함 화면으로 이동
-                  Navigator.pop(context);
                 },
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -744,9 +708,9 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
             await showCustomConfirmationDialog(
               context: context,
               title: '',
-              content: Text(
+              content: const Text(
                 '회원가입 승인 대기중 입니다.',
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.black,
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
@@ -793,37 +757,108 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
               // 담당자가 없는 부서인 경우 팝업 표시
               if (!isActive) {
                 if (mounted) {
-                  if (mounted) {
-                    await showCustomConfirmationDialog(
-                      context: context,
-                      title: '',
-                      content: Text(
-                        '해당 부서의 담당자가 배정되지 않았습니다.',
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                        ),
+                  await showCustomConfirmationDialog(
+                    context: context,
+                    title: '',
+                    content: const Text(
+                      '해당 부서의 담당자가 배정되지 않았습니다.',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
                       ),
-                      confirmText: '확인',
-                      cancelText: '',
-                      barrierDismissible: false,
-                      confirmOnLeft: true,
-                    );
-                  }
+                    ),
+                    confirmText: '확인',
+                    cancelText: '',
+                    barrierDismissible: false,
+                    confirmOnLeft: true,
+                  );
                 }
                 return;
               }
 
-              // 담당자가 있는 경우 민원 등록 화면으로 이동
-              if (mounted) {
-                context.pushNamed(
-                  'complaintCreate',
-                  queryParameters: {
-                    'departmentId': deptId,
-                    'departmentName': deptName,
-                  },
-                );
+              // 2️⃣ 담당자가 있는 경우: 출근 여부 확인
+              final buildingId = currentUser?.buildingId;
+              if (buildingId == null) {
+                print('buildingId가 없습니다.');
+                return;
+              }
+
+              final attendanceResponse = await residentDeptDataSource.checkStaffAttendance(
+                buildingId: buildingId,
+                departmentId: deptId,
+              );
+
+              if (attendanceResponse['success'] == true) {
+                final data = attendanceResponse['data'] as Map<String, dynamic>;
+                final staffAttendance = data['staffAttendance'] as List<dynamic>? ?? [];
+
+                // 출근한 담당자가 있는지 확인
+                final hasCheckedInStaff = staffAttendance.any((staff) {
+                  final isCheckedIn = staff['isCheckedIn'] as bool? ?? false;
+                  return isCheckedIn;
+                });
+
+                // 모든 담당자가 퇴근했는지 확인
+                final allCheckedOut = staffAttendance.isNotEmpty && staffAttendance.every((staff) {
+                  final isCheckedOut = staff['isCheckedOut'] as bool? ?? false;
+                  return isCheckedOut;
+                });
+
+                // 출근한 담당자가 없는 경우
+                if (!hasCheckedInStaff) {
+                  if (mounted) {
+                    // 모든 담당자가 퇴근한 경우
+                    if (allCheckedOut) {
+                      await showCustomConfirmationDialog(
+                        context: context,
+                        title: '',
+                        content: const Text(
+                          '해당 담당자가 퇴근하였습니다.',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        confirmText: '확인',
+                        cancelText: '',
+                        barrierDismissible: false,
+                        confirmOnLeft: true,
+                      );
+                    } else {
+                      // 아직 출근하지 않은 경우
+                      await showCustomConfirmationDialog(
+                        context: context,
+                        title: '',
+                        content: const Text(
+                          '해당 담당자가 출근하지 않았습니다.',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        confirmText: '확인',
+                        cancelText: '',
+                        barrierDismissible: false,
+                        confirmOnLeft: true,
+                      );
+                    }
+                  }
+                  return;
+                }
+
+                // 출근한 담당자가 있는 경우: 민원 등록 화면으로 이동
+                if (mounted) {
+                  context.pushNamed(
+                    'complaintCreate',
+                    queryParameters: {
+                      'departmentId': deptId,
+                      'departmentName': deptName,
+                    },
+                  );
+                }
               }
             }
           } catch (e) {
