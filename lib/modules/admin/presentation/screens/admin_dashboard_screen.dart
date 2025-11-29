@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:building_manage_front/shared/widgets/separator.dart';
 import 'package:building_manage_front/shared/widgets/common_navigation_bar.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
@@ -66,47 +67,46 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   }
 
   Widget _buildHeader() {
+    final currentUser = ref.watch(currentUserProvider);
+    final buildingImageUrl = currentUser?.buildingImageUrl;
+
     return SizedBox(
       height: 344,
-      child: Stack(
-        children: [
-          // Background image
-          Positioned.fill(
-            child: Image.asset(
+      child: buildingImageUrl != null && buildingImageUrl.isNotEmpty
+          ? CachedNetworkImage(
+              imageUrl: buildingImageUrl,
+              fit: BoxFit.cover,
+              placeholder: (context, url) => Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      const Color(0xFFE3F2FD),
+                      Colors.white.withValues(alpha: 0.5),
+                    ],
+                  ),
+                ),
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF006FFF)),
+                  ),
+                ),
+              ),
+              errorWidget: (context, url, error) => Image.asset(
+                'assets/home.png',
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: 344,
+              ),
+            )
+          : Image.asset(
               'assets/home.png',
               fit: BoxFit.cover,
+              width: double.infinity,
+              height: 344,
             ),
-          ),
-
-          // Logo (placeholder - you can add actual logo)
-          // Positioned(
-          //   left: 28,
-          //   top: 309,
-          //   child: Container(
-          //     width: 109,
-          //     height: 40,
-          //     color: Colors.white.withOpacity(0.2),
-          //     // Add your logo widget here
-          //   ),
-          // ),
-          //
-          // // Building name text
-          // const Positioned(
-          //   left: 16,
-          //   top: 323,
-          //   child: Text(
-          //     '건물명',
-          //     style: TextStyle(
-          //       fontFamily: 'Pretendard',
-          //       fontWeight: FontWeight.w700,
-          //       fontSize: 36,
-          //       height: 1.25,
-          //       color: Color(0xFF17191A),
-          //     ),
-          //   ),
-          // ),
-        ],
-      ),
     );
   }
 
