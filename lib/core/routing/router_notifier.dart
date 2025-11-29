@@ -22,6 +22,7 @@ import 'package:building_manage_front/modules/resident/presentation/screens/user
 import 'package:building_manage_front/modules/resident/presentation/screens/user_profile_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/change_password_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/password_reset_screen.dart';
+import 'package:building_manage_front/modules/resident/presentation/screens/new_password_reset_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/admin_login_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/admin_dashboard_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/staff_account_issuance_screen.dart';
@@ -213,6 +214,20 @@ class RouterNotifier extends ChangeNotifier {
       path: '/password-reset',
       name: 'passwordReset',
       builder: (context, state) => const PasswordResetScreen(),
+    ),
+
+    // 새 비밀번호 재설정 (공개 경로)
+    GoRoute(
+      path: '/new-password-reset',
+      name: 'newPasswordReset',
+      builder: (context, state) {
+        final phoneNumber = state.uri.queryParameters['phoneNumber']!;
+        final code = state.uri.queryParameters['code']!;
+        return NewPasswordResetScreen(
+          phoneNumber: phoneNumber,
+          code: code,
+        );
+      },
     ),
 
     // 관리자 로그인

@@ -216,6 +216,43 @@ class ResidentAuthRemoteDataSource {
       throw Exception('인증번호 확인 중 오류가 발생했습니다: $e');
     }
   }
+
+  /// 비밀번호 재설정
+  /// POST /api/v1/auth/password-reset/reset
+  Future<Map<String, dynamic>> resetPassword({
+    required String phoneNumber,
+    required String code,
+    required String newPassword,
+  }) async {
+    try {
+      print('🔐 비밀번호 재설정 시작');
+
+      final requestData = {
+        'phoneNumber': phoneNumber,
+        'code': code,
+        'newPassword': newPassword,
+      };
+
+      print('📤 API 호출: POST /api/v1/auth/password-reset/reset');
+
+      final response = await _apiClient.post(
+        '/auth/password-reset/reset',
+        data: requestData,
+      );
+
+      print('✅ 비밀번호 재설정 응답: ${response.data}');
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      print('❌ DioException 발생: ${e.message}');
+      print('❌ 응답 데이터: ${e.response?.data}');
+      print('❌ 상태 코드: ${e.response?.statusCode}');
+
+      throw Exception('비밀번호 재설정 중 오류가 발생했습니다: ${e.message}');
+    } catch (e) {
+      print('❌ 일반 예외 발생: $e');
+      throw Exception('비밀번호 재설정 중 오류가 발생했습니다: $e');
+    }
+  }
 }
 
 // Riverpod Provider

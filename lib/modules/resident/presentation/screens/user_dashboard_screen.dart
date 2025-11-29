@@ -791,30 +791,20 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
 
               if (attendanceResponse['success'] == true) {
                 final data = attendanceResponse['data'] as Map<String, dynamic>;
+                final workingCount = data['workingCount'] as int? ?? 0;
+                final totalCount = data['totalCount'] as int? ?? 0;
                 final staffAttendance = data['staffAttendance'] as List<dynamic>? ?? [];
 
-                // 출근한 담당자가 있는지 확인
-                final hasCheckedInStaff = staffAttendance.any((staff) {
-                  final isCheckedIn = staff['isCheckedIn'] as bool? ?? false;
-                  return isCheckedIn;
-                });
-
-                // 모든 담당자가 퇴근했는지 확인
-                final allCheckedOut = staffAttendance.isNotEmpty && staffAttendance.every((staff) {
-                  final isCheckedOut = staff['isCheckedOut'] as bool? ?? false;
-                  return isCheckedOut;
-                });
-
-                // 출근한 담당자가 없는 경우
-                if (!hasCheckedInStaff) {
+                // 근무중인 담당자가 없는 경우
+                if (workingCount == 0) {
                   if (mounted) {
-                    // 모든 담당자가 퇴근한 경우
-                    if (allCheckedOut) {
+                    // 담당자가 없는 경우
+                    if (totalCount == 0) {
                       await showCustomConfirmationDialog(
                         context: context,
                         title: '',
                         content: const Text(
-                          '해당 담당자가 퇴근하였습니다.',
+                          '해당 부서의 담당자가 배정되지 않았습니다.',
                           style: TextStyle(
                             color: Colors.black,
                             fontSize: 20,
@@ -827,29 +817,56 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
                         confirmOnLeft: true,
                       );
                     } else {
-                      // 아직 출근하지 않은 경우
-                      await showCustomConfirmationDialog(
-                        context: context,
-                        title: '',
-                        content: const Text(
-                          '해당 담당자가 출근하지 않았습니다.',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
+                      // 담당자는 있지만 근무중인 담당자가 없는 경우
+                      // status 필드를 확인하여 "LEFT"(퇴근)인지 "NOT_ARRIVED"(미출근)인지 판단
+                      final hasLeftStaff = staffAttendance.any((staff) {
+                        final status = staff['status'] as String? ?? '';
+                        return status == 'LEFT';
+                      });
+
+                      if (hasLeftStaff) {
+                        // 퇴근한 담당자가 있는 경우
+                        await showCustomConfirmationDialog(
+                          context: context,
+                          title: '',
+                          content: const Text(
+                            '해당 담당자가 퇴근하였습니다.',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
-                        ),
-                        confirmText: '확인',
-                        cancelText: '',
-                        barrierDismissible: false,
-                        confirmOnLeft: true,
-                      );
+                          confirmText: '확인',
+                          cancelText: '',
+                          barrierDismissible: false,
+                          confirmOnLeft: true,
+                        );
+                      } else {
+                        // 모두 아직 출근하지 않은 경우
+                        await showCustomConfirmationDialog(
+                          context: context,
+                          title: '',
+                          content: const Text(
+                            '해당 담당자가 출근하지 않았습니다.',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          confirmText: '확인',
+                          cancelText: '',
+                          barrierDismissible: false,
+                          confirmOnLeft: true,
+                        );
+                      }
                     }
                   }
                   return;
                 }
 
-                // 출근한 담당자가 있는 경우: 민원 등록 화면으로 이동
+                // 근무중인 담당자가 있는 경우: 민원 등록 화면으로 이동
                 if (mounted) {
                   context.pushNamed(
                     'complaintCreate',

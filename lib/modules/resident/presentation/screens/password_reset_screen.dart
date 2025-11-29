@@ -19,10 +19,12 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
   bool _isRequestingCode = false;
   bool _isVerifyingCode = false;
   bool _codeSent = false;
+  bool _codeVerified = false;
 
   String? _usernameError;
   String? _phoneNumberError;
   String? _verificationCodeError;
+  String? _verificationCodeSuccess;
 
   @override
   void dispose() {
@@ -112,6 +114,7 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
   Future<void> _verifyCode() async {
     setState(() {
       _verificationCodeError = null;
+      _verificationCodeSuccess = null;
     });
 
     if (_verificationCodeController.text.trim().isEmpty) {
@@ -132,38 +135,40 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
         code: _verificationCodeController.text.trim(),
       );
 
-      final verified = response['verified'] as bool? ?? false;
+      // API 응답 구조: { success: true, data: { verified: true, ... } }
+      final data = response['data'] as Map<String, dynamic>? ?? {};
+      final verified = data['verified'] as bool? ?? false;
 
       if (verified) {
         if (mounted) {
-          await showCustomConfirmationDialog(
-            context: context,
-            title: '',
-            content: const Text(
-              '인증이 완료되었습니다.',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            confirmText: '확인',
-            cancelText: '',
-            barrierDismissible: false,
-            confirmOnLeft: true,
-          );
+          setState(() {
+            _verificationCodeSuccess = '인증되었습니다.';
+            _codeVerified = true;
+          });
+
+          await Future.delayed(const Duration(milliseconds: 500));
 
           if (mounted) {
-            context.pop();
+            // 새 비밀번호 설정 페이지로 이동
+            context.pushNamed(
+              'newPasswordReset',
+              queryParameters: {
+                'phoneNumber': _phoneNumberController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+                'code': _verificationCodeController.text.trim(),
+              },
+            );
           }
         }
+      } else {
+        setState(() {
+          _verificationCodeError = '인증번호가 일치하지 않습니다.';
+        });
       }
     } catch (e) {
       final errorMessage = e.toString();
       if (errorMessage.contains('INVALID_CODE')) {
         setState(() {
-          _verificationCodeError = '유효하지 않거나 만료된 인증번호입니다.';
+          _verificationCodeError = '인증번호가 일치하지 않습니다.';
         });
       } else {
         if (mounted) {
@@ -298,15 +303,19 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
                                 hintText: '인증번호 6자리를 입력하세요',
                                 keyboardType: TextInputType.number,
                                 errorText: _verificationCodeError,
+                                successText: _verificationCodeSuccess,
+                                enabled: !_codeVerified,
                               ),
                             ),
                             const SizedBox(width: 12),
                             SizedBox(
                               height: 52,
                               child: ElevatedButton(
-                                onPressed: _isVerifyingCode ? null : _verifyCode,
+                                onPressed: (_isVerifyingCode || _codeVerified) ? null : _verifyCode,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF006FFF),
+                                  backgroundColor: _codeVerified
+                                      ? const Color(0xFFE8EEF2)
+                                      : const Color(0xFF006FFF),
                                   foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -323,12 +332,15 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
                                           valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                         ),
                                       )
-                                    : const Text(
-                                        '확인',
+                                    : Text(
+                                        _codeVerified ? '확인완료' : '확인',
                                         style: TextStyle(
                                           fontFamily: 'Pretendard',
                                           fontWeight: FontWeight.w700,
                                           fontSize: 14,
+                                          color: _codeVerified
+                                              ? const Color(0xFF757B80)
+                                              : Colors.white,
                                         ),
                                       ),
                               ),
@@ -402,6 +414,7 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
     required String hintText,
     TextInputType keyboardType = TextInputType.text,
     String? errorText,
+    String? successText,
     bool enabled = true,
   }) {
     return Column(
@@ -413,7 +426,9 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
             borderRadius: BorderRadius.circular(12),
             border: errorText != null
                 ? Border.all(color: Colors.red, width: 1)
-                : null,
+                : successText != null
+                    ? Border.all(color: const Color(0xFF006FFF), width: 1)
+                    : null,
           ),
           child: TextField(
             controller: controller,
@@ -451,6 +466,19 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
                 fontWeight: FontWeight.w400,
                 fontSize: 12,
                 color: Colors.red,
+              ),
+            ),
+          ),
+        if (successText != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8, left: 4),
+            child: Text(
+              successText,
+              style: const TextStyle(
+                fontFamily: 'Pretendard',
+                fontWeight: FontWeight.w400,
+                fontSize: 12,
+                color: Color(0xFF006FFF),
               ),
             ),
           ),
