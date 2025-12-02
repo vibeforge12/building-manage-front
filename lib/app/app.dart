@@ -5,6 +5,7 @@ import 'package:building_manage_front/core/providers/router_provider.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 import 'package:building_manage_front/modules/common/services/notification_service.dart';
 import 'package:building_manage_front/core/network/api_client.dart';
+import 'package:building_manage_front/data/datasources/auth_remote_datasource.dart';
 
 import '../core/constants/auth_states.dart';
 
@@ -17,19 +18,35 @@ class BuildingManageApp extends ConsumerWidget {
     final authState = ref.watch(authStateProvider);
     final currentUser = ref.watch(currentUserProvider);
 
-    // 사용자 로그인 시 FCM 토큰 등록
-    ref.listen(currentUserProvider, (previous, next) {
-      if (next != null && previous == null) {
-        // 로그인 완료
-        _registerFcmToken(ref, next);
-      }
-    });
-
-    // 사용자 로그아웃 시 FCM 토큰 정리
+    // ✅ 앱 시작 시 자동 로그인 체크 (한 번만 실행) - 단일 ref.listen 사용
     ref.listen(authStateProvider, (previous, current) {
-      if (current == AuthState.unauthenticated && previous != null) {
-        // 로그아웃 완료
-        _clearFcmToken(ref);
+      if (previous == null && current == AuthState.initial) {
+        // 첫 빌드: 자동 로그인 시도
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          try {
+            print('🔄 자동 로그인 체크 시작...');
+            final authNotifier = ref.read(authStateProvider.notifier);
+            final authDataSource = ref.read(authRemoteDataSourceProvider);
+            await authNotifier.checkAutoLogin(authDataSource);
+            print('✅ 자동 로그인 체크 완료');
+          } catch (e) {
+            print('❌ 자동 로그인 중 오류: $e');
+          }
+        });
+      } else if (current == AuthState.authenticated && previous == AuthState.loading) {
+        // 로그인 완료: FCM 토큰 등록
+        try {
+          _registerFcmToken(ref, currentUser);
+        } catch (e) {
+          print('❌ FCM 토큰 등록 중 오류: $e');
+        }
+      } else if (current == AuthState.unauthenticated && previous != null) {
+        // 로그아웃 완료: FCM 토큰 정리
+        try {
+          _clearFcmToken(ref);
+        } catch (e) {
+          print('❌ FCM 토큰 정리 중 오류: $e');
+        }
       }
     });
 

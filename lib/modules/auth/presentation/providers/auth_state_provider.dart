@@ -61,73 +61,87 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
   Future<void> checkAutoLogin(AuthRemoteDataSource authDataSource) async {
     // 이미 로그인된 상태면 체크하지 않음
     if (state == AuthState.authenticated && _currentUser != null) {
+      print('✅ 이미 로그인된 상태 - 자동 로그인 스킵');
       return;
     }
 
     setLoading();
 
     try {
+      print('🔄 저장된 토큰 확인 중...');
       // 저장된 토큰 확인
       final accessToken = await AuthInterceptor.getCurrentToken();
       final refreshToken = await AuthInterceptor.getCurrentRefreshToken();
 
+      print('📋 Access Token: ${accessToken?.substring(0, 20) ?? 'null'}...');
+      print('📋 Refresh Token: ${refreshToken?.substring(0, 20) ?? 'null'}...');
+
       if (accessToken == null || refreshToken == null) {
+        print('⚠️ 저장된 토큰이 없음 - 로그인 화면으로 이동');
         setUnauthenticated();
         return;
       }
 
       // Refresh 시도: 실패 시 1회 재시도 후 포기
       Future<Map<String, dynamic>> _attemptRefresh() async {
+        print('🔄 토큰 갱신 시도 중...');
         return await authDataSource.refreshToken(refreshToken);
       }
 
       Map<String, dynamic>? response;
       try {
         response = await _attemptRefresh();
+        print('✅ 토큰 갱신 성공');
       } catch (e) {
         // 1차 실패: 로깅 후 1회 재시도
-        // ignore: avoid_print
-        print('Token refresh failed (attempt 1): $e');
+        print('⚠️ 토큰 갱신 실패 (1차 시도): $e');
         try {
           response = await _attemptRefresh();
+          print('✅ 토큰 갱신 성공 (2차 시도)');
         } catch (e2) {
-          // ignore: avoid_print
-          print('Token refresh failed (attempt 2): $e2');
+          print('❌ 토큰 갱신 실패 (2차 시도): $e2');
           response = null;
         }
       }
 
       if (response != null) {
-        final newTokenData = response['data'] ?? response;
-        final newAccess = newTokenData['accessToken'];
-        final newRefresh = newTokenData['refreshToken'];
+        try {
+          final newTokenData = response['data'] ?? response;
+          final newAccess = newTokenData['accessToken'];
+          final newRefresh = newTokenData['refreshToken'];
 
-        if (newAccess is String && newAccess.isNotEmpty) {
-          _accessToken = newAccess;
-          // 저장소에도 저장해두면 이후 요청 헤더 반영에 안전
-          await AuthInterceptor.saveToken(newAccess);
-        }
+          if (newAccess is String && newAccess.isNotEmpty) {
+            _accessToken = newAccess;
+            await AuthInterceptor.saveToken(newAccess);
+            print('✅ 새 Access Token 저장됨');
+          }
 
-        if (newRefresh is String && newRefresh.isNotEmpty) {
-          // refresh 토큰이 갱신되는 백엔드라면 저장
-          // SharedPreferences 저장은 AuthInterceptor.onResponse 경유가 아니므로 여기서는 생략하거나
-          // 전용 저장 메서드를 별도로 둘 수 있습니다. 간단화를 위해 생략.
-        }
+          if (newRefresh is String && newRefresh.isNotEmpty) {
+            print('✅ 새 Refresh Token 받음');
+          }
 
-        // 사용자 정보가 포함된 경우 반영
-        final userData = newTokenData['user'];
-        if (userData != null) {
-          await loginSuccess(userData, _accessToken ?? '');
-        } else {
-          // 사용자 정보가 없더라도 토큰만으로 인증 상태 유지
-          state = AuthState.authenticated;
+          // 사용자 정보가 포함된 경우 반영
+          final userData = newTokenData['user'];
+          if (userData != null) {
+            print('🔄 사용자 정보 로드 중...');
+            await loginSuccess(userData, _accessToken ?? '');
+            print('✅ 자동 로그인 완료');
+          } else {
+            print('⚠️ 사용자 정보 없음 - 토큰만으로 인증 상태 유지');
+            state = AuthState.authenticated;
+          }
+        } catch (e) {
+          print('❌ 응답 처리 중 오류: $e');
+          await AuthInterceptor.clearToken();
+          setUnauthenticated();
         }
       } else {
-        // 두 번 모두 실패: 토큰 제거 후 미인증 처리
+        print('❌ 토큰 갱신 실패 - 로그인 화면으로 이동');
         await AuthInterceptor.clearToken();
         setUnauthenticated();
       }
     } catch (e) {
+      print('❌ 자동 로그인 중 예상치 못한 오류: $e');
       setUnauthenticated();
     }
   }
