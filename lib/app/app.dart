@@ -26,6 +26,8 @@ class BuildingManageApp extends ConsumerWidget {
           final authNotifier = ref.read(authStateProvider.notifier);
           final authDataSource = ref.read(authRemoteDataSourceProvider);
           await authNotifier.checkAutoLogin(authDataSource);
+          // 자동 로그인 완료 후 라우터 갱신
+          ref.refresh(routerProvider);
         } catch (e) {
           print('❌ 자동 로그인 중 오류: $e');
         }
