@@ -35,18 +35,22 @@ class BuildingManageApp extends ConsumerWidget {
         });
       } else if (current == AuthState.authenticated && previous == AuthState.loading) {
         // 로그인 완료: FCM 토큰 등록
-        try {
-          _registerFcmToken(ref, currentUser);
-        } catch (e) {
-          print('❌ FCM 토큰 등록 중 오류: $e');
-        }
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          try {
+            await _registerFcmToken(ref, currentUser);
+          } catch (e) {
+            print('❌ FCM 토큰 등록 중 오류: $e');
+          }
+        });
       } else if (current == AuthState.unauthenticated && previous != null) {
         // 로그아웃 완료: FCM 토큰 정리
-        try {
-          _clearFcmToken(ref);
-        } catch (e) {
-          print('❌ FCM 토큰 정리 중 오류: $e');
-        }
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          try {
+            await _clearFcmToken(ref);
+          } catch (e) {
+            print('❌ FCM 토큰 정리 중 오류: $e');
+          }
+        });
       }
     });
 
@@ -73,7 +77,7 @@ class BuildingManageApp extends ConsumerWidget {
   }
 
   /// FCM 토큰 등록
-  static void _registerFcmToken(WidgetRef ref, dynamic user) async {
+  static Future<void> _registerFcmToken(WidgetRef ref, dynamic user) async {
     try {
       final notificationService = ref.read(notificationServiceProvider);
       final apiClient = ref.read(apiClientProvider);
@@ -93,7 +97,7 @@ class BuildingManageApp extends ConsumerWidget {
   }
 
   /// FCM 토큰 정리
-  static void _clearFcmToken(WidgetRef ref) async {
+  static Future<void> _clearFcmToken(WidgetRef ref) async {
     try {
       final notificationService = ref.read(notificationServiceProvider);
       await notificationService.clearPushToken();
