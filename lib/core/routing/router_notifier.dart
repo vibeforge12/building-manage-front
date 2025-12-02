@@ -9,6 +9,7 @@ import 'package:building_manage_front/modules/auth/presentation/screens/main_hom
 import 'package:building_manage_front/modules/auth/presentation/screens/admin_login_selection_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/resident_signup_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/user_login_screen.dart';
+import 'package:building_manage_front/modules/resident/presentation/screens/user_dashboard_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/admin_login_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/admin_dashboard_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/staff_account_issuance_screen.dart';
