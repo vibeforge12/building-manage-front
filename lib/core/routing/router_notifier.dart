@@ -89,7 +89,7 @@ class RouterNotifier extends ChangeNotifier {
     // 인증된 사용자: 권한 확인
     final userType = currentUser.userType;
 
-    if (path.startsWith('/user/') && userType != UserType.user) {
+    if (path.startsWith('/resident/') && userType != UserType.user) {
       return _getDefaultDashboard(userType);
     } else if (path.startsWith('/admin/') && userType != UserType.admin) {
       return _getDefaultDashboard(userType);
@@ -152,9 +152,9 @@ class RouterNotifier extends ChangeNotifier {
       builder: (context, state) => const HeadquartersLoginScreen(),
     ),
 
-    // 유저 대시보드 (보호된 경로)
+    // 입주민 대시보드 (보호된 경로)
     GoRoute(
-      path: '/user/dashboard',
+      path: '/resident/dashboard',
       name: 'userDashboard',
       builder: (context, state) => const UserDashboardScreen(),
     ),
@@ -220,7 +220,7 @@ class RouterNotifier extends ChangeNotifier {
   String _getDefaultDashboard(UserType userType) {
     switch (userType) {
       case UserType.user:
-        return '/user/dashboard';
+        return '/resident/dashboard';
       case UserType.admin:
         return '/admin/dashboard';
       case UserType.manager:
