@@ -64,7 +64,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1010780994133',
     projectId: 'building-management-935a4',
     storageBucket: 'building-management-935a4.firebasestorage.app',
-    iosBundleId: 'com.example.buildingManageFront',
+    iosBundleId: 'com.j2partners.buildingManageFront',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -73,7 +73,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1010780994133',
     projectId: 'building-management-935a4',
     storageBucket: 'building-management-935a4.firebasestorage.app',
-    iosBundleId: 'com.example.buildingManageFront',
+    iosBundleId: 'com.j2partners.buildingManageFront',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
