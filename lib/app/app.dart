@@ -26,13 +26,19 @@ class BuildingManageApp extends ConsumerWidget {
           final authNotifier = ref.read(authStateProvider.notifier);
           final authDataSource = ref.read(authRemoteDataSourceProvider);
           await authNotifier.checkAutoLogin(authDataSource);
-          // 자동 로그인 완료 후 라우터 갱신
-          ref.refresh(routerProvider);
         } catch (e) {
           print('❌ 자동 로그인 중 오류: $e');
         }
       });
     }
+
+    // 자동 로그인 완료 시 (loading → authenticated) 라우터 갱신
+    ref.listen<AuthState>(authStateProvider, (previous, current) {
+      if (previous == AuthState.loading && current == AuthState.authenticated) {
+        print('🔄 라우터 갱신 트리거 (loading → authenticated)');
+        ref.refresh(routerProvider);
+      }
+    });
 
     // FCM 토큰 등록/정리
     ref.listen(authStateProvider, (previous, current) {
