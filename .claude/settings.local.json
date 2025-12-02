@@ -17,7 +17,16 @@
       "Bash(flutter pub get:*)",
       "Bash(flutter pub run build_runner build:*)",
       "Bash(flutter clean:*)",
-      "Bash(pod install:*)"
+      "Bash(pod install:*)",
+      "Bash(/usr/libexec/java_home:*)",
+      "Bash(java:*)",
+      "Bash(export JAVA_HOME:*)",
+      "Bash(echo:*)",
+      "Bash(JAVA_HOME=/opt/homebrew/Cellar/openjdk@17/17.0.16/libexec/openjdk.jdk/Contents/Home ./gradlew:*)",
+      "Bash(JAVA_HOME=/opt/homebrew/Cellar/openjdk@17/17.0.16/libexec/openjdk.jdk/Contents/Home flutter build:*)",
+      "Bash(JAVA_HOME=/opt/homebrew/Cellar/openjdk@17/17.0.16/libexec/openjdk.jdk/Contents/Home flutter doctor:*)",
+      "Bash(flutter config:*)",
+      "Bash(open:*)"
     ],
     "deny": [],
     "ask": []
