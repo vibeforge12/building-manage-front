@@ -18,30 +18,34 @@ class BuildingManageApp extends ConsumerWidget {
     final authState = ref.watch(authStateProvider);
     final currentUser = ref.watch(currentUserProvider);
 
-    // ✅ 앱 시작 시 자동 로그인 체크 (한 번만 실행) - 단일 ref.listen 사용
+    // ✅ 앱 시작 시 자동 로그인 체크
+    // initial 상태에서 한 번만 실행 (currentUser == null 조건으로 guard)
+    if (authState == AuthState.initial && currentUser == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        try {
+          final authNotifier = ref.read(authStateProvider.notifier);
+          final authDataSource = ref.read(authRemoteDataSourceProvider);
+          await authNotifier.checkAutoLogin(authDataSource);
+        } catch (e) {
+          print('❌ 자동 로그인 중 오류: $e');
+        }
+      });
+    }
+
+    // FCM 토큰 등록/정리
     ref.listen(authStateProvider, (previous, current) {
-      if (previous == null && current == AuthState.initial) {
-        // 첫 빌드: 자동 로그인 시도
-        WidgetsBinding.instance.addPostFrameCallback((_) async {
-          try {
-            print('🔄 자동 로그인 체크 시작...');
-            final authNotifier = ref.read(authStateProvider.notifier);
-            final authDataSource = ref.read(authRemoteDataSourceProvider);
-            await authNotifier.checkAutoLogin(authDataSource);
-            print('✅ 자동 로그인 체크 완료');
-          } catch (e) {
-            print('❌ 자동 로그인 중 오류: $e');
-          }
-        });
-      } else if (current == AuthState.authenticated && previous == AuthState.loading) {
-        // 로그인 완료: FCM 토큰 등록
-        WidgetsBinding.instance.addPostFrameCallback((_) async {
-          try {
-            await _registerFcmToken(ref, currentUser);
-          } catch (e) {
-            print('❌ FCM 토큰 등록 중 오류: $e');
-          }
-        });
+      if (current == AuthState.authenticated && previous == AuthState.loading) {
+        // 로그인 완료: FCM 토큰 등록 (currentUser가 null이 아닐 때만)
+        final user = ref.read(currentUserProvider);
+        if (user != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            try {
+              await _registerFcmToken(ref, user);
+            } catch (e) {
+              print('❌ FCM 토큰 등록 중 오류: $e');
+            }
+          });
+        }
       } else if (current == AuthState.unauthenticated && previous != null) {
         // 로그아웃 완료: FCM 토큰 정리
         WidgetsBinding.instance.addPostFrameCallback((_) async {
