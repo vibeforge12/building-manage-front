@@ -23,6 +23,25 @@
           "other_platform_oauth_client": []
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1010780994133:android:e0253ffdeb0dfd3b0632dc",
+        "android_client_info": {
+          "package_name": "com.j2partners.buildingManageFront"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDEN-wplH6PW_zZ6igcuCxzZkfFaAuCD9E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
     }
   ],
   "configuration_version": "1"
