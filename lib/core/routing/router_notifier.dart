@@ -54,9 +54,40 @@ class RouterNotifier extends ChangeNotifier {
     final currentUser = _ref.read(currentUserProvider);
     final path = state.fullPath ?? '/';
 
-    // 공개 경로들 (인증 필요 없음)
+    print('🔄 Router redirect - path: $path, authState: $authState, user: ${currentUser?.name}');
+
+    // ========================================
+    // 1. 스플래시 화면 처리 (자동 로그인 체크 중)
+    // ========================================
+    if (path == '/splash') {
+      // 아직 체크 중 (initial 또는 loading) → 스플래시 유지
+      if (authState == AuthState.initial || authState == AuthState.loading) {
+        print('🔄 스플래시 유지 - 자동 로그인 체크 중...');
+        return null;
+      }
+
+      // 인증됨 + 사용자 정보 있음 → 대시보드로 이동
+      if (authState == AuthState.authenticated && currentUser != null) {
+        final dashboard = _getDefaultDashboard(currentUser.userType);
+        print('✅ 스플래시 → 대시보드: $dashboard');
+        return dashboard;
+      }
+
+      // 인증됨 but 사용자 정보 없음 → 아직 동기화 중이므로 스플래시 유지
+      if (authState == AuthState.authenticated && currentUser == null) {
+        print('🔄 스플래시 유지 - 사용자 정보 로드 대기 중...');
+        return null;
+      }
+
+      // 미인증 → 홈 화면으로 이동
+      print('⚠️ 스플래시 → 홈 화면');
+      return '/';
+    }
+
+    // ========================================
+    // 2. 공개 경로 처리 (로그인 화면 등)
+    // ========================================
     final publicRoutes = [
-      '/splash',
       '/',
       '/admin-login-selection',
       '/user-login',
@@ -68,15 +99,26 @@ class RouterNotifier extends ChangeNotifier {
       '/new-password-reset',
     ];
 
-    // 공개 경로에서는 리다이렉트 하지 않음
-    if (publicRoutes.any((route) => path == route || (route != '/' && path.startsWith(route)))) {
+    final isPublicRoute = publicRoutes.any(
+      (route) => path == route || (route != '/' && path.startsWith(route))
+    );
+
+    if (isPublicRoute) {
+      // 이미 인증된 사용자가 로그인 화면에 접근 → 대시보드로 리다이렉트
+      if (authState == AuthState.authenticated && currentUser != null) {
+        final dashboard = _getDefaultDashboard(currentUser.userType);
+        print('✅ 인증된 사용자 로그인 화면 접근 → 대시보드: $dashboard');
+        return dashboard;
+      }
       return null;
     }
 
-    // 모든 다른 경로는 보호된 경로로 간주
+    // ========================================
+    // 3. 보호된 경로 처리 (대시보드 등)
+    // ========================================
     // 인증되지 않았으면 로그인 화면으로 리다이렉트
     if (authState != AuthState.authenticated || currentUser == null) {
-      if (path.startsWith('/user/')) {
+      if (path.startsWith('/resident/')) {
         return '/user-login';
       } else if (path.startsWith('/admin/')) {
         return '/admin-login';
