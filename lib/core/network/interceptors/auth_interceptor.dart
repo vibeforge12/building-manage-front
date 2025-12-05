@@ -6,9 +6,15 @@ class AuthInterceptor extends Interceptor {
   static const String _refreshTokenKey = 'refresh_token';
 
   // Secure Storage 인스턴스 (싱글톤 패턴)
+  // Android: 패키지명 변경 시에도 데이터 유지를 위해 sharedPreferencesName 고정
   static const FlutterSecureStorage _secureStorage = FlutterSecureStorage(
     aOptions: AndroidOptions(
       encryptedSharedPreferences: true,
+      sharedPreferencesName: 'building_manage_secure_prefs',
+      preferencesKeyPrefix: 'building_manage_',
+    ),
+    iOptions: IOSOptions(
+      accessibility: KeychainAccessibility.first_unlock_this_device,
     ),
   );
 
@@ -122,6 +128,15 @@ class AuthInterceptor extends Interceptor {
       await _secureStorage.write(key: _tokenKey, value: token);
     } catch (e) {
       print('Failed to save token manually: $e');
+    }
+  }
+
+  // Refresh 토큰 수동 저장 (외부에서 사용 가능)
+  static Future<void> saveRefreshToken(String refreshToken) async {
+    try {
+      await _secureStorage.write(key: _refreshTokenKey, value: refreshToken);
+    } catch (e) {
+      print('Failed to save refresh token manually: $e');
     }
   }
 

@@ -43,12 +43,23 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> loginSuccess(Map<String, dynamic> userData, String accessToken) async {
+  Future<void> loginSuccess(Map<String, dynamic> userData, String accessToken, [String? refreshToken]) async {
     try {
       print('🔑 LOGIN SUCCESS - userData: $userData');
       final user = User.fromJson(userData);
       _currentUser = user;
       _accessToken = accessToken;
+      _refreshToken = refreshToken;
+
+      // ✅ 토큰을 SecureStorage에 저장 (앱 종료 후에도 유지)
+      await AuthInterceptor.saveToken(accessToken);
+      print('✅ Access Token SecureStorage에 저장 완료');
+
+      if (refreshToken != null && refreshToken.isNotEmpty) {
+        await AuthInterceptor.saveRefreshToken(refreshToken);
+        print('✅ Refresh Token SecureStorage에 저장 완료');
+      }
+
       state = AuthState.authenticated;
       print('✅ USER SET - userType: ${user.userType}, name: ${user.name}, id: ${user.id}');
     } catch (e) {
@@ -117,14 +128,16 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
           }
 
           if (newRefresh is String && newRefresh.isNotEmpty) {
-            print('✅ 새 Refresh Token 받음');
+            _refreshToken = newRefresh;
+            await AuthInterceptor.saveRefreshToken(newRefresh);
+            print('✅ 새 Refresh Token 저장됨');
           }
 
           // 사용자 정보가 포함된 경우 반영
           final userData = newTokenData['user'];
           if (userData != null) {
             print('🔄 사용자 정보 로드 중...');
-            await loginSuccess(userData, _accessToken ?? '');
+            await loginSuccess(userData, _accessToken ?? '', _refreshToken);
             print('✅ 자동 로그인 완료');
           } else {
             print('⚠️ 사용자 정보 없음 - 토큰만으로 인증 상태 유지');

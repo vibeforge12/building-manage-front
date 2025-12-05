@@ -47,6 +47,7 @@ class _UserLoginScreenState extends ConsumerState<UserLoginScreen> {
 
       final data = res['data'] ?? res;
       final accessToken = data['accessToken'] as String?;
+      final refreshToken = data['refreshToken'] as String?;
       final user = data['user'] as Map<String, dynamic>?;
       if (accessToken == null || accessToken.isEmpty) {
         throw Exception('토큰이 응답에 없습니다.');
@@ -55,6 +56,7 @@ class _UserLoginScreenState extends ConsumerState<UserLoginScreen> {
       await ref.read(authStateProvider.notifier).loginSuccess(
         user ?? <String, dynamic>{},
         accessToken,
+        refreshToken,
       );
 
       // approvalStatus에 따른 조건부 라우팅

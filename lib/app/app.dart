@@ -51,8 +51,11 @@ class BuildingManageApp extends ConsumerWidget {
 
     // FCM 토큰 등록/정리
     ref.listen(authStateProvider, (previous, current) {
-      if (current == AuthState.authenticated && previous == AuthState.loading) {
-        // 로그인 완료: FCM 토큰 등록 (currentUser가 null이 아닐 때만)
+      // 로그인 완료: FCM 토큰 등록
+      // - 자동 로그인: loading → authenticated
+      // - 수동 로그인: initial → authenticated
+      if (current == AuthState.authenticated &&
+          previous != AuthState.authenticated) {
         final user = ref.read(currentUserProvider);
         if (user != null) {
           WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -63,8 +66,10 @@ class BuildingManageApp extends ConsumerWidget {
             }
           });
         }
-      } else if (current == AuthState.unauthenticated && previous != null) {
-        // 로그아웃 완료: FCM 토큰 정리
+      } else if (current == AuthState.unauthenticated &&
+                 previous != null &&
+                 previous != AuthState.initial) {
+        // 로그아웃 완료: FCM 토큰 정리 (초기 상태에서의 변경은 제외)
         WidgetsBinding.instance.addPostFrameCallback((_) async {
           try {
             await _clearFcmToken(ref);
