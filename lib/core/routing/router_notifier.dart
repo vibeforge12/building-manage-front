@@ -5,6 +5,7 @@ import 'package:building_manage_front/core/constants/auth_states.dart';
 import 'package:building_manage_front/core/constants/user_types.dart';
 import 'package:building_manage_front/domain/entities/user.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
+import 'package:building_manage_front/modules/auth/presentation/screens/splash_screen.dart';
 import 'package:building_manage_front/modules/auth/presentation/screens/main_home_screen.dart';
 import 'package:building_manage_front/modules/auth/presentation/screens/admin_login_selection_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/resident_signup_screen.dart';
@@ -42,7 +43,7 @@ class RouterNotifier extends ChangeNotifier {
   void _setupRouter() {
     _router = GoRouter(
       refreshListenable: this,
-      initialLocation: '/',
+      initialLocation: '/splash',
       redirect: _redirect,
       routes: _routes,
     );
@@ -55,6 +56,7 @@ class RouterNotifier extends ChangeNotifier {
 
     // 공개 경로들 (인증 필요 없음)
     final publicRoutes = [
+      '/splash',
       '/',
       '/admin-login-selection',
       '/user-login',
@@ -103,6 +105,13 @@ class RouterNotifier extends ChangeNotifier {
   }
 
   List<RouteBase> get _routes => [
+    // 스플래시 화면 (앱 시작점)
+    GoRoute(
+      path: '/splash',
+      name: 'splash',
+      builder: (context, state) => const SplashScreen(),
+    ),
+
     // 메인 홈 (로그인 선택)
     GoRoute(
       path: '/',
