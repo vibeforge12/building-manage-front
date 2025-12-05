@@ -139,15 +139,28 @@ class NotificationService {
       switch (userType.toLowerCase()) {
         case 'user':
           await _pushTokenDataSource.registerUserPushToken(pushToken: token);
+          print('✅ 사용자(user) FCM 토큰 서버 등록 완료');
+          break;
+        case 'admin':
+          // 관리자 = staff API 사용
+          await _pushTokenDataSource.registerStaffPushToken(pushToken: token);
+          print('✅ 관리자(admin) FCM 토큰 서버 등록 완료');
           break;
         case 'staff':
           await _pushTokenDataSource.registerStaffPushToken(pushToken: token);
+          print('✅ 담당자(staff) FCM 토큰 서버 등록 완료');
           break;
         case 'manager':
           await _pushTokenDataSource.registerManagerPushToken(pushToken: token);
+          print('✅ 매니저(manager) FCM 토큰 서버 등록 완료');
+          break;
+        case 'headquarters':
+          // 본사 = manager API 사용 (또는 별도 API가 있다면 교체)
+          await _pushTokenDataSource.registerManagerPushToken(pushToken: token);
+          print('✅ 본사(headquarters) FCM 토큰 서버 등록 완료');
           break;
         default:
-          print('⚠️ 알 수 없는 사용자 타입: $userType');
+          print('⚠️ 알 수 없는 사용자 타입: $userType - FCM 토큰 등록 건너뜀');
       }
     } catch (e) {
       print('❌ 서버 토큰 등록 실패: $e');

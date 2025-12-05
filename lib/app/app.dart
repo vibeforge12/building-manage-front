@@ -12,29 +12,36 @@ import '../core/constants/user_types.dart';
 class BuildingManageApp extends ConsumerWidget {
   const BuildingManageApp({super.key});
 
+  // FCM 토큰 등록 여부 추적 (중복 등록 방지)
+  static bool _fcmRegistered = false;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
 
-    // FCM 토큰 등록/정리 (로그인/로그아웃 시)
+    // FCM 토큰 등록 (사용자 정보가 설정되면)
+    ref.listen(currentUserProvider, (previous, current) {
+      // 사용자가 로그인 됨 (null → User)
+      if (previous == null && current != null && !_fcmRegistered) {
+        print('📱 FCM: 사용자 로그인 감지 → 토큰 등록 시작');
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          try {
+            await _registerFcmToken(ref, current);
+            _fcmRegistered = true;
+          } catch (e) {
+            print('❌ FCM 토큰 등록 중 오류: $e');
+          }
+        });
+      }
+    });
+
+    // FCM 토큰 정리 (로그아웃 시)
     ref.listen(authStateProvider, (previous, current) {
-      // 로그인 완료: FCM 토큰 등록
-      if (current == AuthState.authenticated &&
-          previous != AuthState.authenticated) {
-        final user = ref.read(currentUserProvider);
-        if (user != null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) async {
-            try {
-              await _registerFcmToken(ref, user);
-            } catch (e) {
-              print('❌ FCM 토큰 등록 중 오류: $e');
-            }
-          });
-        }
-      } else if (current == AuthState.unauthenticated &&
-                 previous != null &&
-                 previous != AuthState.initial) {
-        // 로그아웃 완료: FCM 토큰 정리
+      if (current == AuthState.unauthenticated &&
+          previous != null &&
+          previous != AuthState.initial) {
+        print('📱 FCM: 로그아웃 감지 → 토큰 정리 시작');
+        _fcmRegistered = false; // 재로그인 시 다시 등록하도록
         WidgetsBinding.instance.addPostFrameCallback((_) async {
           try {
             await _clearFcmToken(ref);
