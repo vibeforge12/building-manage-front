@@ -1,4 +1,4 @@
-package com.example.building_manage_front
+package com.j2partners.buildingManageFront
 
 import io.flutter.embedding.android.FlutterActivity
 

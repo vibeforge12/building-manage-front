@@ -58,6 +58,7 @@ class _HeadquartersLoginScreenState extends ConsumerState<HeadquartersLoginScree
         await authNotifier.loginSuccess(
           userData['user'],
           userData['accessToken'],
+          userData['refreshToken'],
         );
 
         if (mounted) {

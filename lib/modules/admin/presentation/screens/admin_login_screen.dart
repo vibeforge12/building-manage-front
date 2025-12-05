@@ -52,11 +52,12 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
       // 응답 payload 추출 및 관리자 역할 정규화(기존 동작 복원)
       final payload = response['data'] ?? response;
       final accessToken = payload['accessToken'];
+      final refreshToken = payload['refreshToken'];
       final userJson = Map<String, dynamic>.from(payload['user'] ?? {});
       userJson['role'] = 'admin';
 
       if (accessToken is String && accessToken.isNotEmpty && userJson.isNotEmpty) {
-        await authNotifier.loginSuccess(userJson, accessToken);
+        await authNotifier.loginSuccess(userJson, accessToken, refreshToken);
 
         if (mounted) {
           context.goNamed('adminDashboard');

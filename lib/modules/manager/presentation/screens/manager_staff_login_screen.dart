@@ -43,6 +43,7 @@ class _ManagerStaffLoginScreenState extends ConsumerState<ManagerStaffLoginScree
 
       final data = result['data'] ?? result;
       final accessToken = data['accessToken'] as String?;
+      final refreshToken = data['refreshToken'] as String?;
       final userData = data['user'] as Map<String, dynamic>?;
 
       if (accessToken == null || accessToken.isEmpty) {
@@ -53,6 +54,7 @@ class _ManagerStaffLoginScreenState extends ConsumerState<ManagerStaffLoginScree
       await ref.read(authStateProvider.notifier).loginSuccess(
         userData ?? <String, dynamic>{},
         accessToken,
+        refreshToken,
       );
 
       if (mounted) {

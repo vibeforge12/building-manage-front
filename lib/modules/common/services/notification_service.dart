@@ -20,9 +20,20 @@ class NotificationService {
 
   late PushTokenRemoteDataSource _pushTokenDataSource;
 
+  // 초기화 상태 추적 (중복 초기화 방지)
+  bool _isInitialized = false;
+  // 토큰 리스너 등록 상태 추적 (중복 리스너 방지)
+  bool _isTokenListenerRegistered = false;
+
   /// 서비스 초기화
   /// 앱 시작 시 한 번만 호출
   Future<void> initialize(ApiClient apiClient) async {
+    // 이미 초기화되었으면 스킵
+    if (_isInitialized) {
+      print('⚠️ NotificationService 이미 초기화됨 - 스킵');
+      return;
+    }
+
     _pushTokenDataSource = PushTokenRemoteDataSource(apiClient);
 
     // 로컬 알림 설정 초기화 (실패해도 계속 진행)
@@ -41,9 +52,19 @@ class NotificationService {
 
     // 백그라운드에서 포그라운드로 전환될 때 메시지 처리
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('📱 알림 클릭: ${message.notification?.title}');
+      print('📱 알림 클릭 (백그라운드→포그라운드): ${message.notification?.title}');
       _handleMessageTap(message);
     });
+
+    // 앱이 종료된 상태에서 푸시 알림 클릭으로 앱이 시작된 경우 처리
+    RemoteMessage? initialMessage = await _messaging.getInitialMessage();
+    if (initialMessage != null) {
+      print('📱 앱 시작 알림 (종료 상태에서 클릭): ${initialMessage.notification?.title}');
+      _handleMessageTap(initialMessage);
+    }
+
+    _isInitialized = true;
+    print('✅ NotificationService 초기화 완료');
   }
 
   /// 로컬 알림 플러그인 초기화
@@ -89,11 +110,14 @@ class NotificationService {
       print('⏰ 시간: ${DateTime.now()}');
       print('=======================');
 
-      // 2. 토큰 변경 감지 (토큰이 새로 생성되면 자동 등록)
-      _messaging.onTokenRefresh.listen((newToken) {
-        print('🔄 FCM 토큰 새로 발급됨. 서버에 업데이트...');
-        _registerTokenToServer(newToken, userType);
-      });
+      // 2. 토큰 변경 감지 (토큰이 새로 생성되면 자동 등록) - 중복 등록 방지
+      if (!_isTokenListenerRegistered) {
+        _messaging.onTokenRefresh.listen((newToken) {
+          print('🔄 FCM 토큰 새로 발급됨. 서버에 업데이트...');
+          _registerTokenToServer(newToken, userType);
+        });
+        _isTokenListenerRegistered = true;
+      }
 
       // 3. 서버에 초기 토큰 등록
       await _registerTokenToServer(token, userType);
