@@ -46,6 +46,7 @@ class ApiEndpoints {
   static const String headquarters = '/headquarters';
   static const String headquartersDashboard = '$headquarters/dashboard';
   static const String headquartersMe = '$headquarters/me';  // 본사 정보 조회/수정
+  static const String headquartersPushToken = '$headquarters/push-token';  // FCM 토큰 등록 (본사)
 
   // Common endpoints - 공통
   static const String common = '/common';

@@ -49,4 +49,18 @@ class PushTokenRemoteDataSource {
       rethrow;
     }
   }
+
+  /// 본사(Headquarters)의 FCM 푸시 토큰 등록
+  Future<void> registerHeadquartersPushToken({required String pushToken}) async {
+    try {
+      await _apiClient.patch(
+        ApiEndpoints.headquartersPushToken,
+        data: {'pushToken': pushToken},
+      );
+      print('✅ Headquarters FCM 토큰 등록 성공: ${pushToken.substring(0, 20)}...');
+    } catch (e) {
+      print('❌ Headquarters FCM 토큰 등록 실패: $e');
+      rethrow;
+    }
+  }
 }
