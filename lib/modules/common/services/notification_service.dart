@@ -275,6 +275,20 @@ class NotificationService {
   /// FCM 권한 요청 (iOS 13+, Android 13+)
   Future<bool> requestPermissions() async {
     try {
+      print('🔔 [FCM-PERM] 권한 요청 시작...');
+
+      // Android 13+ 에서는 flutter_local_notifications를 통해 권한 요청
+      // (firebase_messaging.requestPermission()이 Android에서 불안정할 수 있음)
+      final androidPlugin = _localNotifications.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+
+      if (androidPlugin != null) {
+        print('🔔 [FCM-PERM] Android 감지 - 로컬 알림 권한 요청 중...');
+        final granted = await androidPlugin.requestNotificationsPermission();
+        print('🔔 [FCM-PERM] Android 로컬 알림 권한: ${granted == true ? "승인됨" : "거부됨/null"}');
+      }
+
+      // Firebase Messaging 권한 요청 (iOS 필수, Android 보조)
       final NotificationSettings settings =
           await _messaging.requestPermission(
         alert: true,
@@ -285,6 +299,8 @@ class NotificationService {
         provisional: false,
         sound: true,
       );
+
+      print('🔔 [FCM-PERM] Firebase authorizationStatus: ${settings.authorizationStatus}');
 
       if (settings.authorizationStatus == AuthorizationStatus.authorized) {
         print('✅ 푸시 알림 권한 승인됨');
@@ -297,8 +313,9 @@ class NotificationService {
         print('❌ 푸시 알림 권한 거부됨');
         return false;
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       print('❌ 권한 요청 중 오류: $e');
+      print('❌ 스택트레이스: $stackTrace');
       return false;
     }
   }
