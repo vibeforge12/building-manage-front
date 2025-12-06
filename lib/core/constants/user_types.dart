@@ -1,7 +1,7 @@
 enum UserType {
   user('USER', '유저'),
-  admin('ADMIN', '관리자'),
-  manager('MANAGER', '담당자'),
+  admin('MANAGER', '관리자'),      // 서버: MANAGER = 관리자
+  manager('STAFF', '담당자'),       // 서버: STAFF = 담당자
   headquarters('HEADQUARTERS', '본사');
 
   const UserType(this.code, this.displayName);

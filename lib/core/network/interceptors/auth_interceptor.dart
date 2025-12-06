@@ -7,6 +7,7 @@ class AuthInterceptor extends Interceptor {
 
   // Secure Storage 인스턴스 (싱글톤 패턴)
   // Android: 패키지명 변경 시에도 데이터 유지를 위해 sharedPreferencesName 고정
+  // iOS: first_unlock은 디바이스 재시작 후에도 접근 가능 (앱 재시작 시 크래시 방지)
   static const FlutterSecureStorage _secureStorage = FlutterSecureStorage(
     aOptions: AndroidOptions(
       encryptedSharedPreferences: true,
@@ -14,7 +15,7 @@ class AuthInterceptor extends Interceptor {
       preferencesKeyPrefix: 'building_manage_',
     ),
     iOptions: IOSOptions(
-      accessibility: KeychainAccessibility.first_unlock_this_device,
+      accessibility: KeychainAccessibility.first_unlock,
     ),
   );
 
@@ -63,14 +64,21 @@ class AuthInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
-    // 401 Unauthorized: 토큰 제거 후 앱 첫 화면으로 유도
+    // 401 Unauthorized 처리
     if (err.response?.statusCode == 401) {
-      await _clearToken();
-      // NOTE:
-      // 여기서는 네트워크 레이어라 라우터/Provider에 직접 접근하지 않습니다.
-      // 앱 레벨에서는 다음 앱 진입 시(스플래시 이후) 기본 홈('/')으로 이동하게 됩니다.
-      // 만약 즉시 리디렉트가 필요하다면, 상위 레이어에서 이 에러를 감지하여
-      // 라우터(go('/')) 호출을 수행하도록 핸들링하세요.
+      final path = err.requestOptions.path;
+
+      // 로그인 엔드포인트의 401은 "로그인 실패"이므로 토큰 삭제하지 않음
+      // (기존 로그인 세션을 유지해야 함)
+      final isLoginEndpoint = path.contains('/login') || path.contains('/register');
+
+      if (!isLoginEndpoint) {
+        // 인증된 API 요청의 401만 토큰 제거
+        print('🔐 AuthInterceptor: 401 에러 - 토큰 삭제 ($path)');
+        await _clearToken();
+      } else {
+        print('🔐 AuthInterceptor: 401 에러 - 로그인 실패, 토큰 유지 ($path)');
+      }
     }
 
     super.onError(err, handler);

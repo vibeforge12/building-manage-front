@@ -84,7 +84,7 @@ class NotificationService {
   }
 
   /// FCM 토큰 획득 및 서버 등록
-  /// [userType]: 사용자 유형 (user, staff, manager)
+  /// [userType]: 사용자 유형 (user, manager, staff, headquarters)
   Future<void> registerPushToken({required String userType}) async {
     try {
       // 현재 사용자 타입 저장 (토큰 리프레시 시 사용)
@@ -149,19 +149,19 @@ class NotificationService {
 
       switch (userType.toLowerCase()) {
         case 'user':
-          // 유저 → /users/push-token
+          // 유저(입주민) → /users/push-token
           await _pushTokenDataSource!.registerUserPushToken(pushToken: token);
           print('✅ 유저(user) FCM 토큰 서버 등록 완료');
           break;
-        case 'admin':
-          // 관리자 → /managers/push-token
-          await _pushTokenDataSource!.registerManagerPushToken(pushToken: token);
-          print('✅ 관리자(admin) FCM 토큰 서버 등록 완료');
-          break;
         case 'manager':
-          // 담당자 → /staffs/push-token
+          // 관리자 (서버 role: MANAGER) → /managers/push-token
+          await _pushTokenDataSource!.registerManagerPushToken(pushToken: token);
+          print('✅ 관리자(manager) FCM 토큰 서버 등록 완료');
+          break;
+        case 'staff':
+          // 담당자 (서버 role: STAFF) → /staffs/push-token
           await _pushTokenDataSource!.registerStaffPushToken(pushToken: token);
-          print('✅ 담당자(manager) FCM 토큰 서버 등록 완료');
+          print('✅ 담당자(staff) FCM 토큰 서버 등록 완료');
           break;
         case 'headquarters':
           // 본사 → /headquarters/push-token
