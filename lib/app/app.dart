@@ -5,9 +5,9 @@ import 'package:building_manage_front/core/providers/router_provider.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 import 'package:building_manage_front/modules/common/services/notification_service.dart';
 import 'package:building_manage_front/core/network/api_client.dart';
+import 'package:building_manage_front/domain/entities/user.dart';
 
 import '../core/constants/auth_states.dart';
-import '../core/constants/user_types.dart';
 
 class BuildingManageApp extends ConsumerWidget {
   const BuildingManageApp({super.key});
@@ -21,9 +21,10 @@ class BuildingManageApp extends ConsumerWidget {
 
     // FCM 토큰 등록 (사용자 정보가 설정되면)
     ref.listen(currentUserProvider, (previous, current) {
-      // 사용자가 로그인 됨 (null → User)
-      if (previous == null && current != null && !_fcmRegistered) {
-        print('📱 FCM: 사용자 로그인 감지 → 토큰 등록 시작');
+      // 사용자가 로그인 됨 (current가 있고, 아직 등록 안 했으면)
+      // previous 조건 제거 - 자동 로그인 시에도 트리거되도록
+      if (current != null && !_fcmRegistered) {
+        print('📱 FCM: 사용자 감지 (${current.name}) → 토큰 등록 시작');
         WidgetsBinding.instance.addPostFrameCallback((_) async {
           try {
             await _registerFcmToken(ref, current);
@@ -75,13 +76,15 @@ class BuildingManageApp extends ConsumerWidget {
   }
 
   /// FCM 토큰 등록
-  static Future<void> _registerFcmToken(WidgetRef ref, dynamic user) async {
+  static Future<void> _registerFcmToken(WidgetRef ref, User user) async {
     try {
       final notificationService = ref.read(notificationServiceProvider);
       final apiClient = ref.read(apiClientProvider);
 
-      // 사용자 타입 결정
-      final userType = user.userType?.code.toLowerCase() ?? 'user';
+      // 사용자 타입 결정 (UserType enum의 code를 소문자로)
+      // user, admin, manager, headquarters 중 하나
+      final userType = user.userType.code.toLowerCase();
+      print('📱 FCM 등록 시작 - userType: $userType, userName: ${user.name}');
 
       // FCM 초기화 및 토큰 등록
       await notificationService.initialize(apiClient);
