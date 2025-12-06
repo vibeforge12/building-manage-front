@@ -149,21 +149,19 @@ class NotificationService {
 
       switch (userType.toLowerCase()) {
         case 'user':
+          // 유저 → /users/push-token
           await _pushTokenDataSource!.registerUserPushToken(pushToken: token);
-          print('✅ 사용자(user) FCM 토큰 서버 등록 완료');
+          print('✅ 유저(user) FCM 토큰 서버 등록 완료');
           break;
         case 'admin':
-          // 관리자 = staff API 사용
-          await _pushTokenDataSource!.registerStaffPushToken(pushToken: token);
+          // 관리자 → /managers/push-token
+          await _pushTokenDataSource!.registerManagerPushToken(pushToken: token);
           print('✅ 관리자(admin) FCM 토큰 서버 등록 완료');
           break;
-        case 'staff':
-          await _pushTokenDataSource!.registerStaffPushToken(pushToken: token);
-          print('✅ 담당자(staff) FCM 토큰 서버 등록 완료');
-          break;
         case 'manager':
-          await _pushTokenDataSource!.registerManagerPushToken(pushToken: token);
-          print('✅ 매니저(manager) FCM 토큰 서버 등록 완료');
+          // 담당자 → /staffs/push-token
+          await _pushTokenDataSource!.registerStaffPushToken(pushToken: token);
+          print('✅ 담당자(manager) FCM 토큰 서버 등록 완료');
           break;
         case 'headquarters':
           // 본사는 FCM 푸시 알림 사용 안함
