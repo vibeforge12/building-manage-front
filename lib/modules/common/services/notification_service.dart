@@ -86,93 +86,121 @@ class NotificationService {
   /// FCM 토큰 획득 및 서버 등록
   /// [userType]: 사용자 유형 (user, manager, staff, headquarters)
   Future<void> registerPushToken({required String userType}) async {
+    print('🔔 [FCM] ========== registerPushToken 시작 ==========');
+    print('🔔 [FCM] userType 파라미터: $userType');
+    print('🔔 [FCM] 현재 시간: ${DateTime.now()}');
+
     try {
       // 현재 사용자 타입 저장 (토큰 리프레시 시 사용)
       _currentUserType = userType;
+      print('🔔 [FCM] _currentUserType 저장됨: $_currentUserType');
 
       // 1. FCM 토큰 획득 (시뮬레이터에서는 실패할 수 있음)
+      print('🔔 [FCM] getToken() 호출 시작...');
       String? token;
       try {
         token = await _messaging.getToken();
-      } catch (e) {
-        print('⚠️ FCM 토큰 획득 실패 (시뮬레이터 환경): $e');
-        print('💡 실제 기기에서는 정상 작동합니다.');
-        // 시뮬레이터에서는 토큰 없이 계속 진행
+        print('🔔 [FCM] getToken() 성공! 토큰 길이: ${token?.length ?? 0}');
+      } catch (e, stackTrace) {
+        print('⚠️ [FCM] getToken() 예외 발생!');
+        print('⚠️ [FCM] 에러 타입: ${e.runtimeType}');
+        print('⚠️ [FCM] 에러 메시지: $e');
+        print('⚠️ [FCM] 스택트레이스: $stackTrace');
+        print('💡 [FCM] 시뮬레이터/에뮬레이터에서는 실패할 수 있습니다.');
         return;
       }
 
       if (token == null) {
-        print('❌ FCM 토큰을 획득할 수 없습니다.');
+        print('❌ [FCM] getToken()이 null 반환! 토큰 획득 실패');
+        print('❌ [FCM] 가능한 원인: Google Play Services 미설치, Firebase 미초기화');
         return;
       }
 
       // 토큰 출력 (Firebase Console 테스트용)
-      print('🔑 ===== FCM TOKEN =====');
-      print('📱 토큰: $token');
-      print('👤 사용자 타입: $userType');
-      print('⏰ 시간: ${DateTime.now()}');
-      print('=======================');
+      print('🔑 [FCM] ===== FCM TOKEN 획득 성공 =====');
+      print('📱 [FCM] 토큰: $token');
+      print('👤 [FCM] 사용자 타입: $userType');
+      print('⏰ [FCM] 시간: ${DateTime.now()}');
+      print('🔑 [FCM] ==================================');
 
       // 2. 토큰 변경 감지 (토큰이 새로 생성되면 자동 등록) - 중복 등록 방지
       if (!_isTokenListenerRegistered) {
+        print('🔔 [FCM] onTokenRefresh 리스너 등록 중...');
         _messaging.onTokenRefresh.listen((newToken) {
           // _currentUserType 사용 (재로그인 시 업데이트된 값 사용)
           final currentType = _currentUserType ?? 'user';
-          print('🔄 FCM 토큰 새로 발급됨. 서버에 업데이트... (userType: $currentType)');
+          print('🔄 [FCM] 토큰 리프레시 감지! 새 토큰 길이: ${newToken.length}');
+          print('🔄 [FCM] 서버에 업데이트 중... (userType: $currentType)');
           _registerTokenToServer(newToken, currentType);
         });
         _isTokenListenerRegistered = true;
+        print('✅ [FCM] onTokenRefresh 리스너 등록 완료');
       }
 
       // 3. 서버에 초기 토큰 등록
+      print('🔔 [FCM] 서버에 토큰 등록 시작...');
       await _registerTokenToServer(token, userType);
-    } catch (e) {
-      print('❌ FCM 토큰 등록 중 오류: $e');
+      print('🔔 [FCM] ========== registerPushToken 완료 ==========');
+    } catch (e, stackTrace) {
+      print('❌ [FCM] registerPushToken 전체 오류!');
+      print('❌ [FCM] 에러 타입: ${e.runtimeType}');
+      print('❌ [FCM] 에러 메시지: $e');
+      print('❌ [FCM] 스택트레이스: $stackTrace');
     }
   }
 
   /// 서버에 FCM 토큰 등록
   Future<void> _registerTokenToServer(String token, String userType) async {
+    print('📤 [FCM] _registerTokenToServer 시작');
+    print('📤 [FCM] 토큰 길이: ${token.length}');
+    print('📤 [FCM] userType: $userType');
+
     try {
       // 데이터소스 체크
       if (_pushTokenDataSource == null) {
-        print('❌ FCM 토큰 등록 실패: 데이터소스가 초기화되지 않았습니다.');
+        print('❌ [FCM] 치명적 오류: _pushTokenDataSource가 null!');
+        print('❌ [FCM] initialize()가 먼저 호출되었는지 확인 필요');
         return;
       }
+      print('✅ [FCM] _pushTokenDataSource 확인됨');
 
-      // 토큰 출력 (Firebase Console 테스트용)
-      print('🔑 ===== FCM TOKEN =====');
-      print('📱 토큰: $token');
-      print('👤 사용자 타입: $userType');
-      print('⏰ 시간: ${DateTime.now()}');
-      print('=======================');
+      final lowerUserType = userType.toLowerCase();
+      print('📤 [FCM] lowercase userType: $lowerUserType');
 
-      switch (userType.toLowerCase()) {
+      switch (lowerUserType) {
         case 'user':
           // 유저(입주민) → /users/push-token
+          print('📤 [FCM] API 호출: /users/push-token');
           await _pushTokenDataSource!.registerUserPushToken(pushToken: token);
-          print('✅ 유저(user) FCM 토큰 서버 등록 완료');
+          print('✅ [FCM] 유저(user) FCM 토큰 서버 등록 완료!');
           break;
         case 'manager':
           // 관리자 (서버 role: MANAGER) → /managers/push-token
+          print('📤 [FCM] API 호출: /managers/push-token');
           await _pushTokenDataSource!.registerManagerPushToken(pushToken: token);
-          print('✅ 관리자(manager) FCM 토큰 서버 등록 완료');
+          print('✅ [FCM] 관리자(manager) FCM 토큰 서버 등록 완료!');
           break;
         case 'staff':
           // 담당자 (서버 role: STAFF) → /staffs/push-token
+          print('📤 [FCM] API 호출: /staffs/push-token');
           await _pushTokenDataSource!.registerStaffPushToken(pushToken: token);
-          print('✅ 담당자(staff) FCM 토큰 서버 등록 완료');
+          print('✅ [FCM] 담당자(staff) FCM 토큰 서버 등록 완료!');
           break;
         case 'headquarters':
           // 본사 → /headquarters/push-token
+          print('📤 [FCM] API 호출: /headquarters/push-token');
           await _pushTokenDataSource!.registerHeadquartersPushToken(pushToken: token);
-          print('✅ 본사(headquarters) FCM 토큰 서버 등록 완료');
+          print('✅ [FCM] 본사(headquarters) FCM 토큰 서버 등록 완료!');
           break;
         default:
-          print('⚠️ 알 수 없는 사용자 타입: $userType - FCM 토큰 등록 건너뜀');
+          print('⚠️ [FCM] 알 수 없는 사용자 타입: $userType');
+          print('⚠️ [FCM] 지원 타입: user, manager, staff, headquarters');
       }
-    } catch (e) {
-      print('❌ 서버 토큰 등록 실패: $e');
+    } catch (e, stackTrace) {
+      print('❌ [FCM] 서버 토큰 등록 실패!');
+      print('❌ [FCM] 에러 타입: ${e.runtimeType}');
+      print('❌ [FCM] 에러 메시지: $e');
+      print('❌ [FCM] 스택트레이스: $stackTrace');
     }
   }
 
