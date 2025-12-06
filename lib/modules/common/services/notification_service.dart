@@ -166,10 +166,9 @@ class NotificationService {
           print('✅ 매니저(manager) FCM 토큰 서버 등록 완료');
           break;
         case 'headquarters':
-          // 본사 = manager API 사용 (또는 별도 API가 있다면 교체)
-          await _pushTokenDataSource!.registerManagerPushToken(pushToken: token);
-          print('✅ 본사(headquarters) FCM 토큰 서버 등록 완료');
-          break;
+          // 본사는 FCM 푸시 알림 사용 안함
+          print('ℹ️ 본사(headquarters)는 FCM 토큰 등록이 필요하지 않습니다.');
+          return;
         default:
           print('⚠️ 알 수 없는 사용자 타입: $userType - FCM 토큰 등록 건너뜀');
       }
