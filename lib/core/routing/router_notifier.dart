@@ -80,6 +80,7 @@ class RouterNotifier extends ChangeNotifier {
       initialLocation: '/splash',
       redirect: _redirect,
       routes: _routes,
+      observers: [_RouteLogger()],
     );
   }
 
@@ -623,5 +624,39 @@ class RouterNotifier extends ChangeNotifier {
       case UserType.headquarters:
         return '/headquarters/dashboard';
     }
+  }
+}
+
+/// 라우트 변경 로깅을 위한 NavigatorObserver
+class _RouteLogger extends NavigatorObserver {
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    final from = previousRoute?.settings.name ?? 'null';
+    final to = route.settings.name ?? 'unknown';
+    print('📍 [ROUTE] PUSH: $from → $to');
+    super.didPush(route, previousRoute);
+  }
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    final from = route.settings.name ?? 'unknown';
+    final to = previousRoute?.settings.name ?? 'null';
+    print('📍 [ROUTE] POP: $from → $to');
+    super.didPop(route, previousRoute);
+  }
+
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
+    final from = oldRoute?.settings.name ?? 'unknown';
+    final to = newRoute?.settings.name ?? 'unknown';
+    print('📍 [ROUTE] REPLACE: $from → $to');
+    super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
+  }
+
+  @override
+  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    final removed = route.settings.name ?? 'unknown';
+    print('📍 [ROUTE] REMOVE: $removed');
+    super.didRemove(route, previousRoute);
   }
 }
