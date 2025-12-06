@@ -194,9 +194,6 @@ class RouterNotifier extends ChangeNotifier {
       builder: (context, state) => const MainHomeScreen(),
     ),
 
-
-
-
     // 입주민 회원가입
     GoRoute(
       path: '/resident-signup',
