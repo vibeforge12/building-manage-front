@@ -624,24 +624,4 @@ class RouterNotifier extends ChangeNotifier {
         return '/headquarters/dashboard';
     }
   }
-
-  // 임시 플레이스홀더 위젯 생성
-  Widget _buildPlaceholder(String title) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            const Text('대시보드 화면이 여기에 구현될 예정입니다.'),
-          ],
-        ),
-      ),
-    );
-  }
 }

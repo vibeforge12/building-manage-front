@@ -39,15 +39,17 @@ class User extends Equatable {
     UserType userType;
 
     // role 필드를 UserType enum으로 변환
+    // 서버 role 매핑: manager=관리자, staff=담당자
+    // 클라이언트에서 강제 설정하는 경우: admin, manager (legacy)
     switch (json['role'] as String?) {
       case 'headquarters':
         userType = UserType.headquarters;
         break;
-      case 'admin':
+      case 'admin':        // 클라이언트에서 강제 설정 (AdminLoginScreen)
+      case 'manager':      // 서버 role: 'manager' → 플러터 관리자
         userType = UserType.admin;
         break;
-      case 'manager':
-      case 'staff':  // API가 staff로 반환
+      case 'staff':        // 서버 role: 'staff' → 플러터 담당자
         userType = UserType.manager;
         break;
       case 'resident':

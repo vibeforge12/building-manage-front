@@ -80,12 +80,23 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
 
     try {
       print('🔄 저장된 토큰 확인 중...');
-      // 저장된 토큰 확인
-      final accessToken = await AuthInterceptor.getCurrentToken();
-      final refreshToken = await AuthInterceptor.getCurrentRefreshToken();
 
-      print('📋 Access Token: ${accessToken?.substring(0, 20) ?? 'null'}...');
-      print('📋 Refresh Token: ${refreshToken?.substring(0, 20) ?? 'null'}...');
+      // 저장된 토큰 확인 (iOS Keychain 접근 시 예외 발생 가능)
+      String? accessToken;
+      String? refreshToken;
+
+      try {
+        accessToken = await AuthInterceptor.getCurrentToken();
+        refreshToken = await AuthInterceptor.getCurrentRefreshToken();
+      } catch (e) {
+        // iOS Keychain 접근 실패 시 (디바이스 재시작 직후 등)
+        print('⚠️ SecureStorage 접근 실패: $e');
+        setUnauthenticated();
+        return;
+      }
+
+      print('📋 Access Token: ${accessToken != null && accessToken.length > 20 ? accessToken.substring(0, 20) : accessToken ?? 'null'}...');
+      print('📋 Refresh Token: ${refreshToken != null && refreshToken.length > 20 ? refreshToken.substring(0, 20) : refreshToken ?? 'null'}...');
 
       if (accessToken == null || refreshToken == null) {
         print('⚠️ 저장된 토큰이 없음 - 로그인 화면으로 이동');
@@ -93,10 +104,13 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         return;
       }
 
+      // non-nullable로 변환 (위에서 null 체크 완료)
+      final validRefreshToken = refreshToken;
+
       // Refresh 시도: 실패 시 1회 재시도 후 포기
       Future<Map<String, dynamic>> _attemptRefresh() async {
         print('🔄 토큰 갱신 시도 중...');
-        return await authDataSource.refreshToken(refreshToken);
+        return await authDataSource.refreshToken(validRefreshToken);
       }
 
       Map<String, dynamic>? response;
@@ -140,8 +154,10 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
             await loginSuccess(userData, _accessToken ?? '', _refreshToken);
             print('✅ 자동 로그인 완료');
           } else {
-            print('⚠️ 사용자 정보 없음 - 토큰만으로 인증 상태 유지');
-            state = AuthState.authenticated;
+            // 사용자 정보가 없으면 자동 로그인 불가 (정상적인 인증 아님)
+            print('⚠️ 사용자 정보 없음 - 로그인 화면으로 이동');
+            await AuthInterceptor.clearToken();
+            setUnauthenticated();
           }
         } catch (e) {
           print('❌ 응답 처리 중 오류: $e');
