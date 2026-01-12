@@ -89,15 +89,12 @@ class RouterNotifier extends ChangeNotifier {
     final currentUser = _ref.read(currentUserProvider);
     final path = state.fullPath;
 
-    print('🔄 ROUTER REDIRECT - path: $path, authState: $authState, userType: ${currentUser?.userType}');
-
     // 승인이 거부된 사용자는 모든 경로 접근 차단 (거부 화면으로만 접근 가능)
     if (authState == AuthState.authenticated &&
         currentUser != null &&
         currentUser.userType == UserType.user &&
         currentUser.approvalStatus == 'REJECTED' &&
         path != '/resident-approval-rejected') {
-      print('❌ REJECTED USER - Blocking all access except rejection screen');
       return '/resident-approval-rejected';
     }
 
@@ -154,26 +151,20 @@ class RouterNotifier extends ChangeNotifier {
     // 인증된 사용자가 잘못된 권한의 경로에 접근하는 경우
     if (authState == AuthState.authenticated && currentUser != null && isProtectedRoute) {
       final userType = currentUser.userType;
-      print('🔐 CHECKING PERMISSION - userType: $userType, path: $path');
 
       if (path?.startsWith('/user/') == true && userType != UserType.user) {
         final redirectPath = _getDefaultDashboard(userType);
-        print('❌ WRONG PERMISSION - Redirecting to: $redirectPath');
         return redirectPath;
       } else if (path?.startsWith('/admin/') == true && userType != UserType.admin) {
         final redirectPath = _getDefaultDashboard(userType);
-        print('❌ WRONG PERMISSION - Redirecting to: $redirectPath');
         return redirectPath;
       } else if (path?.startsWith('/manager/') == true && userType != UserType.manager) {
         final redirectPath = _getDefaultDashboard(userType);
-        print('❌ WRONG PERMISSION - Redirecting to: $redirectPath');
         return redirectPath;
       } else if (path?.startsWith('/headquarters/') == true && userType != UserType.headquarters) {
         final redirectPath = _getDefaultDashboard(userType);
-        print('❌ WRONG PERMISSION - Redirecting to: $redirectPath');
         return redirectPath;
       }
-      print('✅ PERMISSION OK - No redirect needed');
     }
 
     return null; // 리다이렉트 없음
@@ -628,32 +619,21 @@ class RouterNotifier extends ChangeNotifier {
 class _RouteLogger extends NavigatorObserver {
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    final from = previousRoute?.settings.name ?? 'null';
-    final to = route.settings.name ?? 'unknown';
-    print('📍 [ROUTE] PUSH: $from → $to');
     super.didPush(route, previousRoute);
   }
 
   @override
   void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    final from = route.settings.name ?? 'unknown';
-    final to = previousRoute?.settings.name ?? 'null';
-    print('📍 [ROUTE] POP: $from → $to');
     super.didPop(route, previousRoute);
   }
 
   @override
   void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
-    final from = oldRoute?.settings.name ?? 'unknown';
-    final to = newRoute?.settings.name ?? 'unknown';
-    print('📍 [ROUTE] REPLACE: $from → $to');
     super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
   }
 
   @override
   void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    final removed = route.settings.name ?? 'unknown';
-    print('📍 [ROUTE] REMOVE: $removed');
     super.didRemove(route, previousRoute);
   }
 }

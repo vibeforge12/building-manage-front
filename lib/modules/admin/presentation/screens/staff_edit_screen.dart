@@ -106,7 +106,6 @@ class _StaffEditScreenState extends ConsumerState<StaffEditScreen> {
         });
       }
     } catch (e) {
-      print('부서 목록 조회 실패: $e');
       // 부서 목록 조회 실패는 에러로 표시하지 않고 로그만 출력
     } finally {
       setState(() {
@@ -121,12 +120,6 @@ class _StaffEditScreenState extends ConsumerState<StaffEditScreen> {
     }
 
     if (_departmentId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('부서 정보가 없습니다.'),
-          backgroundColor: Colors.red,
-        ),
-      );
       return;
     }
 
@@ -147,24 +140,10 @@ class _StaffEditScreenState extends ConsumerState<StaffEditScreen> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('담당자 정보가 수정되었습니다.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-
         context.pop(true); // 수정 성공 시 true 반환
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      // 담당자 정보 수정 실패
     } finally {
       if (mounted) {
         setState(() {

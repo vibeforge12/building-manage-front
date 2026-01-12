@@ -34,8 +34,6 @@ class User extends Equatable {
 
   // API 응답에서 User 객체 생성
   factory User.fromJson(Map<String, dynamic> json) {
-    print('🔍 User.fromJson - Raw JSON: $json');
-
     UserType userType;
 
     // role 필드를 UserType enum으로 변환
@@ -61,7 +59,6 @@ class User extends Equatable {
     }
 
     final phoneNumber = json['phoneNumber'] as String?;
-    print('📞 User.fromJson - Extracted phoneNumber: $phoneNumber');
 
     // building 객체에서 buildingId, buildingName, buildingImageUrl 추출
     String? buildingId = json['buildingId'] as String?;
@@ -90,7 +87,6 @@ class User extends Equatable {
       approvalStatus: json['approvalStatus'] as String?,
     );
 
-    print('✅ User.fromJson - Created user with phoneNumber: ${user.phoneNumber}');
     return user;
   }
 

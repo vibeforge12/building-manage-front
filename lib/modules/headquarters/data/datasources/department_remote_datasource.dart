@@ -124,13 +124,11 @@ class DepartmentRemoteDataSource {
     File? iconFile,
   }) async {
     try {
-      print('🏢 부서 생성 시작 - 이름: $name');
 
       String? iconUrl;
 
       // 아이콘 파일이 있는 경우 S3에 업로드
       if (iconFile != null && _imageUploadService != null) {
-        print('📷 이미지 업로드 시작');
 
         // 파일을 바이트로 읽기
         final Uint8List fileBytes = await iconFile.readAsBytes();
@@ -144,10 +142,7 @@ class DepartmentRemoteDataSource {
           contentType: contentType,
           folder: 'departments',
         );
-
-        print('✅ 이미지 업로드 완료: $iconUrl');
       } else {
-        print('📷 아이콘 없음 또는 이미지 업로드 서비스 없음');
       }
 
       // 부서 생성 API 호출 (iconUrl 포함)
@@ -159,23 +154,14 @@ class DepartmentRemoteDataSource {
         data['iconUrl'] = iconUrl;
       }
 
-      print('📤 API 호출: POST ${ApiEndpoints.headquarters}/departments');
-      print('📦 데이터: $data');
-
       final response = await _apiClient.post(
         '${ApiEndpoints.headquarters}/departments',
         data: data,
       );
-
-      print('✅ 부서 생성 응답: ${response.data}');
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
-      print('❌ DioException 발생: ${e.message}');
-      print('❌ 응답 데이터: ${e.response?.data}');
-      print('❌ 상태 코드: ${e.response?.statusCode}');
       throw Exception('부서 생성 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {
-      print('❌ 일반 예외 발생: $e');
       throw Exception('부서 생성 중 오류가 발생했습니다: $e');
     }
   }
@@ -187,7 +173,6 @@ class DepartmentRemoteDataSource {
     required String name,
   }) async {
     try {
-      print('✏️ 부서 수정 시작 - ID: $departmentId, 이름: $name');
 
       final data = {
         'name': name,
@@ -197,13 +182,8 @@ class DepartmentRemoteDataSource {
         '${ApiEndpoints.headquarters}/departments/$departmentId',
         data: data,
       );
-
-      print('✅ 부서 수정 응답: ${response.data}');
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
-      print('❌ DioException 발생: ${e.message}');
-      print('❌ 응답 데이터: ${e.response?.data}');
-      print('❌ 상태 코드: ${e.response?.statusCode}');
       throw ApiException(
         message: '부서 수정 중 오류가 발생했습니다.',
         errorCode: 'DEPARTMENT_UPDATE_FAILED',
@@ -212,7 +192,6 @@ class DepartmentRemoteDataSource {
       if (e is ApiException) {
         rethrow;
       }
-      print('❌ 일반 예외 발생: $e');
       throw ApiException(
         message: '부서 수정 중 오류가 발생했습니다.',
         errorCode: 'DEPARTMENT_UPDATE_FAILED',
@@ -224,18 +203,12 @@ class DepartmentRemoteDataSource {
   /// DELETE /api/v1/headquarters/departments/:departmentId
   Future<Map<String, dynamic>> deleteDepartment(String departmentId) async {
     try {
-      print('🗑️ 부서 삭제 시작 - ID: $departmentId');
 
       final response = await _apiClient.delete(
         '${ApiEndpoints.headquarters}/departments/$departmentId',
       );
-
-      print('✅ 부서 삭제 응답: ${response.data}');
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
-      print('❌ DioException 발생: ${e.message}');
-      print('❌ 응답 데이터: ${e.response?.data}');
-      print('❌ 상태 코드: ${e.response?.statusCode}');
       throw ApiException(
         message: '부서 삭제 중 오류가 발생했습니다.',
         errorCode: 'DEPARTMENT_DELETE_FAILED',
@@ -244,7 +217,6 @@ class DepartmentRemoteDataSource {
       if (e is ApiException) {
         rethrow;
       }
-      print('❌ 일반 예외 발생: $e');
       throw ApiException(
         message: '부서 삭제 중 오류가 발생했습니다.',
         errorCode: 'DEPARTMENT_DELETE_FAILED',

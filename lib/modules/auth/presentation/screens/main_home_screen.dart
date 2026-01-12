@@ -21,69 +21,79 @@ class MainHomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
         children: [
           const FullScreenImageBackground(assetPath: 'assets/home.png'),
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const _LandingHeader(),
-                  const SizedBox(height: 60),
-                  PrimaryActionButton(
-                    label: '유저 로그인',
-                    backgroundColor: const Color(0xFFEDF9FF),
-                    foregroundColor: Colors.black,
-                    onPressed: () => _openUserLogin(context),
-                  ),
-                  const SizedBox(height: 16),
-                  PrimaryActionButton(
-                    label: '관리자 로그인',
-                    backgroundColor: const Color(0xFFEDF9FF),
-                    foregroundColor: Colors.black,
-                    onPressed: () => _openAdminSelection(context),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
+            child: SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: screenHeight - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Divider(
-                          color: Color(0xffBBC5CC),
-                          thickness: 1,
-                        ),
+                      const _LandingHeader(),
+                      SizedBox(height: screenHeight * 0.05),
+                      PrimaryActionButton(
+                        label: '유저 로그인',
+                        backgroundColor: const Color(0xFFEDF9FF),
+                        foregroundColor: Colors.black,
+                        onPressed: () => _openUserLogin(context),
                       ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12),
-                        child: Text(
-                          '또는',
-                          style: TextStyle(
-                            color: Color(0xffBBC5CC),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
+                      const SizedBox(height: 16),
+                      PrimaryActionButton(
+                        label: '관리자 로그인',
+                        backgroundColor: const Color(0xFFEDF9FF),
+                        foregroundColor: Colors.black,
+                        onPressed: () => _openAdminSelection(context),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Divider(
+                              color: Color(0xffBBC5CC),
+                              thickness: 1,
+                            ),
                           ),
-                        ),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 12),
+                            child: Text(
+                              '또는',
+                              style: TextStyle(
+                                color: Color(0xffBBC5CC),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Divider(
+                              color: Color(0xffBBC5CC),
+                              thickness: 1,
+                            ),
+                          ),
+                        ],
                       ),
-                      Expanded(
-                        child: Divider(
-                          color: Color(0xffBBC5CC),
-                          thickness: 1,
-                        ),
+                      const SizedBox(height: 16),
+                      PrimaryActionButton(
+                        label: '회원가입',
+                        backgroundColor: const Color(0xFF006FFF),
+                        foregroundColor: Colors.white,
+                        onPressed: () => context.go('/resident-signup'),
                       ),
+                      const SizedBox(height: 16),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  PrimaryActionButton(
-                    label: '회원가입',
-                    backgroundColor: const Color(0xFF006FFF),
-                    foregroundColor: Colors.white,
-                    onPressed: () => context.go('/resident-signup'),
-                  ),
-                ],
+                ),
               ),
             ),
           ),

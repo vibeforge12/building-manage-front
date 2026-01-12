@@ -71,15 +71,6 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
       }
 
       setState(() => _errorMessage = errorMessage);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

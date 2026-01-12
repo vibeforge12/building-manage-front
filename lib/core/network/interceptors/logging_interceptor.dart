@@ -20,54 +20,33 @@ class LoggingInterceptor extends Interceptor {
   }
 
   void _logRequest(RequestOptions options) {
-    print('\n🚀 API REQUEST');
-    print('📍 ${options.method} ${options.baseUrl}${options.path}');
 
     if (options.queryParameters.isNotEmpty) {
-      print('📊 Query Parameters: ${options.queryParameters}');
     }
 
     if (options.headers.isNotEmpty) {
-      print('📋 Headers: ${_sanitizeHeaders(options.headers)}');
     }
 
     if (options.data != null) {
-      print('📦 Request Data: ${_sanitizeData(options.data)}');
     }
-    print('───────────────────────────────────');
   }
 
   void _logResponse(Response response) {
-    print('\n✅ API RESPONSE');
-    print('📍 ${response.requestOptions.method} ${response.requestOptions.path}');
-    print('📊 Status Code: ${response.statusCode}');
-    print('⏱️  Response Time: ${DateTime.now()}');
 
     if (response.headers.map.isNotEmpty) {
-      print('📋 Response Headers: ${response.headers.map}');
     }
 
     if (response.data != null) {
-      print('📦 Response Data: ${_formatResponseData(response.data)}');
     }
-    print('───────────────────────────────────');
   }
 
   void _logError(DioException err) {
-    print('\n❌ API ERROR');
-    print('📍 ${err.requestOptions.method} ${err.requestOptions.path}');
-    print('🚨 Error Type: ${err.type}');
-    print('💬 Error Message: ${err.message}');
 
     if (err.response != null) {
-      print('📊 Status Code: ${err.response?.statusCode}');
-      print('📦 Error Data: ${err.response?.data}');
     }
 
     if (err.stackTrace != null) {
-      print('🔍 Stack Trace: ${err.stackTrace}');
     }
-    print('───────────────────────────────────');
   }
 
   // 민감한 정보를 제거한 헤더 반환

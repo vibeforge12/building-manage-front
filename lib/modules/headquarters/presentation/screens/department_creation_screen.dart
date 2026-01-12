@@ -39,9 +39,7 @@ class _DepartmentCreationScreenState extends ConsumerState<DepartmentCreationScr
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('아이콘을 선택하는 중 오류가 발생했습니다.')),
-      );
+      // 아이콘 선택 실패
     }
   }
 
@@ -64,33 +62,14 @@ class _DepartmentCreationScreenState extends ConsumerState<DepartmentCreationScr
 
       if (mounted) {
         if (response['success'] == true) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('부서가 성공적으로 생성되었습니다.')),
-          );
-
           // 부서 목록 새로고침 트리거 - BuildingManagementScreen의 부서 목록이 즉시 업데이트됨
           ref.read(departmentRefreshTriggerProvider.notifier).state++;
 
           context.pop();
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(response['message'] ?? '부서 생성에 실패했습니다.')),
-          );
         }
       }
     } catch (e) {
-      if (mounted) {
-        String errorMessage = '부서 생성 중 오류가 발생했습니다.';
-        if (e is ApiException) {
-          errorMessage = e.userFriendlyMessage;
-        } else if (e is Exception) {
-          errorMessage = e.toString().replaceFirst('Exception: ', '');
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage)),
-        );
-      }
+      // 부서 생성 실패
     } finally {
       if (mounted) {
         setState(() {

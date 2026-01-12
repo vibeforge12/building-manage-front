@@ -70,12 +70,6 @@ class AdminComplaint extends Equatable {
       responseImageUrl = latestResult?['imageUrl'] as String?;
     }
 
-    print('✅ AdminComplaint.fromJson() 파싱 성공');
-    print('   ID: ${json['id']}');
-    print('   Title: ${json['title']}');
-    print('   IsResolved: ${json['isResolved']}');
-    print('   Response: $response');
-
     return AdminComplaint(
       id: json['id'] as String? ?? '',
       title: json['title'] as String? ?? '',

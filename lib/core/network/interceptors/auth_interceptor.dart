@@ -6,16 +6,13 @@ class AuthInterceptor extends Interceptor {
   static const String _refreshTokenKey = 'refresh_token';
 
   // Secure Storage 인스턴스 (싱글톤 패턴)
-  // Android: 패키지명 변경 시에도 데이터 유지를 위해 sharedPreferencesName 고정
-  // iOS: first_unlock은 디바이스 재시작 후에도 접근 가능 (앱 재시작 시 크래시 방지)
+  // ⚠️ 중요: 앱 재설치 감지 및 토큰 삭제
+  // - Android: resetOnError로 에러 시 데이터 초기화
+  // - iOS/Android: main.dart의 _clearTokensOnFirstRun()에서 앱 버전 체크로 첫 설치 감지 후 토큰 삭제
   static const FlutterSecureStorage _secureStorage = FlutterSecureStorage(
     aOptions: AndroidOptions(
       encryptedSharedPreferences: true,
-      sharedPreferencesName: 'building_manage_secure_prefs',
-      preferencesKeyPrefix: 'building_manage_',
-    ),
-    iOptions: IOSOptions(
-      accessibility: KeychainAccessibility.first_unlock,
+      resetOnError: true,
     ),
   );
 
@@ -42,9 +39,6 @@ class AuthInterceptor extends Interceptor {
 
       if (token != null && token.isNotEmpty) {
         options.headers['Authorization'] = 'Bearer $token';
-        print('🔐 AuthInterceptor: Token attached to request');
-      } else {
-        print('⚠️ AuthInterceptor: No token found in SecureStorage');
       }
     }
 
@@ -74,10 +68,7 @@ class AuthInterceptor extends Interceptor {
 
       if (!isLoginEndpoint) {
         // 인증된 API 요청의 401만 토큰 제거
-        print('🔐 AuthInterceptor: 401 에러 - 토큰 삭제 ($path)');
         await _clearToken();
-      } else {
-        print('🔐 AuthInterceptor: 401 에러 - 로그인 실패, 토큰 유지 ($path)');
       }
     }
 
@@ -105,8 +96,7 @@ class AuthInterceptor extends Interceptor {
         }
       }
     } catch (e) {
-      // 토큰 저장 실패 시 로그 (실제 앱에서는 로깅 시스템 사용)
-      print('Failed to save tokens: $e');
+      // Token save failed
     }
   }
 
@@ -116,7 +106,7 @@ class AuthInterceptor extends Interceptor {
       await _secureStorage.delete(key: _tokenKey);
       await _secureStorage.delete(key: _refreshTokenKey);
     } catch (e) {
-      print('Failed to clear tokens: $e');
+      // Token clear failed
     }
   }
 
@@ -125,7 +115,6 @@ class AuthInterceptor extends Interceptor {
     try {
       return await _secureStorage.read(key: _tokenKey);
     } catch (e) {
-      print('Failed to get current token: $e');
       return null;
     }
   }
@@ -135,7 +124,7 @@ class AuthInterceptor extends Interceptor {
     try {
       await _secureStorage.write(key: _tokenKey, value: token);
     } catch (e) {
-      print('Failed to save token manually: $e');
+      // Token save failed
     }
   }
 
@@ -144,7 +133,7 @@ class AuthInterceptor extends Interceptor {
     try {
       await _secureStorage.write(key: _refreshTokenKey, value: refreshToken);
     } catch (e) {
-      print('Failed to save refresh token manually: $e');
+      // Refresh token save failed
     }
   }
 
@@ -153,7 +142,6 @@ class AuthInterceptor extends Interceptor {
     try {
       return await _secureStorage.read(key: _refreshTokenKey);
     } catch (e) {
-      print('Failed to get current refresh token: $e');
       return null;
     }
   }
@@ -164,7 +152,7 @@ class AuthInterceptor extends Interceptor {
       await _secureStorage.delete(key: _tokenKey);
       await _secureStorage.delete(key: _refreshTokenKey);
     } catch (e) {
-      print('Failed to clear tokens manually: $e');
+      // Token clear failed
     }
   }
 }

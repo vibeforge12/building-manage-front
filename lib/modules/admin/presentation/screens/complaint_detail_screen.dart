@@ -60,7 +60,6 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
           }
 
           if (snapshot.hasError) {
-            print('❌ 민원 상세 조회 에러: ${snapshot.error}');
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,

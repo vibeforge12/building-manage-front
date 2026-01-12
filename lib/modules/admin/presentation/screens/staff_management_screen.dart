@@ -66,7 +66,6 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
   }
 
   Future<void> _deleteStaff(String staffId, String staffName) async {
-    print('🗑️ _deleteStaff 호출: staffId=$staffId, staffName=$staffName');
 
     final confirmed = await showCustomConfirmationDialog(
       context: context,
@@ -84,50 +83,21 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
       isDestructive: true,
     );
 
-    print('✅ 다이얼로그 결과: confirmed=$confirmed');
-
     if (confirmed != true) {
-      print('❌ 삭제 취소됨');
       return;
     }
-
-    print('🔄 삭제 진행 시작...');
 
     try {
       // UseCase를 통한 담당자 삭제 (비즈니스 로직 포함)
       final deleteStaffUseCase = ref.read(deleteStaffUseCaseProvider);
-      print('📤 deleteStaffUseCase 호출 중...');
       await deleteStaffUseCase.execute(staffId: staffId);
 
-      print('✅ 삭제 성공!');
-
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('담당자가 삭제되었습니다.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        print('🔄 목록 새로고침 시작...');
         // 목록 새로고침
         await _loadStaffs();
-        print('✅ 목록 새로고침 완료!');
       }
     } catch (e) {
-      print('❌ 삭제 실패: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              e is ApiException
-                  ? e.userFriendlyMessage
-                  : '담당자 삭제 중 오류가 발생했습니다.',
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      // 담당자 삭제 실패
     }
   }
 

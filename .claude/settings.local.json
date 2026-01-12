@@ -27,7 +27,16 @@
       "Bash(JAVA_HOME=/opt/homebrew/Cellar/openjdk@17/17.0.16/libexec/openjdk.jdk/Contents/Home flutter doctor:*)",
       "Bash(flutter config:*)",
       "Bash(open:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(nc:*)",
+      "Bash(adb logcat:*)",
+      "Bash(flutter devices:*)",
+      "Bash(flutter emulators:*)",
+      "Bash(flutter pub run:*)",
+      "Bash(ls:*)",
+      "Bash(/Users/gimseon-u/.local/bin/uvx mcp-obsidian:*)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)"
     ],
     "deny": [],
     "ask": []

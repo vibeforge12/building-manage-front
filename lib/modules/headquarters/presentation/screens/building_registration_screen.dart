@@ -44,9 +44,7 @@ class _BuildingRegistrationScreenState extends ConsumerState<BuildingRegistratio
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('이미지를 선택하는 중 오류가 발생했습니다.')),
-      );
+      // 이미지 선택 실패
     }
   }
 
@@ -65,7 +63,6 @@ class _BuildingRegistrationScreenState extends ConsumerState<BuildingRegistratio
       // 이미지가 선택되었으면 S3에 업로드하고 URL 받기
       if (_selectedImage != null) {
         try {
-          print('🖼️ 이미지 S3 업로드 시작');
           final imageUploadService = ref.read(imageUploadServiceProvider);
           final fileBytes = await _selectedImage!.readAsBytes();
 
@@ -75,18 +72,7 @@ class _BuildingRegistrationScreenState extends ConsumerState<BuildingRegistratio
             contentType: ImageUploadService.getContentType(_selectedImage!.path),
             folder: 'buildings',
           );
-
-          print('✅ 이미지 S3 업로드 완료: $imageUrl');
         } catch (e) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('이미지 업로드 실패: $e'),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 3),
-              ),
-            );
-          }
           return;
         }
       }
@@ -103,31 +89,13 @@ class _BuildingRegistrationScreenState extends ConsumerState<BuildingRegistratio
 
       if (mounted) {
         if (response['success'] == true) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('건물이 성공적으로 등록되었습니다.')),
-          );
           // 건물 목록 새로고침 트리거
           ref.read(buildingRefreshTriggerProvider.notifier).state++;
           context.pop();
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(response['message'] ?? '건물 등록에 실패했습니다.')),
-          );
         }
       }
     } catch (e) {
-      if (mounted) {
-        String errorMessage = '건물 등록 중 오류가 발생했습니다.';
-        if (e is ApiException) {
-          errorMessage = e.userFriendlyMessage;
-        } else if (e is Exception) {
-          errorMessage = e.toString().replaceFirst('Exception: ', '');
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage)),
-        );
-      }
+      // 건물 등록 실패
     } finally {
       if (mounted) {
         setState(() {

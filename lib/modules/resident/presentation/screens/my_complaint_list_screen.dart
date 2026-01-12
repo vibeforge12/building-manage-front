@@ -49,7 +49,6 @@ class _MyComplaintListScreenState extends ConsumerState<MyComplaintListScreen> {
         });
       }
     } catch (e) {
-      print('❌ 내 민원 조회 실패: $e');
       setState(() {
         _error = '민원 로드 중 오류가 발생했습니다.';
         _isLoading = false;

@@ -98,28 +98,23 @@ class AttendanceHistoryNotifier extends StateNotifier<AttendanceHistoryState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      print('📅 월별 출퇴근 기록 조회 시작 (Provider): ${state.year}년 ${state.month}월');
 
       final response = await _getMonthlyAttendanceUseCase.execute(
         year: state.year,
         month: state.month,
       );
 
-      print('✅ 월별 출퇴근 기록 조회 성공 (Provider): ${response.records.length}개');
-
       state = state.copyWith(
         isLoading: false,
         records: response.records,
       );
     } on ApiException catch (e) {
-      print('❌ 월별 출퇴근 기록 조회 실패 (Provider): ${e.userFriendlyMessage}');
 
       state = state.copyWith(
         isLoading: false,
         error: e.userFriendlyMessage,
       );
     } catch (e) {
-      print('❌ 월별 출퇴근 기록 조회 실패 (Provider): $e');
 
       state = state.copyWith(
         isLoading: false,

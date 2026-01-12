@@ -76,11 +76,8 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
     );
 
     try {
-      print('🏢 출근 처리 시작 (Provider)');
 
       final response = await _checkInUseCase.execute();
-
-      print('✅ 출근 처리 성공 (Provider)');
 
       state = state.copyWith(
         status: AttendanceStatus.checkedIn,
@@ -90,12 +87,9 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
 
       return true;
     } on ApiException catch (e) {
-      print('❌ 출근 처리 실패 (Provider): ${e.userFriendlyMessage}');
-      print('❌ 에러 메시지: ${e.message}');
 
       // 서버에서 이미 출근 처리되었다고 응답한 경우, 클라이언트 상태도 출근으로 변경
       if (e.message?.contains('이미 출근') == true) {
-        print('🔄 서버 상태와 동기화: 출근 상태로 변경');
         state = state.copyWith(
           status: AttendanceStatus.checkedIn,
           checkInTime: DateTime.now(),
@@ -110,7 +104,6 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
 
       return false;
     } catch (e) {
-      print('❌ 출근 처리 실패 (Provider): $e');
 
       state = state.copyWith(
         status: AttendanceStatus.notCheckedIn,
@@ -141,11 +134,8 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
     );
 
     try {
-      print('🏃 퇴근 처리 시작 (Provider)');
 
       final response = await _checkOutUseCase.execute();
-
-      print('✅ 퇴근 처리 성공 (Provider)');
 
       state = state.copyWith(
         status: AttendanceStatus.checkedOut,
@@ -155,7 +145,6 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
 
       return true;
     } on ApiException catch (e) {
-      print('❌ 퇴근 처리 실패 (Provider): ${e.userFriendlyMessage}');
 
       state = state.copyWith(
         status: AttendanceStatus.checkedIn,
@@ -164,7 +153,6 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
 
       return false;
     } catch (e) {
-      print('❌ 퇴근 처리 실패 (Provider): $e');
 
       state = state.copyWith(
         status: AttendanceStatus.checkedIn,

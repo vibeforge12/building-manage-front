@@ -74,9 +74,6 @@ class _AdminAccountIssuanceScreenState extends ConsumerState<AdminAccountIssuanc
     }
 
     if (_selectedBuilding == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('건물을 선택해주세요.')),
-      );
       return;
     }
 
@@ -85,7 +82,6 @@ class _AdminAccountIssuanceScreenState extends ConsumerState<AdminAccountIssuanc
     });
 
     try {
-      print('🔵 관리자 계정 발급 시작');
       final adminAccountDataSource = ref.read(adminAccountRemoteDataSourceProvider);
 
       final response = await adminAccountDataSource.createAdminAccount(
@@ -93,8 +89,6 @@ class _AdminAccountIssuanceScreenState extends ConsumerState<AdminAccountIssuanc
         phoneNumber: _phoneController.text.trim(),
         buildingId: _selectedBuilding!['id'].toString(),
       );
-
-      print('✅ 관리자 계정 발급 성공: $response');
 
       if (mounted) {
         // 성공 다이얼로그 표시
@@ -119,7 +113,6 @@ class _AdminAccountIssuanceScreenState extends ConsumerState<AdminAccountIssuanc
         }
       }
     } catch (e) {
-      print('❌ 관리자 계정 발급 실패: $e');
       if (mounted) {
         // 에러 다이얼로그 표시
         showDialog(

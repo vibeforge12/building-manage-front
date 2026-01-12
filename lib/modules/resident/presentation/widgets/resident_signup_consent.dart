@@ -50,12 +50,6 @@ class _ResidentSignupConsentState extends ConsumerState<ResidentSignupConsent> {
 
   void _onNext() {
     if (!_isRequiredAgreed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('필수 약관에 동의해 주세요.'),
-          backgroundColor: Colors.red,
-        ),
-      );
       return;
     }
 

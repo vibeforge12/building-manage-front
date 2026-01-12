@@ -12,20 +12,12 @@ class StaffRemoteDataSource {
   /// GET /api/v1/managers/staffs
   Future<Map<String, dynamic>> getStaffs() async {
     try {
-      print('👥 담당자 목록 조회 시작');
-      print('📤 API 호출: GET /api/v1/managers/staffs');
 
       final response = await _apiClient.get('/managers/staffs');
-
-      print('✅ 담당자 목록 응답: ${response.data}');
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
-      print('❌ DioException 발생: ${e.message}');
-      print('❌ 응답 데이터: ${e.response?.data}');
-      print('❌ 상태 코드: ${e.response?.statusCode}');
       throw Exception('담당자 목록을 불러오는 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {
-      print('❌ 일반 예외 발생: $e');
       throw Exception('담당자 목록을 불러오는 중 오류가 발생했습니다: $e');
     }
   }
@@ -39,11 +31,6 @@ class StaffRemoteDataSource {
     String? imageUrl,
   }) async {
     try {
-      print('📤 담당자 계정 발급 요청 시작');
-      print('   이름: $name');
-      print('   전화번호: $phoneNumber');
-      print('   부서 ID: $departmentId');
-      print('   이미지 URL: ${imageUrl ?? "(없음)"}');
 
       final data = {
         'name': name,
@@ -52,21 +39,13 @@ class StaffRemoteDataSource {
         if (imageUrl != null) 'imageUrl': imageUrl,
       };
 
-      print('📋 요청 데이터: $data');
-
       final response = await _apiClient.post(
         '/managers/staffs',
         data: data,
       );
 
-      print('✅ 담당자 계정 발급 성공');
-      print('📦 응답 데이터: ${response.data}');
-
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
-      print('❌ DioException 발생: ${e.message}');
-      print('   상태 코드: ${e.response?.statusCode}');
-      print('   응답 데이터: ${e.response?.data}');
 
       if (e.response?.data != null && e.response!.data is Map) {
         final errorData = e.response!.data as Map<String, dynamic>;
@@ -83,7 +62,6 @@ class StaffRemoteDataSource {
         statusCode: e.response?.statusCode,
       );
     } catch (e) {
-      print('❌ 일반 예외 발생: $e');
       throw ApiException(
         message: '담당자 계정 발급 중 오류가 발생했습니다.',
         errorCode: 'STAFF_CREATE_FAILED',
@@ -97,23 +75,13 @@ class StaffRemoteDataSource {
     required String staffId,
   }) async {
     try {
-      print('📋 담당자 상세 조회 시작');
-      print('   담당자 ID: $staffId');
-      print('📤 API 호출: GET /api/v1/managers/staffs/$staffId');
 
       final response = await _apiClient.get('/managers/staffs/$staffId');
 
-      print('✅ 담당자 상세 조회 성공');
-      print('📦 응답 데이터: ${response.data}');
-
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
-      print('❌ DioException 발생: ${e.message}');
-      print('   상태 코드: ${e.response?.statusCode}');
-      print('   응답 데이터: ${e.response?.data}');
       throw Exception('담당자 상세 정보를 불러오는 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {
-      print('❌ 일반 예외 발생: $e');
       throw Exception('담당자 상세 정보를 불러오는 중 오류가 발생했습니다: $e');
     }
   }
@@ -130,12 +98,6 @@ class StaffRemoteDataSource {
     String? password,
   }) async {
     try {
-      print('✏️ 담당자 정보 수정 요청 시작');
-      print('   담당자 ID: $staffId');
-      print('   이름: $name');
-      print('   전화번호: $phoneNumber');
-      print('   부서 ID: $departmentId');
-      print('   상태: $status');
 
       final data = {
         'name': name,
@@ -152,22 +114,13 @@ class StaffRemoteDataSource {
         data['password'] = password;
       }
 
-      print('📋 요청 데이터: $data');
-      print('📤 API 호출: PATCH /api/v1/managers/staffs/$staffId');
-
       final response = await _apiClient.patch(
         '/managers/staffs/$staffId',
         data: data,
       );
 
-      print('✅ 담당자 정보 수정 성공');
-      print('📦 응답 데이터: ${response.data}');
-
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
-      print('❌ DioException 발생: ${e.message}');
-      print('   상태 코드: ${e.response?.statusCode}');
-      print('   응답 데이터: ${e.response?.data}');
 
       if (e.response?.data != null && e.response!.data is Map) {
         final errorData = e.response!.data as Map<String, dynamic>;
@@ -184,7 +137,6 @@ class StaffRemoteDataSource {
         statusCode: e.response?.statusCode,
       );
     } catch (e) {
-      print('❌ 일반 예외 발생: $e');
       throw ApiException(
         message: '담당자 정보 수정 중 오류가 발생했습니다.',
         errorCode: 'STAFF_UPDATE_FAILED',
@@ -198,20 +150,11 @@ class StaffRemoteDataSource {
     required String staffId,
   }) async {
     try {
-      print('🗑️ 담당자 삭제 요청 시작');
-      print('   담당자 ID: $staffId');
-      print('📤 API 호출: DELETE /api/v1/managers/staffs/$staffId');
 
       final response = await _apiClient.delete('/managers/staffs/$staffId');
 
-      print('✅ 담당자 삭제 성공');
-      print('📦 응답 데이터: ${response.data}');
-
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
-      print('❌ DioException 발생: ${e.message}');
-      print('   상태 코드: ${e.response?.statusCode}');
-      print('   응답 데이터: ${e.response?.data}');
 
       if (e.response?.data != null && e.response!.data is Map) {
         final errorData = e.response!.data as Map<String, dynamic>;
@@ -228,7 +171,6 @@ class StaffRemoteDataSource {
         statusCode: e.response?.statusCode,
       );
     } catch (e) {
-      print('❌ 일반 예외 발생: $e');
       throw ApiException(
         message: '담당자 삭제 중 오류가 발생했습니다.',
         errorCode: 'STAFF_DELETE_FAILED',

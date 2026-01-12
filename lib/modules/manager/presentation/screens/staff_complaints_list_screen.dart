@@ -59,7 +59,6 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
       }
     } catch (e) {
       final tabName = _tabIndex == 0 ? '미완료' : '처리된';
-      print('❌ $tabName 민원 목록 조회 실패: $e');
       setState(() {
         _error = '민원 로드 중 오류가 발생했습니다.';
         _isLoading = false;

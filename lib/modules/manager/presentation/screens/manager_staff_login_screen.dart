@@ -62,11 +62,6 @@ class _ManagerStaffLoginScreenState extends ConsumerState<ManagerStaffLoginScree
       }
     } catch (e) {
       setState(() => _loginFailed = true);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('로그인 실패: $e')),
-        );
-      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }

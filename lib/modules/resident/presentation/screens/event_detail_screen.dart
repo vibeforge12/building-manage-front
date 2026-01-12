@@ -30,19 +30,15 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
   Future<void> _loadEventDetail() async {
     try {
-      print('🎬 EventDetailScreen - eventId: ${widget.eventId}');
 
       // Riverpod에 접근하기 위해 직접 provider 인스턴스 사용
       final container = ProviderContainer();
       final noticeDataSource = container.read(noticeRemoteDataSourceProvider);
       final response = await noticeDataSource.getEventDetail(eventId: widget.eventId);
-      print('📦 EventDetailScreen - response: $response');
-      print('📦 EventDetailScreen - response keys: ${response.keys}');
 
       // API 응답 구조: response = { success: true, data: { id, title, content, imageUrl, createdAt, ... } }
       if (response['success'] == true && response['data'] != null) {
         final eventData = response['data'] as Map<String, dynamic>;
-        print('✅ EventDetailScreen - 데이터 로드 성공: $eventData');
         if (mounted) {
           setState(() {
             _event = eventData;
@@ -50,7 +46,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           });
         }
       } else {
-        print('❌ EventDetailScreen - success가 false 또는 data가 null');
         if (mounted) {
           setState(() {
             _error = '이벤트를 불러올 수 없습니다.';
@@ -59,7 +54,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         }
       }
     } catch (e) {
-      print('❌ 이벤트 상세 조회 실패: $e');
       if (mounted) {
         setState(() {
           _error = '이벤트 로드 중 오류가 발생했습니다.';
@@ -292,9 +286,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       ),
                     ),
                     errorWidget: (context, url, error) {
-                      print('❌ EventDetailScreen 이미지 로드 실패');
-                      print('📍 URL: $url');
-                      print('❌ Error: $error');
                       return Container(
                         color: const Color(0xFFF5F5F5),
                         child: const Center(

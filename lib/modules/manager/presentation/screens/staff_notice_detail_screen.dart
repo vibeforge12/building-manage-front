@@ -52,7 +52,6 @@ class _StaffNoticeDetailScreenState extends State<StaffNoticeDetailScreen> {
         });
       }
     } catch (e) {
-      print('❌ 공지사항 상세 조회 실패: $e');
       setState(() {
         _error = '공지사항 로드 중 오류가 발생했습니다.';
         _isLoading = false;

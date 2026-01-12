@@ -15,10 +15,8 @@ class BuildingRemoteDataSource {
     String? memo,
   }) async {
     try {
-      print('🏢 건물 등록 시작 - 이름: $name, 주소: $address');
 
       if (imageUrl != null) {
-        print('📷 이미지 URL: $imageUrl');
       }
 
       final requestData = {
@@ -28,22 +26,14 @@ class BuildingRemoteDataSource {
         if (memo != null && memo.isNotEmpty) 'memo': memo,
       };
 
-      print('📤 API 호출: POST ${ApiEndpoints.headquartersBuildings}');
-
       final response = await _apiClient.post(
         ApiEndpoints.headquartersBuildings,
         data: requestData,
       );
-
-      print('✅ 건물 등록 응답: ${response.data}');
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
-      print('❌ DioException 발생: ${e.message}');
-      print('❌ 응답 데이터: ${e.response?.data}');
-      print('❌ 상태 코드: ${e.response?.statusCode}');
       throw Exception('건물 등록 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {
-      print('❌ 일반 예외 발생: $e');
       throw Exception('건물 등록 중 오류가 발생했습니다: $e');
     }
   }
@@ -77,7 +67,6 @@ class BuildingRemoteDataSource {
     String? memo,
   }) async {
     try {
-      print('✏️ 건물 수정 시작 - ID: $buildingId, 이름: $name');
 
       final requestData = {
         'name': name,
@@ -86,22 +75,14 @@ class BuildingRemoteDataSource {
         if (memo != null && memo.isNotEmpty) 'memo': memo,
       };
 
-      print('📤 API 호출: PATCH ${ApiEndpoints.headquartersBuildings}/$buildingId');
-
       final response = await _apiClient.patch(
         '${ApiEndpoints.headquartersBuildings}/$buildingId',
         data: requestData,
       );
-
-      print('✅ 건물 수정 응답: ${response.data}');
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
-      print('❌ DioException 발생: ${e.message}');
-      print('❌ 응답 데이터: ${e.response?.data}');
-      print('❌ 상태 코드: ${e.response?.statusCode}');
       throw Exception('건물 수정 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {
-      print('❌ 일반 예외 발생: $e');
       throw Exception('건물 수정 중 오류가 발생했습니다: $e');
     }
   }

@@ -28,6 +28,7 @@ class ApiEndpoints {
   static const String userProfile = '$user/profile';
   static const String userDashboard = '$user/dashboard';
   static const String userPushToken = '/users/push-token';  // FCM 토큰 등록 (입주민)
+  static const String userWithdraw = '/users/me';  // 회원 탈퇴 (DELETE)
 
   // Admin endpoints - 관리자 관련
   static const String admin = '/admin';

@@ -101,7 +101,6 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
   }
 
   Future<void> _verifyResident(String residentId, String residentName) async {
-    print('✅ _verifyResident 호출: residentId=$residentId, residentName=$residentName');
 
     final confirmed = await showCustomConfirmationDialog(
       context: context,
@@ -119,53 +118,25 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
       isDestructive: false,
     );
 
-    print('✅ 다이얼로그 결과: confirmed=$confirmed');
-
     if (confirmed != true) {
-      print('❌ 등록 취소됨');
       return;
     }
-
-    print('🔄 승인 진행 시작...');
 
     try {
       // UseCase를 통한 입주민 승인 (비즈니스 로직 포함)
       final verifyResidentUseCase = ref.read(verifyResidentUseCaseProvider);
-      print('📤 verifyResidentUseCase 호출 중...');
       await verifyResidentUseCase.execute(residentId: residentId);
 
-      print('✅ 승인 성공!');
-
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('$residentName 입주민이 승인되었습니다.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        print('🔄 목록 새로고침 시작...');
         await _loadPendingResidents();
         await _loadVerifiedResidents();
-        print('✅ 목록 새로고침 완료!');
       }
     } catch (e) {
-      print('❌ 승인 실패: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              e is ApiException ? e.userFriendlyMessage : '입주민 승인 중 오류가 발생했습니다.',
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      // 입주민 승인 실패
     }
   }
 
   Future<void> _rejectResident(String residentId, String residentName) async {
-    print('❌ _rejectResident 호출: residentId=$residentId, residentName=$residentName');
 
     final confirmed = await showCustomConfirmationDialog(
       context: context,
@@ -182,52 +153,24 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
       isDestructive: true,
     );
 
-    print('✅ 다이얼로그 결과: confirmed=$confirmed');
-
     if (confirmed != true) {
-      print('❌ 거절 취소됨');
       return;
     }
-
-    print('🔄 거절 진행 시작...');
 
     try {
       // UseCase를 통한 입주민 거절 (비즈니스 로직 포함)
       final rejectResidentUseCase = ref.read(rejectResidentUseCaseProvider);
-      print('📤 rejectResidentUseCase 호출 중...');
       await rejectResidentUseCase.execute(residentId: residentId);
 
-      print('✅ 거절 성공!');
-
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('$residentName 입주민이 거절되었습니다.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        print('🔄 목록 새로고침 시작...');
         await _loadPendingResidents();
-        print('✅ 목록 새로고침 완료!');
       }
     } catch (e) {
-      print('❌ 거절 실패: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              e is ApiException ? e.userFriendlyMessage : '입주민 거절 중 오류가 발생했습니다.',
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      // 입주민 거절 실패
     }
   }
 
   Future<void> _deleteVerifiedResident(String residentId, String residentName) async {
-    print('🗑️ _deleteVerifiedResident 호출: residentId=$residentId, residentName=$residentName');
 
     final confirmed = await showCustomConfirmationDialog(
       context: context,
@@ -245,47 +188,20 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
       isDestructive: true,
     );
 
-    print('✅ 다이얼로그 결과: confirmed=$confirmed');
-
     if (confirmed != true) {
-      print('❌ 삭제 취소됨');
       return;
     }
-
-    print('🔄 삭제 진행 시작...');
 
     try {
       // UseCase를 통한 입주민 삭제 (비즈니스 로직 포함)
       final rejectResidentUseCase = ref.read(rejectResidentUseCaseProvider);
-      print('📤 rejectResidentUseCase 호출 중...');
       await rejectResidentUseCase.execute(residentId: residentId);
 
-      print('✅ 삭제 성공!');
-
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('$residentName 입주민이 삭제되었습니다.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        print('🔄 목록 새로고침 시작...');
         await _loadVerifiedResidents();
-        print('✅ 목록 새로고침 완료!');
       }
     } catch (e) {
-      print('❌ 삭제 실패: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              e is ApiException ? e.userFriendlyMessage : '입주민 삭제 중 오류가 발생했습니다.',
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      // 입주민 삭제 실패
     }
   }
 

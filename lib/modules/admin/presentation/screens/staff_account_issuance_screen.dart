@@ -385,12 +385,6 @@ class _StaffAccountIssuanceScreenState
     }
 
     if (_selectedDepartmentId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('담당부서를 선택해주세요.'),
-          backgroundColor: Colors.red,
-        ),
-      );
       return;
     }
 
@@ -429,15 +423,6 @@ class _StaffAccountIssuanceScreenState
           context.go('/admin/dashboard');
         }
       }
-    } else if (staffState.error != null) {
-      // 에러 메시지 표시
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(staffState.error!),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 3),
-        ),
-      );
     }
   }
 }

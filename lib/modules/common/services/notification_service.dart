@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,38 +33,32 @@ class NotificationService {
   Future<void> initialize(ApiClient apiClient) async {
     // 항상 새로운 apiClient로 데이터소스 갱신 (로그인 시 토큰 변경 반영)
     _pushTokenDataSource = PushTokenRemoteDataSource(apiClient);
-    print('📱 NotificationService: 데이터소스 갱신됨');
 
     // 로컬 알림 설정 초기화 (한 번만)
     if (!_isMessageListenersRegistered) {
       try {
         await _initializeLocalNotifications();
-        print('✅ 로컬 알림 초기화 성공');
       } catch (e) {
-        print('⚠️ 로컬 알림 초기화 실패 (계속 진행): $e');
+        // Local notification initialization failed
       }
 
       // 포그라운드 메시지 핸들러 (한 번만 등록)
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        print('📢 포그라운드 메시지 수신: ${message.notification?.title}');
         _handleForegroundMessage(message);
       });
 
       // 백그라운드에서 포그라운드로 전환될 때 메시지 처리 (한 번만 등록)
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-        print('📱 알림 클릭 (백그라운드→포그라운드): ${message.notification?.title}');
         _handleMessageTap(message);
       });
 
       // 앱이 종료된 상태에서 푸시 알림 클릭으로 앱이 시작된 경우 처리
       RemoteMessage? initialMessage = await _messaging.getInitialMessage();
       if (initialMessage != null) {
-        print('📱 앱 시작 알림 (종료 상태에서 클릭): ${initialMessage.notification?.title}');
         _handleMessageTap(initialMessage);
       }
 
       _isMessageListenersRegistered = true;
-      print('✅ NotificationService 메시지 리스너 등록 완료');
     }
   }
 
@@ -86,121 +81,87 @@ class NotificationService {
   /// FCM 토큰 획득 및 서버 등록
   /// [userType]: 사용자 유형 (user, manager, staff, headquarters)
   Future<void> registerPushToken({required String userType}) async {
-    print('🔔 [FCM] ========== registerPushToken 시작 ==========');
-    print('🔔 [FCM] userType 파라미터: $userType');
-    print('🔔 [FCM] 현재 시간: ${DateTime.now()}');
-
     try {
       // 현재 사용자 타입 저장 (토큰 리프레시 시 사용)
       _currentUserType = userType;
-      print('🔔 [FCM] _currentUserType 저장됨: $_currentUserType');
 
       // 1. FCM 토큰 획득 (시뮬레이터에서는 실패할 수 있음)
-      print('🔔 [FCM] getToken() 호출 시작...');
       String? token;
       try {
         token = await _messaging.getToken();
-        print('🔔 [FCM] getToken() 성공! 토큰 길이: ${token?.length ?? 0}');
       } catch (e, stackTrace) {
-        print('⚠️ [FCM] getToken() 예외 발생!');
-        print('⚠️ [FCM] 에러 타입: ${e.runtimeType}');
-        print('⚠️ [FCM] 에러 메시지: $e');
-        print('⚠️ [FCM] 스택트레이스: $stackTrace');
-        print('💡 [FCM] 시뮬레이터/에뮬레이터에서는 실패할 수 있습니다.');
+        // Token acquisition failed (simulator/emulator may not support FCM)
         return;
       }
 
       if (token == null) {
-        print('❌ [FCM] getToken()이 null 반환! 토큰 획득 실패');
-        print('❌ [FCM] 가능한 원인: Google Play Services 미설치, Firebase 미초기화');
+        // Token is null (possible causes: no Google Play Services, Firebase not initialized)
         return;
       }
 
-      // 토큰 출력 (Firebase Console 테스트용)
-      print('🔑 [FCM] ===== FCM TOKEN 획득 성공 =====');
-      print('📱 [FCM] 토큰: $token');
-      print('👤 [FCM] 사용자 타입: $userType');
-      print('⏰ [FCM] 시간: ${DateTime.now()}');
-      print('🔑 [FCM] ==================================');
-
       // 2. 토큰 변경 감지 (토큰이 새로 생성되면 자동 등록) - 중복 등록 방지
       if (!_isTokenListenerRegistered) {
-        print('🔔 [FCM] onTokenRefresh 리스너 등록 중...');
         _messaging.onTokenRefresh.listen((newToken) {
           // _currentUserType 사용 (재로그인 시 업데이트된 값 사용)
           final currentType = _currentUserType ?? 'user';
-          print('🔄 [FCM] 토큰 리프레시 감지! 새 토큰 길이: ${newToken.length}');
-          print('🔄 [FCM] 서버에 업데이트 중... (userType: $currentType)');
           _registerTokenToServer(newToken, currentType);
         });
         _isTokenListenerRegistered = true;
-        print('✅ [FCM] onTokenRefresh 리스너 등록 완료');
       }
 
       // 3. 서버에 초기 토큰 등록
-      print('🔔 [FCM] 서버에 토큰 등록 시작...');
       await _registerTokenToServer(token, userType);
-      print('🔔 [FCM] ========== registerPushToken 완료 ==========');
     } catch (e, stackTrace) {
-      print('❌ [FCM] registerPushToken 전체 오류!');
-      print('❌ [FCM] 에러 타입: ${e.runtimeType}');
-      print('❌ [FCM] 에러 메시지: $e');
-      print('❌ [FCM] 스택트레이스: $stackTrace');
+      // FCM token registration failed
     }
   }
 
-  /// 서버에 FCM 토큰 등록
-  Future<void> _registerTokenToServer(String token, String userType) async {
-    print('📤 [FCM] _registerTokenToServer 시작');
-    print('📤 [FCM] 토큰 길이: ${token.length}');
-    print('📤 [FCM] userType: $userType');
+  /// 서버에 FCM 토큰 등록 (401 에러 시 최대 2회 재시도)
+  Future<void> _registerTokenToServer(String token, String userType, {int retryCount = 0}) async {
+    const int maxRetries = 2;
 
     try {
       // 데이터소스 체크
       if (_pushTokenDataSource == null) {
-        print('❌ [FCM] 치명적 오류: _pushTokenDataSource가 null!');
-        print('❌ [FCM] initialize()가 먼저 호출되었는지 확인 필요');
         return;
       }
-      print('✅ [FCM] _pushTokenDataSource 확인됨');
 
       final lowerUserType = userType.toLowerCase();
-      print('📤 [FCM] lowercase userType: $lowerUserType');
 
       switch (lowerUserType) {
         case 'user':
           // 유저(입주민) → /users/push-token
-          print('📤 [FCM] API 호출: /users/push-token');
           await _pushTokenDataSource!.registerUserPushToken(pushToken: token);
-          print('✅ [FCM] 유저(user) FCM 토큰 서버 등록 완료!');
           break;
         case 'manager':
           // 관리자 (서버 role: MANAGER) → /managers/push-token
-          print('📤 [FCM] API 호출: /managers/push-token');
           await _pushTokenDataSource!.registerManagerPushToken(pushToken: token);
-          print('✅ [FCM] 관리자(manager) FCM 토큰 서버 등록 완료!');
           break;
         case 'staff':
           // 담당자 (서버 role: STAFF) → /staffs/push-token
-          print('📤 [FCM] API 호출: /staffs/push-token');
           await _pushTokenDataSource!.registerStaffPushToken(pushToken: token);
-          print('✅ [FCM] 담당자(staff) FCM 토큰 서버 등록 완료!');
           break;
         case 'headquarters':
           // 본사 → /headquarters/push-token
-          print('📤 [FCM] API 호출: /headquarters/push-token');
           await _pushTokenDataSource!.registerHeadquartersPushToken(pushToken: token);
-          print('✅ [FCM] 본사(headquarters) FCM 토큰 서버 등록 완료!');
           break;
         default:
-          print('⚠️ [FCM] 알 수 없는 사용자 타입: $userType');
-          print('⚠️ [FCM] 지원 타입: user, manager, staff, headquarters');
+          // Unknown user type
+          break;
+      }
+    } on DioException catch (e) {
+      final statusCode = e.response?.statusCode;
+
+      // 401 Unauthorized 에러 시 재시도
+      if (statusCode == 401 && retryCount < maxRetries) {
+        // 잠시 대기 후 재시도 (토큰 갱신 시간 확보)
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        // 재시도
+        await _registerTokenToServer(token, userType, retryCount: retryCount + 1);
       }
     } catch (e, stackTrace) {
-      print('❌ [FCM] 서버 토큰 등록 실패!');
-      print('❌ [FCM] 에러 타입: ${e.runtimeType}');
-      print('❌ [FCM] 에러 메시지: $e');
-      print('❌ [FCM] 스택트레이스: $stackTrace');
+      // Token registration to server failed
     }
   }
 
@@ -218,7 +179,6 @@ class NotificationService {
 
   /// 알림 클릭 처리
   void _handleMessageTap(RemoteMessage message) {
-    print('데이터: ${message.data}');
     // TODO: 알림 데이터에 따라 네비게이션 처리
     // 예: 민원 알림이면 민원 상세화면으로 이동
     // GoRouter를 사용하여 네비게이션 수행
@@ -266,26 +226,21 @@ class NotificationService {
     try {
       // 로컬에서 FCM 토큰 삭제
       await _messaging.deleteToken();
-      print('✅ FCM 토큰 삭제 완료');
     } catch (e) {
-      print('❌ FCM 토큰 삭제 실패: $e');
+      // FCM token deletion failed
     }
   }
 
   /// FCM 권한 요청 (iOS 13+, Android 13+)
   Future<bool> requestPermissions() async {
     try {
-      print('🔔 [FCM-PERM] 권한 요청 시작...');
-
       // Android 13+ 에서는 flutter_local_notifications를 통해 권한 요청
       // (firebase_messaging.requestPermission()이 Android에서 불안정할 수 있음)
       final androidPlugin = _localNotifications.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>();
 
       if (androidPlugin != null) {
-        print('🔔 [FCM-PERM] Android 감지 - 로컬 알림 권한 요청 중...');
-        final granted = await androidPlugin.requestNotificationsPermission();
-        print('🔔 [FCM-PERM] Android 로컬 알림 권한: ${granted == true ? "승인됨" : "거부됨/null"}');
+        await androidPlugin.requestNotificationsPermission();
       }
 
       // Firebase Messaging 권한 요청 (iOS 필수, Android 보조)
@@ -300,22 +255,15 @@ class NotificationService {
         sound: true,
       );
 
-      print('🔔 [FCM-PERM] Firebase authorizationStatus: ${settings.authorizationStatus}');
-
       if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-        print('✅ 푸시 알림 권한 승인됨');
         return true;
       } else if (settings.authorizationStatus ==
           AuthorizationStatus.provisional) {
-        print('⚠️ 푸시 알림 권한 임시 승인됨');
         return true;
       } else {
-        print('❌ 푸시 알림 권한 거부됨');
         return false;
       }
     } catch (e, stackTrace) {
-      print('❌ 권한 요청 중 오류: $e');
-      print('❌ 스택트레이스: $stackTrace');
       return false;
     }
   }

@@ -18,7 +18,6 @@ class _ResidentApprovalPendingScreenState
     // 3초 후 자동으로 대시보드로 이동
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
-        print('⏳ PENDING 화면 표시 완료 - 대시보드로 이동');
         context.goNamed('userDashboard');
       }
     });

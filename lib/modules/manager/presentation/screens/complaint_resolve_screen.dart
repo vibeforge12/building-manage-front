@@ -73,11 +73,7 @@ class _ComplaintResolveScreenState extends ConsumerState<ComplaintResolveScreen>
         _updateFormState();
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('이미지를 선택할 수 없습니다: $e')),
-        );
-      }
+      // 이미지 선택 실패
     }
   }
 
@@ -122,14 +118,6 @@ class _ComplaintResolveScreenState extends ConsumerState<ComplaintResolveScreen>
         setState(() {
           _isUploadingImage = false;
         });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('이미지 업로드 실패: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
       }
       return; // 업로드 실패 시 민원 등록 진행 안함
     }
@@ -159,24 +147,6 @@ class _ComplaintResolveScreenState extends ConsumerState<ComplaintResolveScreen>
         setState(() {
           _isSubmitting = false;
         });
-
-        String errorMessage = '민원 처리 등록 실패';
-
-        // 에러 메시지 추출
-        if (e.toString().contains('message:')) {
-          final match = RegExp(r'message: ([^,}]+)').firstMatch(e.toString());
-          if (match != null) {
-            errorMessage = match.group(1) ?? errorMessage;
-          }
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
       }
     }
   }

@@ -21,10 +21,8 @@ class NoticeRemoteDataSource {
   Future<Map<String, dynamic>> getEventHighlights() async {
     try {
       final response = await _apiClient.get('/events/highlight');
-      print('✅ 이벤트 API 응답: ${response.data}');
       return response.data;
     } catch (e) {
-      print('❌ 이벤트 API 에러: $e');
       rethrow;
     }
   }

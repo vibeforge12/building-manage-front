@@ -54,7 +54,6 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
         });
       }
     } catch (e) {
-      print('❌ 미완료 민원 조회 실패: $e');
       setState(() {
         _complaintsError = '민원 로드 중 오류가 발생했습니다.';
         _isLoadingComplaints = false;
@@ -86,7 +85,6 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
         });
       }
     } catch (e) {
-      print('❌ 공지사항 조회 실패: $e');
       setState(() {
         _noticesError = '공지사항 로드 중 오류가 발생했습니다.';
         _isLoadingNotices = false;
@@ -334,15 +332,10 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
   }
 
   Future<void> _handleCheckIn(BuildContext context) async {
-    print('🔵 _handleCheckIn 시작');
     final attendanceState = ref.read(attendanceProvider);
-    print('🔵 현재 상태: ${attendanceState.status}');
-    print('🔵 isCheckedIn: ${attendanceState.isCheckedIn}');
-    print('🔵 isCheckedOut: ${attendanceState.isCheckedOut}');
 
     // 이미 퇴근한 경우 (출근과 퇴근을 모두 완료한 경우)
     if (attendanceState.isCheckedOut) {
-      print('🔴 이미 퇴근한 상태');
       await showCustomConfirmationDialog(
         context: context,
         title: '이미 퇴근 하셨습니다',
@@ -356,7 +349,6 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
 
     // 이미 출근한 경우
     if (attendanceState.isCheckedIn) {
-      print('🔴 이미 출근한 상태');
       await showCustomConfirmationDialog(
         context: context,
         title: '',
@@ -369,7 +361,6 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
     }
 
     // 출근 확인 다이얼로그
-    print('🟢 다이얼로그 표시');
     final confirmed = await showCustomConfirmationDialog(
       context: context,
       title: '출근 등록 하시겠습니까?',
@@ -379,35 +370,22 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
       barrierDismissible: false,
     );
 
-    print('🟢 다이얼로그 결과: $confirmed');
-
     if (confirmed != true || !context.mounted) return;
 
     // Provider를 통한 출근 처리
-    print('🟢 출근 처리 API 호출');
     final success = await ref.read(attendanceProvider.notifier).checkIn();
-    print('🟢 출근 처리 결과: $success');
 
     if (!context.mounted) return;
 
     if (success) {
-      print('✅ 출근 성공');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('출근이 등록되었습니다.'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
+      // 출근 등록 성공
     } else {
-      print('❌ 출근 실패');
       // 상태를 다시 읽어서 서버 동기화 여부 확인
       final updatedState = ref.read(attendanceProvider);
       final error = updatedState.error;
 
       // 서버에서 "이미 출근"이라고 응답하여 상태가 동기화된 경우
       if (updatedState.isCheckedIn && error?.contains('이미 출근') == true) {
-        print('🔄 서버 상태 동기화 완료 - InfoDialog 표시');
         await showCustomConfirmationDialog(
           context: context,
           title: '이미 출근하셨습니다',
@@ -416,29 +394,15 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
           cancelText: '',
           barrierDismissible: false,
         );
-      } else {
-        // 일반 에러의 경우 SnackBar 표시
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(error ?? '출근 처리 중 오류가 발생했습니다.'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
       }
     }
   }
 
   Future<void> _handleCheckOut(BuildContext context) async {
-    print('🔵 _handleCheckOut 시작');
     final attendanceState = ref.read(attendanceProvider);
-    print('🔵 현재 상태: ${attendanceState.status}');
-    print('🔵 isCheckedIn: ${attendanceState.isCheckedIn}');
-    print('🔵 isCheckedOut: ${attendanceState.isCheckedOut}');
 
     // 이미 퇴근한 경우
     if (attendanceState.isCheckedOut) {
-      print('🔴 이미 퇴근한 상태');
       await showCustomConfirmationDialog(
         context: context,
         title: '이미 퇴근하였습니다',
@@ -452,7 +416,6 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
 
     // 출근하지 않은 경우
     if (!attendanceState.isCheckedIn) {
-      print('🔴 출근하지 않은 상태');
       await showCustomConfirmationDialog(
         context: context,
         title: '',
@@ -465,7 +428,6 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
     }
 
     // 퇴근 확인 다이얼로그
-    print('🟢 퇴근 다이얼로그 표시');
     final confirmed = await showCustomConfirmationDialog(
       context: context,
       title: '퇴근 하시겠습니까?',
@@ -475,36 +437,15 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
       barrierDismissible: false,
     );
 
-    print('🟢 퇴근 다이얼로그 결과: $confirmed');
-
     if (confirmed != true || !context.mounted) return;
 
     // Provider를 통한 퇴근 처리
-    print('🟢 퇴근 처리 API 호출');
     final success = await ref.read(attendanceProvider.notifier).checkOut();
-    print('🟢 퇴근 처리 결과: $success');
 
     if (!context.mounted) return;
 
     if (success) {
-      print('✅ 퇴근 성공');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('퇴근이 등록되었습니다.'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
-    } else {
-      print('❌ 퇴근 실패');
-      final error = ref.read(attendanceProvider).error;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error ?? '퇴근 처리 중 오류가 발생했습니다.'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 3),
-        ),
-      );
+      // 퇴근 등록 성공
     }
   }
 

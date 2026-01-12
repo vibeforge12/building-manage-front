@@ -208,7 +208,48 @@ class AuthRemoteDataSource {
       await _apiClient.post(ApiEndpoints.logout);
     } catch (e) {
       // 로그아웃은 실패해도 로컬에서 토큰을 제거하면 됨
-      print('Logout API failed: $e');
+    }
+  }
+
+  /// 입주민 회원 탈퇴
+  /// DELETE /api/v1/users/me
+  /// 비밀번호 확인 후 계정 삭제
+  Future<Map<String, dynamic>> withdrawUser({
+    required String password,
+  }) async {
+    try {
+      final response = await _apiClient.delete(
+        ApiEndpoints.userWithdraw,
+        data: {
+          'password': password,
+        },
+      );
+
+      return response.data as Map<String, dynamic>;
+    } on ApiException catch (e) {
+      // 401: 비밀번호 불일치, 404: 사용자 없음
+      if (e.statusCode == 401) {
+        throw ApiException(
+          message: '비밀번호가 일치하지 않습니다.',
+          errorCode: 'PASSWORD_MISMATCH',
+          statusCode: 401,
+        );
+      } else if (e.statusCode == 404) {
+        throw ApiException(
+          message: '사용자 정보를 찾을 수 없습니다.',
+          errorCode: 'USER_NOT_FOUND',
+          statusCode: 404,
+        );
+      }
+      rethrow;
+    } catch (e) {
+      if (e is ApiException) {
+        rethrow;
+      }
+      throw ApiException(
+        message: '회원 탈퇴 중 오류가 발생했습니다.',
+        errorCode: 'WITHDRAW_FAILED',
+      );
     }
   }
 }

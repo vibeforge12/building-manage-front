@@ -82,7 +82,6 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
         });
       }
     } catch (e) {
-      print('부서 목록 조회 실패: $e');
     } finally {
       setState(() {
         _isLoadingDepartments = false;
@@ -105,7 +104,6 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
         });
       }
     } catch (e) {
-      print('공지사 조회 실패: $e');
       setState(() {
         _notices = [];
       });
@@ -131,7 +129,6 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
         });
       }
     } catch (e) {
-      print('이벤트 조회 실패: $e');
       setState(() {
         _events = [];
       });
@@ -780,7 +777,6 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
               // 2️⃣ 담당자가 있는 경우: 출근 여부 확인
               final buildingId = currentUser?.buildingId;
               if (buildingId == null) {
-                print('buildingId가 없습니다.');
                 return;
               }
 
@@ -879,7 +875,6 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
               }
             }
           } catch (e) {
-            print('부서 상태 확인 실패: $e');
           }
         }
       },

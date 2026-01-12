@@ -1,9 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 
 class ResidentApprovalCompletedScreen extends ConsumerWidget {
   const ResidentApprovalCompletedScreen({super.key});
+
+  Future<void> _markApprovalAsShown(WidgetRef ref) async {
+    final currentUser = ref.read(currentUserProvider);
+    if (currentUser != null) {
+      final prefs = await SharedPreferences.getInstance();
+      final approvalShownKey = 'approval_shown_${currentUser.id}';
+      await prefs.setBool(approvalShownKey, true);
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -98,7 +109,9 @@ class ResidentApprovalCompletedScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: FilledButton(
-                onPressed: () {
+                onPressed: () async {
+                  // 승인 완료 화면을 봤다는 플래그 저장
+                  await _markApprovalAsShown(ref);
                   context.goNamed('userDashboard');
                 },
                 style: FilledButton.styleFrom(

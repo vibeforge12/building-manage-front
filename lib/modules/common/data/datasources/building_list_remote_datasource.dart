@@ -19,7 +19,6 @@ class BuildingListRemoteDataSource {
     String? status,
   }) async {
     try {
-      print('🏢 건물 목록 조회 시작 - 페이지: $page, 키워드: ${keyword ?? "없음"}');
 
       final queryParameters = <String, dynamic>{
         'page': page,
@@ -35,22 +34,14 @@ class BuildingListRemoteDataSource {
         queryParameters['status'] = status;
       }
 
-      print('📤 API 호출: GET ${ApiEndpoints.commonBuildings}');
-
       final response = await _apiClient.get(
         ApiEndpoints.commonBuildings,
         queryParameters: queryParameters,
       );
-
-      print('✅ 건물 목록 응답: ${response.data}');
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
-      print('❌ DioException 발생: ${e.message}');
-      print('❌ 응답 데이터: ${e.response?.data}');
-      print('❌ 상태 코드: ${e.response?.statusCode}');
       throw Exception('건물 목록을 불러오는 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {
-      print('❌ 일반 예외 발생: $e');
       throw Exception('건물 목록을 불러오는 중 오류가 발생했습니다: $e');
     }
   }
@@ -59,21 +50,13 @@ class BuildingListRemoteDataSource {
   /// DELETE /api/v1/headquarters/buildings/{buildingId}
   Future<Map<String, dynamic>> deleteBuilding(String buildingId) async {
     try {
-      print('🗑️ 건물 삭제 시작 - buildingId: $buildingId');
       final endpoint = '${ApiEndpoints.headquartersBuildings}/$buildingId';
-      print('📤 API 호출: DELETE $endpoint');
 
       final response = await _apiClient.delete(endpoint);
-
-      print('✅ 건물 삭제 응답: ${response.data}');
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
-      print('❌ DioException 발생: ${e.message}');
-      print('❌ 응답 데이터: ${e.response?.data}');
-      print('❌ 상태 코드: ${e.response?.statusCode}');
       throw Exception('건물을 삭제하는 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {
-      print('❌ 일반 예외 발생: $e');
       throw Exception('건물을 삭제하는 중 오류가 발생했습니다: $e');
     }
   }

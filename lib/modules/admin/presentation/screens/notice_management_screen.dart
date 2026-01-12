@@ -50,24 +50,14 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
         sortOrder: _selectedFilter == '오래된순' ? 'ASC' : 'DESC',
       );
 
-      print('📌 API 응답: $response');
-      print('📌 response["data"]: ${response["data"]}');
-      print('📌 response["data"]["data"]: ${response["data"]["data"]}');
-
       if (mounted) {
         final noticeList = List<Map<String, dynamic>>.from(response['data']['data'] ?? []);
-        print('📌 파싱된 공지사항 개수: ${noticeList.length}');
         setState(() {
           _notices = noticeList;
         });
       }
     } catch (e) {
-      print('공지사항 목록 로드 실패: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('공지사항 로드 실패: $e')),
-        );
-      }
+      // 공지사항 로드 실패
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -81,24 +71,15 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
         sortOrder: _selectedFilter == '오래된순' ? 'ASC' : 'DESC',
       );
 
-      print('📌 이벤트 API 응답: $response');
-      print('📌 이벤트 response["data"]["items"]: ${response["data"]["items"]}');
-
       if (mounted) {
         // 이벤트 API 응답 구조: response["data"]["items"]
         final eventList = List<Map<String, dynamic>>.from(response['data']['items'] ?? []);
-        print('📌 파싱된 이벤트 개수: ${eventList.length}');
         setState(() {
           _events = eventList;
         });
       }
     } catch (e) {
-      print('이벤트 목록 로드 실패: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('이벤트 로드 실패: $e')),
-        );
-      }
+      // 이벤트 로드 실패
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -486,12 +467,6 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${isEvent ? '이벤트' : '공지사항'}이 삭제되었습니다.'),
-            backgroundColor: Colors.green,
-          ),
-        );
         // 목록 새로고침
         if (isEvent) {
           _loadEvents();
@@ -500,15 +475,7 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
         }
       }
     } catch (e) {
-      print('${isEvent ? '이벤트' : '공지사항'} 삭제 실패: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('삭제 실패: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      // 삭제 실패
     }
   }
 

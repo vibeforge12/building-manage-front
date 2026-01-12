@@ -74,11 +74,7 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
         _updateFormState();
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('이미지를 선택할 수 없습니다: $e')),
-        );
-      }
+      // 이미지 선택 실패
     }
   }
 
@@ -114,15 +110,6 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
             _isUploadingImage = false;
           });
 
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('이미지 업로드 실패: $e'),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 3),
-              ),
-            );
-          }
           return;
         }
       }
@@ -142,28 +129,7 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
         context.pushReplacementNamed('complaintComplete');
       }
     } catch (e) {
-      if (mounted) {
-        String errorMessage = '민원 등록 실패';
-
-        // DioException에서 서버 에러 메시지 추출
-        if (e.toString().contains('해당 부서는')) {
-          errorMessage = '이 부서는 현재 건물에서 이용할 수 없습니다.\n다른 부서를 선택해주세요.';
-        } else if (e.toString().contains('message:')) {
-          // 다른 서버 에러 메시지가 있으면 추출
-          final match = RegExp(r'message: ([^,}]+)').firstMatch(e.toString());
-          if (match != null) {
-            errorMessage = match.group(1) ?? errorMessage;
-          }
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
+      // 민원 등록 실패
     }
   }
 

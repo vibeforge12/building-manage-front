@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 import 'package:building_manage_front/modules/resident/presentation/providers/resident_providers.dart';
 
@@ -61,42 +62,39 @@ class _UserLoginScreenState extends ConsumerState<UserLoginScreen> {
 
       // approvalStatus에 따른 조건부 라우팅
       final approvalStatus = user?['approvalStatus'] as String?;
-      print('🔐 APPROVAL STATUS: $approvalStatus (type: ${approvalStatus.runtimeType})');
       if (mounted) {
         if (approvalStatus == 'REJECTED') {
           // 거부됨만: 홈 화면(로그인 페이지)로 리다이렉트
-          print('❌ REJECTED: 홈 화면으로 이동');
           _usernameController.clear();
           _passwordController.clear();
           setState(() => _loginFailed = true);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('가입이 거부되었습니다. 관리자에게 문의해주세요.'),
-              backgroundColor: Colors.red,
-            ),
-          );
           context.go('/');
         } else if (approvalStatus == 'PENDING') {
           // PENDING: 승인 대기 화면으로 이동 (3초 후 자동 대시보드 이동)
-          print('⏳ PENDING: 승인 대기 화면으로 이동');
           context.goNamed('residentApprovalPending');
         } else if (approvalStatus == 'APPROVED') {
-          // APPROVED: 바로 대시보드로 이동
-          print('✅ APPROVED: 바로 대시보드로 이동');
+          // APPROVED: 최초 1회만 승인 완료 화면 표시
+          final userId = user?['id'] as String?;
+          if (userId != null) {
+            final prefs = await SharedPreferences.getInstance();
+            final approvalShownKey = 'approval_shown_$userId';
+            final hasShownApproval = prefs.getBool(approvalShownKey) ?? false;
+
+            if (!hasShownApproval) {
+              // 첫 로그인: 승인 완료 화면 표시
+              context.goNamed('residentApprovalCompleted');
+              return;
+            }
+          }
+          // 이미 승인 완료 화면을 본 경우: 대시보드로 이동
           context.goNamed('userDashboard');
         } else {
           // 기타 상태: 기본적으로 대시보드로 이동
-          print('❓ Unknown status: $approvalStatus, 대시보드로 이동');
           context.goNamed('userDashboard');
         }
       }
     } catch (e) {
       setState(() => _loginFailed = true);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('로그인 실패: $e')),
-        );
-      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }

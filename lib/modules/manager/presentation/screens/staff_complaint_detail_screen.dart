@@ -52,7 +52,6 @@ class _StaffComplaintDetailScreenState extends State<StaffComplaintDetailScreen>
         });
       }
     } catch (e) {
-      print('❌ 민원 상세 조회 실패: $e');
       setState(() {
         _error = '민원 로드 중 오류가 발생했습니다.';
         _isLoading = false;

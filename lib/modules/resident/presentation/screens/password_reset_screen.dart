@@ -75,12 +75,7 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('인증번호가 발송되었습니다.'),
-            backgroundColor: Color(0xFF006FFF),
-          ),
-        );
+        // 인증번호 발송 성공
       }
     } catch (e) {
       final errorMessage = e.toString();
@@ -92,15 +87,6 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
         setState(() {
           _phoneNumberError = '휴대폰 번호를 확인해주세요.';
         });
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('인증번호 발송 실패: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
       }
     } finally {
       if (mounted) {
@@ -170,15 +156,6 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
         setState(() {
           _verificationCodeError = '인증번호가 일치하지 않습니다.';
         });
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('인증 실패: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
       }
     } finally {
       if (mounted) {

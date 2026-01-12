@@ -62,13 +62,6 @@ class _HeadquartersLoginScreenState extends ConsumerState<HeadquartersLoginScree
         );
 
         if (mounted) {
-          // ScaffoldMessenger.of(context).showSnackBar(
-          //   const SnackBar(
-          //     content: Text('본사 로그인 성공!'),
-          //     backgroundColor: Colors.green,
-          //   ),
-          // );
-
           // 본사 대시보드로 이동
           context.goNamed('headquartersDashboard');
         }
@@ -81,15 +74,6 @@ class _HeadquartersLoginScreenState extends ConsumerState<HeadquartersLoginScree
       }
 
       setState(() => _errorMessage = errorMessage);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

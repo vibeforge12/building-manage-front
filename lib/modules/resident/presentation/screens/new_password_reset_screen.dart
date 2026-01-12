@@ -106,14 +106,6 @@ class _NewPasswordResetScreenState extends ConsumerState<NewPasswordResetScreen>
       }
     } catch (e) {
       final errorMessage = e.toString();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('비밀번호 재설정 실패: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
     } finally {
       if (mounted) {
         setState(() {

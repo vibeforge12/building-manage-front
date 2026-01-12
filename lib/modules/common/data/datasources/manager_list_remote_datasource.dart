@@ -19,8 +19,6 @@ class ManagerListRemoteDataSource {
     String? keyword,
   }) async {
     try {
-      print('👥 관리자 목록 조회 시작 - 페이지: $page, 키워드: ${keyword ?? "없음"}');
-
       final queryParameters = <String, dynamic>{
         'page': page,
         'limit': limit,
@@ -38,22 +36,15 @@ class ManagerListRemoteDataSource {
         queryParameters['keyword'] = keyword;
       }
 
-      print('📤 API 호출: GET /api/v1/headquarters/managers');
-
       final response = await _apiClient.get(
         '/headquarters/managers',
         queryParameters: queryParameters,
       );
 
-      print('✅ 관리자 목록 응답: ${response.data}');
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
-      print('❌ DioException 발생: ${e.message}');
-      print('❌ 응답 데이터: ${e.response?.data}');
-      print('❌ 상태 코드: ${e.response?.statusCode}');
       throw Exception('관리자 목록을 불러오는 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {
-      print('❌ 일반 예외 발생: $e');
       throw Exception('관리자 목록을 불러오는 중 오류가 발생했습니다: $e');
     }
   }
@@ -62,22 +53,14 @@ class ManagerListRemoteDataSource {
   /// GET /api/v1/headquarters/managers/{managerId}
   Future<Map<String, dynamic>> getManagerDetail(String managerId) async {
     try {
-      print('👤 관리자 상세 조회 시작 - managerId: $managerId');
-      print('📤 API 호출: GET /api/v1/headquarters/managers/$managerId');
-
       final response = await _apiClient.get(
         '/headquarters/managers/$managerId',
       );
 
-      print('✅ 관리자 상세 응답: ${response.data}');
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
-      print('❌ DioException 발생: ${e.message}');
-      print('❌ 응답 데이터: ${e.response?.data}');
-      print('❌ 상태 코드: ${e.response?.statusCode}');
       throw Exception('관리자 상세 정보를 불러오는 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {
-      print('❌ 일반 예외 발생: $e');
       throw Exception('관리자 상세 정보를 불러오는 중 오류가 발생했습니다: $e');
     }
   }
@@ -92,32 +75,39 @@ class ManagerListRemoteDataSource {
     String? status,
   }) async {
     try {
-      print('✏️ 관리자 정보 수정 시작 - managerId: $managerId');
-
       final data = <String, dynamic>{};
       if (name != null) data['name'] = name;
       if (phoneNumber != null) data['phoneNumber'] = phoneNumber;
       if (imageUrl != null) data['imageUrl'] = imageUrl;
       if (status != null) data['status'] = status;
 
-      print('📤 API 호출: PATCH /api/v1/headquarters/managers/$managerId');
-      print('📝 요청 데이터: $data');
-
       final response = await _apiClient.patch(
         '/headquarters/managers/$managerId',
         data: data,
       );
 
-      print('✅ 관리자 수정 응답: ${response.data}');
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
-      print('❌ DioException 발생: ${e.message}');
-      print('❌ 응답 데이터: ${e.response?.data}');
-      print('❌ 상태 코드: ${e.response?.statusCode}');
       throw Exception('관리자 정보 수정 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {
-      print('❌ 일반 예외 발생: $e');
       throw Exception('관리자 정보 수정 중 오류가 발생했습니다: $e');
+    }
+  }
+
+  /// 관리자 삭제 (Soft Delete)
+  /// DELETE /api/v1/headquarters/managers/{managerId}
+  /// 관리자 상태를 DELETED로 변경합니다.
+  Future<Map<String, dynamic>> deleteManager(String managerId) async {
+    try {
+      final response = await _apiClient.delete(
+        '/headquarters/managers/$managerId',
+      );
+
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw Exception('관리자 삭제 중 오류가 발생했습니다: ${e.message}');
+    } catch (e) {
+      throw Exception('관리자 삭제 중 오류가 발생했습니다: $e');
     }
   }
 }

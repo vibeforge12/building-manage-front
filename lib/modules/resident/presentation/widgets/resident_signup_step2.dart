@@ -109,9 +109,6 @@ class _ResidentSignupStep2State extends ConsumerState<ResidentSignupStep2> {
 
   void _handleComplete() {
     if (_selectedBuilding == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('건물을 선택해주세요.')),
-      );
       return;
     }
 

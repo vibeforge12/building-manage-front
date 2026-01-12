@@ -22,7 +22,6 @@ class StaffComplaintsRemoteDataSource {
       );
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      print('❌ 미완료 민원 하이라이트 조회 실패: $e');
       rethrow;
     }
   }
@@ -35,7 +34,6 @@ class StaffComplaintsRemoteDataSource {
       final response = await _apiClient.get('$endpoint/$complaintId');
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      print('❌ 민원 상세 조회 실패: $e');
       rethrow;
     }
   }
@@ -64,7 +62,6 @@ class StaffComplaintsRemoteDataSource {
       );
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      print('❌ 공지사항 목록 조회 실패: $e');
       rethrow;
     }
   }
@@ -77,7 +74,6 @@ class StaffComplaintsRemoteDataSource {
       final response = await _apiClient.get('$endpoint/$noticeId');
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      print('❌ 공지사항 상세 조회 실패: $e');
       rethrow;
     }
   }
@@ -106,7 +102,6 @@ class StaffComplaintsRemoteDataSource {
       );
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      print('❌ 미완료 민원 목록 조회 실패: $e');
       rethrow;
     }
   }
@@ -135,7 +130,6 @@ class StaffComplaintsRemoteDataSource {
       );
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      print('❌ 처리된 민원 목록 조회 실패: $e');
       rethrow;
     }
   }
@@ -162,7 +156,6 @@ class StaffComplaintsRemoteDataSource {
       );
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      print('❌ 민원 처리 등록 실패: $e');
       rethrow;
     }
   }

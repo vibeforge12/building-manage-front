@@ -16,7 +16,6 @@ class UploadRemoteDataSource {
     String folder = 'departments',
   }) async {
     try {
-      print('📤 Presigned URL 요청 - fileName: $fileName, contentType: $contentType, folder: $folder');
 
       final response = await _apiClient.post(
         ApiEndpoints.uploadPresignedUrl,
@@ -26,16 +25,10 @@ class UploadRemoteDataSource {
           'folder': folder,
         },
       );
-
-      print('✅ Presigned URL 응답: ${response.data}');
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
-      print('❌ DioException 발생: ${e.message}');
-      print('❌ 응답 데이터: ${e.response?.data}');
-      print('❌ 상태 코드: ${e.response?.statusCode}');
       throw Exception('Presigned URL을 받아오는 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {
-      print('❌ 일반 예외 발생: $e');
       throw Exception('Presigned URL을 받아오는 중 오류가 발생했습니다: $e');
     }
   }
@@ -51,7 +44,6 @@ class UploadRemoteDataSource {
     required List<Map<String, String>> files,
   }) async {
     try {
-      print('📤 다중 Presigned URL 요청 - ${files.length}개 파일');
 
       final response = await _apiClient.post(
         ApiEndpoints.uploadPresignedUrls,
@@ -59,16 +51,10 @@ class UploadRemoteDataSource {
           'files': files,
         },
       );
-
-      print('✅ 다중 Presigned URL 응답: ${response.data}');
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
-      print('❌ DioException 발생: ${e.message}');
-      print('❌ 응답 데이터: ${e.response?.data}');
-      print('❌ 상태 코드: ${e.response?.statusCode}');
       throw Exception('Presigned URL을 받아오는 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {
-      print('❌ 일반 예외 발생: $e');
       throw Exception('Presigned URL을 받아오는 중 오류가 발생했습니다: $e');
     }
   }
@@ -81,7 +67,6 @@ class UploadRemoteDataSource {
     required String contentType,
   }) async {
     try {
-      print('📤 S3 업로드 시작 - contentType: $contentType');
 
       // Dio 인스턴스를 새로 생성 (interceptor 없이)
       final dio = Dio();
@@ -90,9 +75,6 @@ class UploadRemoteDataSource {
       final headers = {
         'Content-Type': contentType,
       };
-
-      print('📝 S3 업로드 URL: $uploadUrl');
-      print('📝 헤더: $headers');
 
       final response = await dio.put(
         uploadUrl,
@@ -103,15 +85,9 @@ class UploadRemoteDataSource {
           validateStatus: (status) => status! < 400,
         ),
       );
-
-      print('✅ S3 업로드 완료 - Status Code: ${response.statusCode}');
     } on DioException catch (e) {
-      print('❌ S3 업로드 실패: ${e.message}');
-      print('❌ 응답 데이터: ${e.response?.data}');
-      print('❌ 상태 코드: ${e.response?.statusCode}');
       throw Exception('S3 업로드 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {
-      print('❌ S3 업로드 일반 예외: $e');
       throw Exception('S3 업로드 중 오류가 발생했습니다: $e');
     }
   }

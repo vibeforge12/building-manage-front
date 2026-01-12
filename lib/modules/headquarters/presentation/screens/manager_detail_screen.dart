@@ -21,6 +21,7 @@ class _ManagerDetailScreenState extends ConsumerState<ManagerDetailScreen> {
   Map<String, dynamic>? _managerData;
   bool _isLoading = false;
   bool _isSaving = false;
+  bool _isDeleting = false;
   String? _errorMessage;
 
   // 수정 모드 상태
@@ -136,27 +137,11 @@ class _ManagerDetailScreenState extends ConsumerState<ManagerDetailScreen> {
         });
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('관리자 정보가 저장되었습니다.'),
-              backgroundColor: Color(0xFF4CAF50),
-            ),
-          );
+          // 관리자 정보 저장 성공
         }
       }
     } catch (e) {
-      if (mounted) {
-        String errorMessage = '저장 중 오류가 발생했습니다.';
-        if (e is ApiException) {
-          errorMessage = e.userFriendlyMessage;
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      // 저장 실패
     } finally {
       setState(() {
         _isSaving = false;
@@ -184,6 +169,54 @@ class _ManagerDetailScreenState extends ConsumerState<ManagerDetailScreen> {
       barrierDismissible: false,
       confirmOnLeft: false,  // "예"를 오른쪽에 배치
     );
+  }
+
+  /// 관리자 삭제 확인 다이얼로그
+  Future<void> _showDeleteConfirmDialog() async {
+    final managerName = _managerData?['name'] ?? '관리자';
+
+    final confirmed = await showCustomConfirmationDialog(
+      context: context,
+      title: '관리자 삭제',
+      content: Text(
+        '$managerName 관리자를\n정말 삭제하시겠습니까?\n\n삭제된 계정은 복구할 수 없습니다.',
+        textAlign: TextAlign.center,
+      ),
+      confirmText: '삭제',
+      cancelText: '취소',
+      isDestructive: true,
+      barrierDismissible: false,
+      confirmOnLeft: false,  // "삭제"를 오른쪽에 배치
+    );
+
+    if (confirmed == true && mounted) {
+      await _executeDelete();
+    }
+  }
+
+  /// 관리자 삭제 실행
+  Future<void> _executeDelete() async {
+    setState(() {
+      _isDeleting = true;
+    });
+
+    try {
+      final managerDataSource = ref.read(managerListRemoteDataSourceProvider);
+      final response = await managerDataSource.deleteManager(widget.managerId);
+
+      if (response['success'] == true && mounted) {
+        // 목록으로 돌아가기
+        context.pop(true);  // true를 반환하여 목록 새로고침 신호
+      }
+    } catch (e) {
+      // 관리자 삭제 실패
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isDeleting = false;
+        });
+      }
+    }
   }
 
   @override
@@ -327,6 +360,9 @@ class _ManagerDetailScreenState extends ConsumerState<ManagerDetailScreen> {
                                     label: '관리자 코드',
                                     value: _managerData?['managerCode'] ?? '',
                                   ),
+                                  const SizedBox(height: 32),
+                                  // 삭제 버튼
+                                  _buildDeleteButton(),
                                 ],
                               ),
                             ),
@@ -460,6 +496,55 @@ class _ManagerDetailScreenState extends ConsumerState<ManagerDetailScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  /// 삭제 버튼 빌더
+  Widget _buildDeleteButton() {
+    return InkWell(
+      onTap: _isDeleting ? null : _showDeleteConfirmDialog,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: const Color(0xFFFF3B30),
+            width: 1,
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: _isDeleting
+            ? const Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF3B30)),
+                  ),
+                ),
+              )
+            : const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.delete_outline,
+                    size: 20,
+                    color: Color(0xFFFF3B30),
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    '관리자 삭제',
+                    style: TextStyle(
+                      fontFamily: 'Pretendard',
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                      color: Color(0xFFFF3B30),
+                    ),
+                  ),
+                ],
+              ),
+      ),
     );
   }
 }

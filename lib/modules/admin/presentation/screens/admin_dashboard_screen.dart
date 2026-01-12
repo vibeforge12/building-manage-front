@@ -364,9 +364,6 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                       builder: (context) {
                         final currentUser = ref.watch(currentUserProvider);
 
-                        print('📱 AdminDashboard Drawer - currentUser: ${currentUser?.toJson()}');
-                        print('📱 AdminDashboard Drawer - phoneNumber: ${currentUser?.phoneNumber}');
-
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [

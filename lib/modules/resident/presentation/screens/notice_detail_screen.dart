@@ -30,18 +30,15 @@ class _NoticeDetailScreenState extends State<NoticeDetailScreen> {
 
   Future<void> _loadNoticeDetail() async {
     try {
-      print('🎬 NoticeDetailScreen - noticeId: ${widget.noticeId}');
 
       // Riverpod에 접근하기 위해 직접 provider 인스턴스 사용
       final container = ProviderContainer();
       final noticeDataSource = container.read(noticeRemoteDataSourceProvider);
       final response = await noticeDataSource.getNoticeDetail(noticeId: widget.noticeId);
-      print('📦 NoticeDetailScreen - response: $response');
 
       // API 응답 구조: response = { success: true, data: { id, title, content, imageUrl, createdAt, ... } }
       if (response['success'] == true && response['data'] != null) {
         final noticeData = response['data'] as Map<String, dynamic>;
-        print('✅ NoticeDetailScreen - 데이터 로드 성공: $noticeData');
         if (mounted) {
           setState(() {
             _notice = noticeData;
@@ -49,7 +46,6 @@ class _NoticeDetailScreenState extends State<NoticeDetailScreen> {
           });
         }
       } else {
-        print('❌ NoticeDetailScreen - success가 false 또는 data가 null');
         if (mounted) {
           setState(() {
             _error = '공지사항을 불러올 수 없습니다.';
@@ -58,7 +54,6 @@ class _NoticeDetailScreenState extends State<NoticeDetailScreen> {
         }
       }
     } catch (e) {
-      print('❌ 공지사항 상세 조회 실패: $e');
       if (mounted) {
         setState(() {
           _error = '공지사항 로드 중 오류가 발생했습니다.';

@@ -24,7 +24,6 @@ class ImageUploadService {
     String folder = 'departments',
   }) async {
     try {
-      print('🖼️ 이미지 업로드 시작: $fileName');
 
       // 1단계: Presigned URL 받기
       final presignedResponse = await _uploadDataSource.getPresignedUrl(
@@ -41,9 +40,6 @@ class ImageUploadService {
       final uploadUrl = data['uploadUrl'] as String;
       final fileUrl = data['fileUrl'] as String;
 
-      print('📝 업로드 URL: $uploadUrl');
-      print('📝 최종 파일 URL: $fileUrl');
-
       // 2단계: S3에 직접 업로드
       await _uploadDataSource.uploadToS3(
         uploadUrl: uploadUrl,
@@ -51,12 +47,9 @@ class ImageUploadService {
         contentType: contentType,
       );
 
-      print('✅ 이미지 업로드 완료: $fileUrl');
-
       // 3단계: 최종 파일 URL 반환
       return fileUrl;
     } catch (e) {
-      print('❌ 이미지 업로드 실패: $e');
       rethrow;
     }
   }
@@ -74,7 +67,6 @@ class ImageUploadService {
     if (files.isEmpty) return [];
 
     try {
-      print('🖼️ 다중 이미지 업로드 시작: ${files.length}개 파일');
 
       // 1단계: 모든 파일에 대한 Presigned URL 한 번에 받기
       final fileInfoList = files.map((file) => {
@@ -95,8 +87,6 @@ class ImageUploadService {
       // data가 직접 배열로 반환됨
       final urlsList = presignedResponse['data'] as List<dynamic>;
 
-      print('📝 ${urlsList.length}개의 Presigned URL 수신 완료');
-
       // 2단계: 각 파일을 병렬로 S3에 업로드
       final List<String> uploadedUrls = [];
 
@@ -114,7 +104,6 @@ class ImageUploadService {
             contentType: file['contentType'] as String,
           ).then((_) {
             uploadedUrls.add(fileUrl);
-            print('✅ 이미지 ${i + 1}/${files.length} 업로드 완료: $fileUrl');
           }),
         );
       }
@@ -122,11 +111,8 @@ class ImageUploadService {
       // 모든 업로드 완료 대기
       await Future.wait(uploadFutures);
 
-      print('✅ 전체 다중 이미지 업로드 완료: ${uploadedUrls.length}개');
-
       return uploadedUrls;
     } catch (e) {
-      print('❌ 다중 이미지 업로드 실패: $e');
       rethrow;
     }
   }
