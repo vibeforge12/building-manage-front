@@ -88,8 +88,12 @@ class ResidentRemoteDataSource {
     required String residentId,
   }) async {
     try {
+      print('🔴 ResidentRemoteDataSource.rejectResident 호출됨');
+      print('📋 residentId: $residentId');
+      print('📤 DELETE /managers/residents/$residentId 호출...');
 
       final response = await _apiClient.delete('/managers/residents/$residentId');
+      print('📥 응답 받음: ${response.data}');
 
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {

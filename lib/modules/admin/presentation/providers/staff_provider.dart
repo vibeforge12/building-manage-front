@@ -44,9 +44,13 @@ class StaffAccountIssuanceNotifier extends StateNotifier<StaffAccountIssuanceSta
     required String departmentId,
     String? imageUrl,
   }) async {
+    print('🔵 Provider: createStaffAccount 시작');
+    print('   name: $name, phone: $phoneNumber, deptId: $departmentId');
+
     state = state.copyWith(isLoading: true, error: null, isSuccess: false);
 
     try {
+      print('🔵 Provider: UseCase 실행 시작');
 
       // UseCase를 통한 담당자 계정 생성 (비즈니스 로직 포함)
       final createStaffUseCase = _ref.read(createStaffUseCaseProvider);
@@ -57,12 +61,15 @@ class StaffAccountIssuanceNotifier extends StateNotifier<StaffAccountIssuanceSta
         imageUrl: imageUrl,
       );
 
+      print('🔵 Provider: UseCase 성공! staff=${staff.toJson()}');
+
       state = state.copyWith(
         isLoading: false,
         createdStaff: staff.toJson(),
         isSuccess: true,
       );
     } on ApiException catch (e) {
+      print('🔴 Provider: ApiException 발생: ${e.message}');
 
       state = state.copyWith(
         isLoading: false,
@@ -70,6 +77,7 @@ class StaffAccountIssuanceNotifier extends StateNotifier<StaffAccountIssuanceSta
         isSuccess: false,
       );
     } catch (e) {
+      print('🔴 Provider: Exception 발생: $e');
 
       state = state.copyWith(
         isLoading: false,

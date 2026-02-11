@@ -65,7 +65,7 @@ class _DepartmentCreationScreenState extends ConsumerState<DepartmentCreationScr
           // 부서 목록 새로고침 트리거 - BuildingManagementScreen의 부서 목록이 즉시 업데이트됨
           ref.read(departmentRefreshTriggerProvider.notifier).state++;
 
-          context.pop();
+          context.pop(true);  // true를 반환하여 목록 새로고침 신호
         }
       }
     } catch (e) {

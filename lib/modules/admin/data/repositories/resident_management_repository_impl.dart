@@ -70,13 +70,20 @@ class ResidentManagementRepositoryImpl implements ResidentManagementRepository {
 
   @override
   Future<void> rejectResident({required String residentId}) async {
+    print('🔶 ResidentManagementRepositoryImpl.rejectResident 호출됨');
+    print('📋 residentId: $residentId');
     try {
+      print('📤 _dataSource.rejectResident 호출...');
       final response = await _dataSource.rejectResident(residentId: residentId);
+      print('📥 응답: $response');
 
       if (response['success'] != true) {
+        print('❌ success가 false임');
         throw Exception('입주민 거절 실패');
       }
+      print('✅ 입주민 거절 성공!');
     } catch (e) {
+      print('❌ Repository 에러: $e');
       rethrow;
     }
   }

@@ -48,6 +48,7 @@ class DepartmentListNotifier extends StateNotifier<DepartmentListState> {
         sortOrder: 'DESC',
         keyword: keyword,
         headquartersId: headquartersId,
+        status: 'ACTIVE',  // ACTIVE 상태인 부서만 조회
       );
 
       final data = response['data'] as Map<String, dynamic>?;

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:building_manage_front/modules/admin/data/datasources/attendance_alert_remote_datasource.dart';
+import 'package:building_manage_front/modules/admin/data/datasources/staff_remote_datasource.dart';
 import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 
 class StaffAttendanceListScreen extends ConsumerStatefulWidget {
@@ -13,6 +14,7 @@ class StaffAttendanceListScreen extends ConsumerStatefulWidget {
 }
 
 class _StaffAttendanceListScreenState extends ConsumerState<StaffAttendanceListScreen> {
+  List<Map<String, dynamic>> _allStaffs = []; // 모든 담당자 목록
   List<Map<String, dynamic>> _allAttendances = [];
   Map<String, List<Map<String, dynamic>>> _groupedByStaff = {};
   bool _isLoading = false;
@@ -21,34 +23,73 @@ class _StaffAttendanceListScreenState extends ConsumerState<StaffAttendanceListS
   @override
   void initState() {
     super.initState();
-    _loadAttendances();
+    _loadData();
   }
 
-  Future<void> _loadAttendances() async {
+  Future<void> _loadData() async {
+    print('🚀 _loadData 시작');
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
-      final dataSource = ref.read(attendanceAlertRemoteDataSourceProvider);
-      final response = await dataSource.getDashboardAlerts();
+      // 담당자 목록과 출근 기록을 동시에 가져오기
+      final staffDataSource = ref.read(staffRemoteDataSourceProvider);
+      final attendanceDataSource = ref.read(attendanceAlertRemoteDataSourceProvider);
 
-      if (response['success'] == true) {
-        final data = response['data'] as Map<String, dynamic>;
-        final latestAttendances = data['latestAttendances'] as List<dynamic>? ?? [];
+      print('📤 API 호출 시작...');
 
-        setState(() {
-          _allAttendances = latestAttendances.cast<Map<String, dynamic>>();
-          _groupAttendancesByStaff();
-        });
+      final results = await Future.wait([
+        staffDataSource.getStaffs(),
+        attendanceDataSource.getDashboardAlerts(),
+      ]);
+
+      print('📥 API 호출 완료');
+
+      final staffResponse = results[0];
+      final attendanceResponse = results[1];
+
+      print('📋 staffResponse: $staffResponse');
+      print('📋 attendanceResponse: $attendanceResponse');
+
+      // 담당자 목록 파싱
+      if (staffResponse['success'] == true) {
+        final data = staffResponse['data'];
+        // data가 List인 경우 (직접 배열 반환)
+        if (data is List) {
+          _allStaffs = data.cast<Map<String, dynamic>>();
+        }
+        // data가 Map인 경우 (items 안에 배열)
+        else if (data is Map<String, dynamic>) {
+          final items = data['items'] as List<dynamic>? ?? [];
+          _allStaffs = items.cast<Map<String, dynamic>>();
+        }
+        print('✅ 담당자 목록 로드: ${_allStaffs.length}명');
+      } else {
+        print('❌ staffResponse success가 false');
       }
-    } catch (e) {
+
+      // 출근 기록 파싱
+      if (attendanceResponse['success'] == true) {
+        final data = attendanceResponse['data'] as Map<String, dynamic>;
+        final latestAttendances = data['latestAttendances'] as List<dynamic>? ?? [];
+        _allAttendances = latestAttendances.cast<Map<String, dynamic>>();
+        _groupAttendancesByStaff();
+        print('✅ 출근 기록 로드: ${_allAttendances.length}건');
+      } else {
+        print('❌ attendanceResponse success가 false');
+      }
+
+      setState(() {});
+    } catch (e, stackTrace) {
+      print('❌ _loadData 에러: $e');
+      print('📋 스택 트레이스: $stackTrace');
       setState(() {
         if (e is ApiException) {
           _errorMessage = e.userFriendlyMessage;
         } else {
-          _errorMessage = '출퇴근 목록을 불러오는 중 오류가 발생했습니다.';
+          _errorMessage = '목록을 불러오는 중 오류가 발생했습니다.';
         }
       });
     } finally {
@@ -84,30 +125,38 @@ class _StaffAttendanceListScreenState extends ConsumerState<StaffAttendanceListS
     }
   }
 
-  /// 담당자별 최신 출퇴근 기록 목록 가져오기
-  List<Map<String, dynamic>> _getLatestPerStaff() {
-    final result = <Map<String, dynamic>>[];
+  /// 오늘 날짜인지 확인
+  bool _isToday(String? dateTimeStr) {
+    if (dateTimeStr == null) return false;
+    try {
+      final dateTime = DateTime.parse(dateTimeStr).toLocal();
+      final now = DateTime.now();
+      return dateTime.year == now.year &&
+          dateTime.month == now.month &&
+          dateTime.day == now.day;
+    } catch (e) {
+      return false;
+    }
+  }
 
-    for (final entry in _groupedByStaff.entries) {
-      if (entry.value.isNotEmpty) {
-        result.add(entry.value.first); // 가장 최신 기록
-      }
+  /// 담당자의 오늘 출근 상태 가져오기
+  /// 반환: 'CHECK_IN' (출근), 'CHECK_OUT' (퇴근), 'NOT_CHECKED' (미출근)
+  String _getTodayStatus(String staffId) {
+    final records = _groupedByStaff[staffId] ?? [];
+
+    // 오늘 기록만 필터링
+    final todayRecords = records.where((r) => _isToday(r['createdAt'] as String?)).toList();
+
+    if (todayRecords.isEmpty) {
+      return 'NOT_CHECKED';
     }
 
-    // 최신순으로 정렬
-    result.sort((a, b) {
-      final aTime = a['createdAt'] as String? ?? '';
-      final bTime = b['createdAt'] as String? ?? '';
-      return bTime.compareTo(aTime);
-    });
-
-    return result;
+    // 가장 최신 기록의 타입 반환
+    return todayRecords.first['type'] as String? ?? 'NOT_CHECKED';
   }
 
   @override
   Widget build(BuildContext context) {
-    final latestPerStaff = _getLatestPerStaff();
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -141,22 +190,23 @@ class _StaffAttendanceListScreenState extends ConsumerState<StaffAttendanceListS
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
               ? _buildErrorView()
-              : latestPerStaff.isEmpty
+              : _allStaffs.isEmpty
                   ? _buildEmptyView()
                   : RefreshIndicator(
-                      onRefresh: _loadAttendances,
+                      onRefresh: _loadData,
                       child: ListView.separated(
                         padding: const EdgeInsets.all(16),
-                        itemCount: latestPerStaff.length,
+                        itemCount: _allStaffs.length,
                         separatorBuilder: (context, index) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
-                          final attendance = latestPerStaff[index];
-                          final staff = attendance['staff'] as Map<String, dynamic>?;
-                          final staffId = staff?['id'] as String? ?? '';
+                          final staff = _allStaffs[index];
+                          final staffId = staff['id'] as String? ?? '';
                           final allRecords = _groupedByStaff[staffId] ?? [];
+                          final todayStatus = _getTodayStatus(staffId);
 
-                          return _buildAttendanceCard(
-                            attendance,
+                          return _buildStaffCard(
+                            staff,
+                            todayStatus: todayStatus,
                             allRecords: allRecords,
                           );
                         },
@@ -189,7 +239,7 @@ class _StaffAttendanceListScreenState extends ConsumerState<StaffAttendanceListS
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: _loadAttendances,
+              onPressed: _loadData,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF006FFF),
                 shape: RoundedRectangleBorder(
@@ -215,13 +265,13 @@ class _StaffAttendanceListScreenState extends ConsumerState<StaffAttendanceListS
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.access_time_outlined,
+              Icons.people_outline,
               size: 64,
               color: Colors.grey[300],
             ),
             const SizedBox(height: 16),
             const Text(
-              '출퇴근 기록이 없습니다.',
+              '등록된 담당자가 없습니다.',
               style: TextStyle(
                 fontFamily: 'Pretendard',
                 fontSize: 16,
@@ -231,7 +281,7 @@ class _StaffAttendanceListScreenState extends ConsumerState<StaffAttendanceListS
             ),
             const SizedBox(height: 8),
             const Text(
-              '담당자가 출퇴근 체크를 하면\n여기에 표시됩니다.',
+              '담당자를 등록하면\n여기에 표시됩니다.',
               style: TextStyle(
                 fontFamily: 'Pretendard',
                 fontSize: 14,
@@ -245,20 +295,35 @@ class _StaffAttendanceListScreenState extends ConsumerState<StaffAttendanceListS
     );
   }
 
-  Widget _buildAttendanceCard(
-    Map<String, dynamic> attendance, {
+  Widget _buildStaffCard(
+    Map<String, dynamic> staff, {
+    required String todayStatus,
     required List<Map<String, dynamic>> allRecords,
   }) {
-    final staff = attendance['staff'] as Map<String, dynamic>?;
-    final staffName = staff?['name'] ?? '알 수 없음';
-    final staffCode = staff?['staffCode'] ?? '';
-    final type = attendance['type'] as String? ?? '';
+    final staffName = staff['name'] ?? '알 수 없음';
+    final staffCode = staff['staffCode'] ?? '';
 
-    // 출근/퇴근 타입에 따른 스타일
-    final isCheckIn = type == 'CHECK_IN';
-    final typeText = isCheckIn ? '출근' : '퇴근';
-    final typeColor = isCheckIn ? const Color(0xFF10B981) : const Color(0xFFEF4444);
-    final typeBgColor = isCheckIn ? const Color(0xFFECFDF5) : const Color(0xFFFEF2F2);
+    // 상태에 따른 스타일
+    String typeText;
+    Color typeColor;
+    Color typeBgColor;
+
+    switch (todayStatus) {
+      case 'CHECK_IN':
+        typeText = '출근';
+        typeColor = const Color(0xFF10B981);
+        typeBgColor = const Color(0xFFECFDF5);
+        break;
+      case 'CHECK_OUT':
+        typeText = '퇴근';
+        typeColor = const Color(0xFFEF4444);
+        typeBgColor = const Color(0xFFFEF2F2);
+        break;
+      default: // NOT_CHECKED
+        typeText = '미출근';
+        typeColor = const Color(0xFF9CA3AF);
+        typeBgColor = const Color(0xFFF3F4F6);
+    }
 
     return GestureDetector(
       onTap: () => _showAttendanceHistory(staffName, staffCode, allRecords),
@@ -273,7 +338,7 @@ class _StaffAttendanceListScreenState extends ConsumerState<StaffAttendanceListS
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -323,7 +388,7 @@ class _StaffAttendanceListScreenState extends ConsumerState<StaffAttendanceListS
                 ],
               ),
             ),
-            // 출근/퇴근 뱃지
+            // 출근/퇴근/미출근 뱃지
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(

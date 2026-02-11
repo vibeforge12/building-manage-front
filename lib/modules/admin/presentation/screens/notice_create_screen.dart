@@ -34,9 +34,21 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
 
   // 모든 필드가 채워졌는지 확인
   bool get _isFormValid {
-    return _selectedDepartmentId != null &&
-        _titleController.text.trim().isNotEmpty &&
-        _contentController.text.trim().isNotEmpty;
+    final hasTitle = _titleController.text.trim().isNotEmpty;
+    final hasContent = _contentController.text.trim().isNotEmpty;
+
+    // 이벤트는 부서 선택 불필요
+    if (widget.isEvent) {
+      return hasTitle && hasContent;
+    }
+
+    // 공지사항: 담당자(STAFF) 대상일 때만 부서 선택 필수
+    if (_selectedTarget == 'STAFF') {
+      return _selectedDepartmentId != null && hasTitle && hasContent;
+    }
+
+    // 전체(BOTH) 또는 유저(RESIDENT)는 부서 선택 불필요
+    return hasTitle && hasContent;
   }
 
   @override
@@ -151,7 +163,8 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
       return;
     }
 
-    if (!widget.isEvent && _selectedDepartmentId == null) {
+    // 담당자(STAFF) 대상일 때만 부서 선택 필수
+    if (!widget.isEvent && _selectedTarget == 'STAFF' && _selectedDepartmentId == null) {
       return;
     }
 
@@ -197,7 +210,7 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
       }
 
       if (mounted) {
-        context.pop();
+        context.pop(true);  // true를 반환하여 목록 새로고침 신호
       }
     } catch (e) {
       print('공지사항 ${_isEditing ? '수정' : '등록'} 실패: $e');
@@ -298,6 +311,11 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
                               if (value != null) {
                                 setState(() {
                                   _selectedTarget = value;
+                                  // 담당자가 아닌 경우 부서 선택 초기화
+                                  if (value != 'STAFF') {
+                                    _selectedDepartmentId = null;
+                                    _selectedDepartmentName = '부서 선택';
+                                  }
                                 });
                               }
                             },
@@ -306,15 +324,16 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
                       ),
                     ),
 
-                    // 부서 드롭다운
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 8),
-                          _isDepartmentsLoading
-                              ? Container(
+                    // 부서 드롭다운 (담당자 선택 시에만 표시)
+                    if (!widget.isEvent && _selectedTarget == 'STAFF')
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 8),
+                            _isDepartmentsLoading
+                                ? Container(
                                   width: double.infinity,
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 16,

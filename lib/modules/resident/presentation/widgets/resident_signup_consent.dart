@@ -17,6 +17,7 @@ class ResidentSignupConsent extends ConsumerStatefulWidget {
     required this.onNext,
   });
 
+
   @override
   ConsumerState<ResidentSignupConsent> createState() =>
       _ResidentSignupConsentState();

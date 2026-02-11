@@ -91,7 +91,7 @@ class _BuildingRegistrationScreenState extends ConsumerState<BuildingRegistratio
         if (response['success'] == true) {
           // 건물 목록 새로고침 트리거
           ref.read(buildingRefreshTriggerProvider.notifier).state++;
-          context.pop();
+          context.pop(true);  // true를 반환하여 목록 새로고침 신호
         }
       }
     } catch (e) {

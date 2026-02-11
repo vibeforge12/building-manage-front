@@ -79,8 +79,12 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
 
     try {
       // UseCase를 통한 입주민 목록 조회 (비즈니스 로직 포함)
+      // status: 'ACTIVE'로 DELETED 상태 입주민 제외
       final getResidentsUseCase = ref.read(getResidentsUseCaseProvider);
-      final residents = await getResidentsUseCase.execute(isVerified: false);
+      final residents = await getResidentsUseCase.execute(
+        isVerified: false,
+        status: 'ACTIVE',
+      );
 
       setState(() {
         _pendingResidents = residents.map((resident) => resident.toJson()).toList();
@@ -104,14 +108,16 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
 
     final confirmed = await showCustomConfirmationDialog(
       context: context,
+      title: '',
       content: const Text(
-        '입주민 등록하시겠습니까?',
+        '입주민을 등록하시겠습니까?',
         style: TextStyle(
           fontFamily: 'Pretendard',
           fontWeight: FontWeight.w700,
           fontSize: 20,
-          color: Color(0xFF464A4D),
+          color: Colors.black,
         ),
+        textAlign: TextAlign.center,
       ),
       confirmText: '예',
       cancelText: '아니오',
@@ -137,36 +143,75 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
   }
 
   Future<void> _rejectResident(String residentId, String residentName) async {
+    print('🚀 _rejectResident 호출됨');
+    print('📋 residentId: $residentId');
+    print('📋 residentName: $residentName');
 
     final confirmed = await showCustomConfirmationDialog(
       context: context,
+      title: '',
       content: const Text(
-        '입주민 거절하시겠습니까?',
+        '입주민을 거절하시겠습니까?',
         style: TextStyle(
           fontFamily: 'Pretendard',
-          fontSize: 14,
-          color: Color(0xFF464A4D),
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          color: Colors.black,
         ),
+        textAlign: TextAlign.center,
       ),
       confirmText: '예',
       cancelText: '아니오',
       isDestructive: true,
     );
 
+    print('📋 confirmed 결과: $confirmed');
+
     if (confirmed != true) {
+      print('❌ 사용자가 취소함');
       return;
     }
+
+    print('✅ 사용자가 확인함, API 호출 시작...');
 
     try {
       // UseCase를 통한 입주민 거절 (비즈니스 로직 포함)
       final rejectResidentUseCase = ref.read(rejectResidentUseCaseProvider);
+      print('📤 rejectResidentUseCase.execute 호출...');
       await rejectResidentUseCase.execute(residentId: residentId);
+      print('✅ 입주민 거절 API 성공!');
 
       if (mounted) {
+        print('🔄 목록 새로고침 중...');
         await _loadPendingResidents();
+        print('✅ 목록 새로고침 완료');
       }
     } catch (e) {
-      // 입주민 거절 실패
+      print('❌ 입주민 거절 실패: $e');
+      // 에러 모달 표시
+      if (mounted) {
+        String errorMessage = e.toString();
+        if (errorMessage.startsWith('Exception: ')) {
+          errorMessage = errorMessage.replaceFirst('Exception: ', '');
+        }
+        await showCustomConfirmationDialog(
+          context: context,
+          title: '',
+          content: Text(
+            errorMessage,
+            style: const TextStyle(
+              color: Colors.black,
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          confirmText: '확인',
+          cancelText: '',
+          barrierDismissible: true,
+          confirmOnLeft: true,
+        );
+      }
     }
   }
 
@@ -174,14 +219,16 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
 
     final confirmed = await showCustomConfirmationDialog(
       context: context,
+      title: '',
       content: const Text(
         '입주민을 삭제하시겠습니까?',
         style: TextStyle(
           fontFamily: 'Pretendard',
           fontWeight: FontWeight.w700,
           fontSize: 20,
-          color: Color(0xFF464A4D),
+          color: Colors.black,
         ),
+        textAlign: TextAlign.center,
       ),
       confirmText: '예',
       cancelText: '아니오',

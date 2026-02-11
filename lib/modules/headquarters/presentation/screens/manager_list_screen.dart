@@ -37,8 +37,10 @@ class _ManagerListScreenState extends ConsumerState<ManagerListScreen> {
 
       if (response['success'] == true) {
         final data = response['data'];
+        final allManagers = List<Map<String, dynamic>>.from(data['data'] ?? []);
         setState(() {
-          _managers = List<Map<String, dynamic>>.from(data['data'] ?? []);
+          // ACTIVE 상태인 관리자만 필터링
+          _managers = allManagers.where((manager) => manager['status'] == 'ACTIVE').toList();
         });
       }
     } catch (e) {
@@ -172,8 +174,12 @@ class _ManagerListScreenState extends ConsumerState<ManagerListScreen> {
     final managerId = manager['id']?.toString() ?? '';
 
     return GestureDetector(
-      onTap: () {
-        context.push('/headquarters/manager-detail/$managerId');
+      onTap: () async {
+        final result = await context.push('/headquarters/manager-detail/$managerId');
+        // 삭제 또는 수정 성공 시 목록 새로고침
+        if (result == true && mounted) {
+          _loadManagers();
+        }
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),

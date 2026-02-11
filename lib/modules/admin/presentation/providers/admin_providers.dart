@@ -144,3 +144,36 @@ final updateComplaintStatusUseCaseProvider = Provider<UpdateComplaintStatusUseCa
   final repository = ref.read(complaintRepositoryProvider);
   return UpdateComplaintStatusUseCase(repository);
 });
+
+// ============================================================================
+// 신규 입주민 존재 여부 Provider (대시보드 NEW 배지용)
+// ============================================================================
+
+/// 신규 입주민(승인 대기) 존재 여부 Provider
+final hasPendingResidentsProvider = FutureProvider.autoDispose<bool>((ref) async {
+  try {
+    final getResidentsUseCase = ref.read(getResidentsUseCaseProvider);
+    // status: 'ACTIVE'로 DELETED 상태 입주민 제외
+    final residents = await getResidentsUseCase.execute(
+      isVerified: false,
+      status: 'ACTIVE',
+    );
+    return residents.isNotEmpty;
+  } catch (e) {
+    return false;
+  }
+});
+
+/// 신규 민원(PENDING 상태) 존재 여부 Provider
+final hasPendingComplaintsProvider = FutureProvider.autoDispose<bool>((ref) async {
+  try {
+    final getPendingComplaintsUseCase = ref.read(getPendingComplaintsUseCaseProvider);
+    final response = await getPendingComplaintsUseCase.execute(
+      page: 1,
+      limit: 1,  // 존재 여부만 확인하므로 1개만 조회
+    );
+    return response.total > 0;
+  } catch (e) {
+    return false;
+  }
+});

@@ -6,6 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:building_manage_front/shared/widgets/separator.dart';
 import 'package:building_manage_front/shared/widgets/common_navigation_bar.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
+import 'package:building_manage_front/modules/admin/presentation/providers/admin_providers.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -112,6 +113,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 
 
   Widget _buildMenuGrid(BuildContext context) {
+    // 신규 입주민 존재 여부 확인
+    final hasPendingResidents = ref.watch(hasPendingResidentsProvider);
+    // 신규 민원 존재 여부 확인
+    final hasPendingComplaints = ref.watch(hasPendingComplaintsProvider);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 26, 16, 0),
       child: Column(
@@ -123,6 +129,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 child: _buildMenuCard(
                   icon: 'assets/icons/users_filled.svg',
                   title: '입주민 관리',
+                  showNewBadge: hasPendingResidents.when(
+                    data: (hasNew) => hasNew,
+                    loading: () => false,
+                    error: (_, __) => false,
+                  ),
                   onTap: () {
                     context.push('/admin/resident-management');
                   },
@@ -133,6 +144,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 child: _buildMenuCard(
                   icon: 'assets/icons/calendar_check_filled.svg',
                   title: '민원 관리',
+                  showNewBadge: hasPendingComplaints.when(
+                    data: (hasNew) => hasNew,
+                    loading: () => false,
+                    error: (_, __) => false,
+                  ),
                   onTap: () {
                     context.push('/admin/complaint-management');
                   },
@@ -175,6 +191,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     required String icon,
     required String title,
     required VoidCallback onTap,
+    bool showNewBadge = false,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -191,14 +208,53 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SvgPicture.asset(
-              icon,
-              width: 24,
-              height: 24,
-              colorFilter: const ColorFilter.mode(
-                Color(0xFF006FFF),
-                BlendMode.srcIn,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SvgPicture.asset(
+                  icon,
+                  width: 24,
+                  height: 24,
+                  colorFilter: const ColorFilter.mode(
+                    Color(0xFF006FFF),
+                    BlendMode.srcIn,
+                  ),
+                ),
+                // NEW 배지
+                if (showNewBadge)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFF6B6B).withValues(alpha: 0.3),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Text(
+                      'NEW',
+                      style: TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 10,
+                        color: Colors.white,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 8),
             Text(

@@ -148,8 +148,12 @@ class _BuildingListScreenState extends ConsumerState<BuildingListScreen> {
         centerTitle: true,
         actions: [
           TextButton(
-            onPressed: () {
-              context.push('/headquarters/building-registration');
+            onPressed: () async {
+              final result = await context.push('/headquarters/building-registration');
+              // 건물 등록 성공 시 목록 새로고침
+              if (result == true && mounted) {
+                _loadBuildings();
+              }
             },
             child: const Text(
               '등록',

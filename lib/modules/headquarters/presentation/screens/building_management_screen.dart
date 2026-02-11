@@ -6,6 +6,7 @@ import 'package:building_manage_front/core/network/exceptions/api_exception.dart
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/building_registration_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/department_creation_screen.dart';
+import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
 
 class BuildingManagementScreen extends ConsumerStatefulWidget {
   const BuildingManagementScreen({super.key});
@@ -71,6 +72,66 @@ class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScr
     Future.delayed(const Duration(milliseconds: 500), () {
       _loadDepartments();
     });
+  }
+
+  /// 부서 삭제 확인 및 실행
+  Future<void> _deleteDepartment(String departmentId, String departmentName) async {
+    // 삭제 확인 모달 표시
+    final confirmed = await showCustomConfirmationDialog(
+      context: context,
+      title: '부서를 삭제하시겠습니까?',
+      content: Text(
+        departmentName,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontFamily: 'Pretendard',
+          fontSize: 16,
+          color: Color(0xFF464A4D),
+        ),
+      ),
+      confirmText: '삭제',
+      cancelText: '취소',
+      isDestructive: true,
+      barrierDismissible: false,
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    try {
+      final departmentDataSource = ref.read(departmentRemoteDataSourceProvider);
+      final response = await departmentDataSource.deleteDepartment(departmentId);
+
+      if (response['success'] == true && mounted) {
+        // 삭제 완료 모달 표시
+        await showCustomConfirmationDialog(
+          context: context,
+          title: '부서가 삭제되었습니다.',
+          content: const SizedBox.shrink(),
+          confirmText: '확인',
+          cancelText: '',  // 빈 문자열로 취소 버튼 숨김
+          barrierDismissible: false,
+        );
+
+        // 목록 새로고침
+        if (mounted) {
+          _loadDepartments();
+        }
+      }
+    } catch (e) {
+      // 삭제 실패 시 에러 모달 표시
+      if (mounted) {
+        await showCustomConfirmationDialog(
+          context: context,
+          title: '부서 삭제에 실패했습니다.',
+          content: const SizedBox.shrink(),
+          confirmText: '확인',
+          cancelText: '',
+          barrierDismissible: false,
+        );
+      }
+    }
   }
 
   @override
@@ -155,8 +216,12 @@ class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScr
                 Container(
                   height: 48,
                   child: FilledButton(
-                    onPressed: () {
-                      context.push('/headquarters/building-registration');
+                    onPressed: () async {
+                      final result = await context.push('/headquarters/building-registration');
+                      // 건물 등록 성공 시 부서 목록도 새로고침
+                      if (result == true && mounted) {
+                        _loadDepartments();
+                      }
                     },
                     style: FilledButton.styleFrom(
                       backgroundColor: const Color(0xFF006FFF),
@@ -195,8 +260,12 @@ class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScr
                 Container(
                   height: 48,
                   child: FilledButton(
-                    onPressed: () {
-                      context.push('/headquarters/department-creation');
+                    onPressed: () async {
+                      final result = await context.push('/headquarters/department-creation');
+                      // 부서 생성 성공 시 목록 새로고침
+                      if (result == true && mounted) {
+                        _loadDepartments();
+                      }
                     },
                     style: FilledButton.styleFrom(
                       backgroundColor: const Color(0xFF006FFF),
@@ -250,21 +319,29 @@ class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScr
                     spacing: 8.0,
                     runSpacing: 8.0,
                     children: _departments.map((department) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(36),
-                          border: Border.all(
-                            color: Color(0xFFE8EEF2),
-                            width: 1.5, // 두께(원하면 1로 내려도됨)
+                      final departmentId = department['id']?.toString() ?? '';
+                      final departmentName = department['name'] ?? '부서명 없음';
+
+                      return GestureDetector(
+                        onTap: () {
+                          _deleteDepartment(departmentId, departmentName);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(36),
+                            border: Border.all(
+                              color: Color(0xFFE8EEF2),
+                              width: 1.5,
+                            ),
                           ),
-                        ),
-                        child: Text(
-                          department['name'] ?? '부서명 없음',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF2D2D2D),
+                          child: Text(
+                            departmentName,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF2D2D2D),
+                            ),
                           ),
                         ),
                       );

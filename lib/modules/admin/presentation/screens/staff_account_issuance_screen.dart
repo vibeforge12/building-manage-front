@@ -40,9 +40,15 @@ class _StaffAccountIssuanceScreenState
   }
 
   bool get _isFormValid {
-    return _nameController.text.trim().isNotEmpty &&
-        _phoneController.text.trim().isNotEmpty &&
-        _selectedDepartment != null;
+    final hasName = _nameController.text.trim().isNotEmpty;
+    final hasPhone = _phoneController.text.trim().isNotEmpty;
+    final hasDept = _selectedDepartment != null;
+
+    print('📋 폼 유효성 검사: name=$hasName, phone=$hasPhone, dept=$hasDept');
+    print('📋 _selectedDepartment: $_selectedDepartment');
+    print('📋 _selectedDepartmentId: $_selectedDepartmentId');
+
+    return hasName && hasPhone && hasDept;
   }
 
   @override
@@ -347,10 +353,8 @@ class _StaffAccountIssuanceScreenState
       child: FilledButton(
         onPressed: isEnabled ? _handleSubmit : null,
         style: FilledButton.styleFrom(
-          backgroundColor: isEnabled
-              ? const Color(0xFF006FFF)
-              : const Color(0xFF006FFF),
-          disabledBackgroundColor: const Color(0xFF006FFF),
+          backgroundColor: const Color(0xFF006FFF),
+          disabledBackgroundColor: const Color(0xFFE8EEF2),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -372,7 +376,7 @@ class _StaffAccountIssuanceScreenState
                   fontWeight: FontWeight.w700,
                   fontSize: 16,
                   height: 1.5,
-                  color: isEnabled ? Colors.white : Colors.white.withOpacity(0.5),
+                  color: isEnabled ? Colors.white : const Color(0xFFA4ADB2),
                 ),
               ),
       ),
@@ -380,13 +384,24 @@ class _StaffAccountIssuanceScreenState
   }
 
   Future<void> _handleSubmit() async {
+    print('🚀 _handleSubmit 호출됨');
+
     if (!(_formKey.currentState?.validate() ?? false)) {
+      print('❌ 폼 유효성 검사 실패');
       return;
     }
+    print('✅ 폼 유효성 검사 통과');
 
     if (_selectedDepartmentId == null) {
+      print('❌ departmentId가 null');
       return;
     }
+    print('✅ departmentId: $_selectedDepartmentId');
+
+    print('📤 API 호출 시작...');
+    print('   name: ${_nameController.text.trim()}');
+    print('   phone: ${_phoneController.text.trim()}');
+    print('   departmentId: $_selectedDepartmentId');
 
     // Provider를 통해 계정 발급 요청
     await ref.read(staffAccountIssuanceProvider.notifier).createStaffAccount(
@@ -395,11 +410,21 @@ class _StaffAccountIssuanceScreenState
       departmentId: _selectedDepartmentId!,
     );
 
-    if (!mounted) return;
+    print('📥 API 호출 완료');
+
+    if (!mounted) {
+      print('❌ mounted가 false');
+      return;
+    }
 
     final staffState = ref.read(staffAccountIssuanceProvider);
+    print('📊 staffState: isSuccess=${staffState.isSuccess}, error=${staffState.error}');
 
     if (staffState.isSuccess) {
+      print('✅ 계정 발급 성공!');
+      // Provider 상태 초기화
+      ref.read(staffAccountIssuanceProvider.notifier).reset();
+
       // 성공 모달 표시
       if (mounted) {
         await showCustomConfirmationDialog(
@@ -422,6 +447,38 @@ class _StaffAccountIssuanceScreenState
         if (mounted) {
           context.go('/admin/dashboard');
         }
+      }
+    } else if (staffState.error != null) {
+      print('❌ 계정 발급 실패: ${staffState.error}');
+
+      // 에러 메시지에서 "Exception: " 접두사 제거
+      String errorMessage = staffState.error!;
+      if (errorMessage.startsWith('Exception: ')) {
+        errorMessage = errorMessage.replaceFirst('Exception: ', '');
+      }
+
+      // Provider 상태 초기화
+      ref.read(staffAccountIssuanceProvider.notifier).reset();
+
+      // 에러 모달 표시
+      if (mounted) {
+        await showCustomConfirmationDialog(
+          context: context,
+          title: '',
+          content: Text(
+            errorMessage,
+            style: const TextStyle(
+              color: Colors.black,
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          confirmText: '확인',
+          cancelText: '',
+          barrierDismissible: true,
+          confirmOnLeft: true,
+        );
       }
     }
   }

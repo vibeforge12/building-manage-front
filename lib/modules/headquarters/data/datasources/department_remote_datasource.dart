@@ -1,6 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:building_manage_front/core/network/api_client.dart';
 import 'package:building_manage_front/core/constants/api_endpoints.dart';
@@ -9,9 +7,9 @@ import 'package:building_manage_front/modules/common/services/image_upload_servi
 
 class DepartmentRemoteDataSource {
   final ApiClient _apiClient;
-  final ImageUploadService? _imageUploadService;
+  final ImageUploadService _imageUploadService;
 
-  DepartmentRemoteDataSource(this._apiClient, [this._imageUploadService]);
+  DepartmentRemoteDataSource(this._apiClient, this._imageUploadService);
 
   /// 부서 목록 조회
   /// GET /api/v1/common/departments
@@ -60,11 +58,11 @@ class DepartmentRemoteDataSource {
   }
 
   /// 부서 상세 조회
-  /// GET /api/v1/common/departments/:id
-  Future<Map<String, dynamic>> getDepartmentById(String id) async {
+  /// GET /api/v1/common/departments/{departmentId}
+  Future<Map<String, dynamic>> getDepartmentById(String departmentId) async {
     try {
       final response = await _apiClient.get(
-        '${ApiEndpoints.departments}/$id',
+        '${ApiEndpoints.departments}/$departmentId',
       );
 
       return response.data as Map<String, dynamic>;
@@ -79,18 +77,18 @@ class DepartmentRemoteDataSource {
     }
   }
 
-  /// 부서 생성
+  /// 부서 생성 (기본)
   /// POST /api/v1/common/departments
   Future<Map<String, dynamic>> createDepartment({
     required String name,
-    required String description,
+    required String iconUrl,
     String? status,
     String? headquartersId,
   }) async {
     try {
       final data = {
         'name': name,
-        'description': description,
+        'iconUrl': iconUrl,
       };
 
       if (status != null) {
@@ -117,35 +115,29 @@ class DepartmentRemoteDataSource {
     }
   }
 
+  /// 본사용 부서 생성 (이미지 업로드 포함)
   /// POST /api/v1/headquarters/departments
-  /// Presigned URL을 사용하여 S3에 직접 업로드하는 방식으로 변경
   Future<Map<String, dynamic>> createHeadquartersDepartment({
     required String name,
     File? iconFile,
   }) async {
     try {
-
       String? iconUrl;
 
-      // 아이콘 파일이 있는 경우 S3에 업로드
-      if (iconFile != null && _imageUploadService != null) {
+      // 아이콘 파일이 있으면 S3에 업로드
+      if (iconFile != null) {
+        final bytes = await iconFile.readAsBytes();
+        final fileName = iconFile.path.split('/').last;
+        final contentType = ImageUploadService.getContentType(fileName);
 
-        // 파일을 바이트로 읽기
-        final Uint8List fileBytes = await iconFile.readAsBytes();
-        final String fileName = iconFile.path.split('/').last;
-        final String contentType = ImageUploadService.getContentType(fileName);
-
-        // Presigned URL 방식으로 S3에 업로드
-        iconUrl = await _imageUploadService!.uploadImage(
-          fileBytes: fileBytes,
+        iconUrl = await _imageUploadService.uploadImage(
+          fileBytes: bytes,
           fileName: fileName,
           contentType: contentType,
           folder: 'departments',
         );
-      } else {
       }
 
-      // 부서 생성 API 호출 (iconUrl 포함)
       final data = <String, dynamic>{
         'name': name,
       };
@@ -158,36 +150,62 @@ class DepartmentRemoteDataSource {
         '${ApiEndpoints.headquarters}/departments',
         data: data,
       );
+
       return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
-      throw Exception('부서 생성 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {
-      throw Exception('부서 생성 중 오류가 발생했습니다: $e');
+      if (e is ApiException) {
+        rethrow;
+      }
+      throw ApiException(
+        message: '부서 생성 중 오류가 발생했습니다.',
+        errorCode: 'DEPARTMENT_CREATE_FAILED',
+      );
     }
   }
 
-  /// 부서 이름 수정
-  /// PATCH /api/v1/headquarters/departments/:departmentId
+  /// 부서 수정
+  /// PATCH /api/v1/headquarters/departments/{departmentId}
   Future<Map<String, dynamic>> updateDepartment({
     required String departmentId,
-    required String name,
+    String? name,
+    File? iconFile,
+    String? status,
   }) async {
     try {
+      String? iconUrl;
 
-      final data = {
-        'name': name,
-      };
+      // 아이콘 파일이 있으면 S3에 업로드
+      if (iconFile != null) {
+        final bytes = await iconFile.readAsBytes();
+        final fileName = iconFile.path.split('/').last;
+        final contentType = ImageUploadService.getContentType(fileName);
+
+        iconUrl = await _imageUploadService.uploadImage(
+          fileBytes: bytes,
+          fileName: fileName,
+          contentType: contentType,
+          folder: 'departments',
+        );
+      }
+
+      final data = <String, dynamic>{};
+
+      if (name != null) {
+        data['name'] = name;
+      }
+      if (iconUrl != null) {
+        data['iconUrl'] = iconUrl;
+      }
+      if (status != null) {
+        data['status'] = status;
+      }
 
       final response = await _apiClient.patch(
         '${ApiEndpoints.headquarters}/departments/$departmentId',
         data: data,
       );
+
       return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
-      throw ApiException(
-        message: '부서 수정 중 오류가 발생했습니다.',
-        errorCode: 'DEPARTMENT_UPDATE_FAILED',
-      );
     } catch (e) {
       if (e is ApiException) {
         rethrow;
@@ -200,19 +218,14 @@ class DepartmentRemoteDataSource {
   }
 
   /// 부서 삭제
-  /// DELETE /api/v1/headquarters/departments/:departmentId
+  /// DELETE /api/v1/headquarters/departments/{departmentId}
   Future<Map<String, dynamic>> deleteDepartment(String departmentId) async {
     try {
-
       final response = await _apiClient.delete(
         '${ApiEndpoints.headquarters}/departments/$departmentId',
       );
+
       return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
-      throw ApiException(
-        message: '부서 삭제 중 오류가 발생했습니다.',
-        errorCode: 'DEPARTMENT_DELETE_FAILED',
-      );
     } catch (e) {
       if (e is ApiException) {
         rethrow;

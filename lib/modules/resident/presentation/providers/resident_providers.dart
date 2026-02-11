@@ -3,7 +3,8 @@ import 'package:building_manage_front/core/network/api_client.dart';
 import 'package:building_manage_front/modules/resident/data/datasources/resident_auth_remote_datasource.dart';
 import 'package:building_manage_front/modules/resident/data/datasources/complaint_remote_datasource.dart';
 import 'package:building_manage_front/modules/resident/data/datasources/notice_remote_datasource.dart';
-import 'package:building_manage_front/modules/headquarters/data/datasources/department_remote_datasource.dart';
+import 'package:building_manage_front/modules/headquarters/data/datasources/department_remote_datasource.dart'
+    show departmentRemoteDataSourceProvider;
 import 'package:building_manage_front/modules/resident/data/repositories/resident_auth_repository_impl.dart';
 import 'package:building_manage_front/modules/resident/data/repositories/complaint_repository_impl.dart';
 import 'package:building_manage_front/modules/resident/data/repositories/notice_repository_impl.dart';
@@ -32,9 +33,8 @@ final noticeRemoteDataSourceProvider = Provider<NoticeRemoteDataSource>((ref) {
   return NoticeRemoteDataSource(ApiClient());
 });
 
-final departmentRemoteDataSourceProvider = Provider<DepartmentRemoteDataSource>((ref) {
-  return DepartmentRemoteDataSource(ApiClient());
-});
+// departmentRemoteDataSourceProvider는 headquarters 모듈에서 import하여 사용
+// (ImageUploadService 의존성 포함)
 
 // ============================================================================
 // Repositories

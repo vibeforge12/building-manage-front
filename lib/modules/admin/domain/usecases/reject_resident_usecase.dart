@@ -16,14 +16,21 @@ class RejectResidentUseCase {
   ///
   /// Throws: Exception if validation or rejection fails
   Future<void> execute({required String residentId}) async {
+    print('🔷 RejectResidentUseCase.execute 호출됨');
+    print('📋 residentId: $residentId');
+
     // 비즈니스 규칙: 유효성 검증
     if (residentId.trim().isEmpty) {
+      print('❌ residentId가 비어있음');
       throw Exception('입주민 ID가 유효하지 않습니다.');
     }
 
     try {
+      print('📤 _repository.rejectResident 호출...');
       await _repository.rejectResident(residentId: residentId.trim());
+      print('✅ _repository.rejectResident 성공!');
     } catch (e) {
+      print('❌ _repository.rejectResident 실패: $e');
       rethrow;
     }
   }
