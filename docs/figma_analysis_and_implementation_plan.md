@@ -38,10 +38,6 @@
 6. ✅ 계정발급 (담당자) → `staff_account_issuance_screen.dart`
 7. ✅ 건물 공지사항 → `notice_management_screen.dart`
 8. ✅ 건물 공지사항/쓰기 → `notice_create_screen.dart`
-9. ❌ 회원가입/비밀번호
-10. ❌ 회원가입/관리자승인대기
-11. ❌ 회원가입/관리자승인완료
-12. ❌ 회원가입/관리자승인보류
 13. ❌ 입주민관리/신규 가입자
 14. ❌ 담당자 관리/부서별 목록
 15. ❌ 담당자 관리/부서 삭제
