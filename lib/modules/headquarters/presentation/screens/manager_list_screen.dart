@@ -177,8 +177,20 @@ class _ManagerListScreenState extends ConsumerState<ManagerListScreen> {
       onTap: () async {
         final result = await context.push('/headquarters/manager-detail/$managerId');
         // 삭제 또는 수정 성공 시 목록 새로고침
-        if (result == true && mounted) {
-          _loadManagers();
+        if (mounted) {
+          if (result == true || (result is Map && result['deleted'] == true)) {
+            _loadManagers();
+            // 삭제 완료 메시지 표시
+            if (result is Map && result['message'] != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(result['message']),
+                  backgroundColor: const Color(0xFF006FFF),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            }
+          }
         }
       },
       child: Container(

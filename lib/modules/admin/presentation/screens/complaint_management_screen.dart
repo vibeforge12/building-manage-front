@@ -18,6 +18,25 @@ class _ComplaintManagementScreenState extends ConsumerState<ComplaintManagementS
   final int _pageSize = 20;
 
   @override
+  void initState() {
+    super.initState();
+    // 화면이 열릴 때마다 데이터 새로고침
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshComplaintData();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 화면이 다시 활성화될 때 데이터 새로고침
+    final route = ModalRoute.of(context);
+    if (route != null && route.isCurrent) {
+      _refreshComplaintData();
+    }
+  }
+
+  @override
   void dispose() {
     super.dispose();
   }

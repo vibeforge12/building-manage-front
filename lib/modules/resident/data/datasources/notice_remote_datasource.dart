@@ -35,7 +35,7 @@ class NoticeRemoteDataSource {
 
   /// 이벤트 목록 조회
   Future<Map<String, dynamic>> getEvents() async {
-    final response = await _apiClient.get('/users/events');
+    final response = await _apiClient.get('/events');
     return response.data;
   }
 

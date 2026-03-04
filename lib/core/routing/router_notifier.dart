@@ -11,7 +11,9 @@ import 'package:building_manage_front/modules/resident/presentation/screens/resi
 import 'package:building_manage_front/modules/resident/presentation/screens/user_login_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/user_dashboard_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/notice_detail_screen.dart';
+import 'package:building_manage_front/modules/resident/presentation/screens/notice_list_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/event_detail_screen.dart';
+import 'package:building_manage_front/modules/resident/presentation/screens/event_list_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/complaint_create_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/complaint_complete_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/my_complaint_list_screen.dart';
@@ -40,6 +42,7 @@ import 'package:building_manage_front/modules/manager/presentation/screens/atten
 import 'package:building_manage_front/modules/manager/presentation/screens/staff_complaint_detail_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/staff_notice_detail_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/staff_complaints_list_screen.dart';
+import 'package:building_manage_front/modules/manager/presentation/screens/staff_notice_list_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/complaint_resolve_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/complaint_resolve_complete_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/headquarters_login_screen.dart';
@@ -269,6 +272,13 @@ class RouterNotifier extends ChangeNotifier {
       builder: (context, state) => const ChangePasswordScreen(),
     ),
 
+    // 공지사항 목록 (보호된 경로) - 입주민용
+    GoRoute(
+      path: '/user/notices',
+      name: 'userNoticeList',
+      builder: (context, state) => const NoticeListScreen(),
+    ),
+
     // 공지사항 상세 (보호된 경로) - 입주민용
     GoRoute(
       path: '/user/notice/:noticeId',
@@ -277,6 +287,13 @@ class RouterNotifier extends ChangeNotifier {
         final noticeId = state.pathParameters['noticeId']!;
         return NoticeDetailScreen(noticeId: noticeId);
       },
+    ),
+
+    // 이벤트 목록 (보호된 경로) - 입주민용
+    GoRoute(
+      path: '/user/events',
+      name: 'userEventList',
+      builder: (context, state) => const EventListScreen(),
     ),
 
     // 이벤트 상세 (보호된 경로) - 입주민용
@@ -480,6 +497,13 @@ class RouterNotifier extends ChangeNotifier {
       path: '/manager/complaints',
       name: 'staffComplaintsList',
       builder: (context, state) => const StaffComplaintsListScreen(),
+    ),
+
+    // 공지사항 목록 (담당자 전용)
+    GoRoute(
+      path: '/manager/notices',
+      name: 'staffNoticesList',
+      builder: (context, state) => const StaffNoticeListScreen(),
     ),
 
     // 민원 처리 등록 (담당자 전용)

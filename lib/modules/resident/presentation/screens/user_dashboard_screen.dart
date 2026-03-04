@@ -998,7 +998,14 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: TextButton(
-                onPressed: () {},
+                onPressed: () {
+                  // 현재 탭에 따라 공지사항 또는 이벤트 목록으로 이동
+                  if (_tabController.index == 0) {
+                    context.pushNamed('userNoticeList');
+                  } else {
+                    context.pushNamed('userEventList');
+                  }
+                },
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.zero,
                   minimumSize: Size.zero,

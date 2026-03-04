@@ -31,7 +31,24 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
     // 초기 데이터 초기화
     _notices = [];
     _events = [];
-    _loadNotices();
+    // 화면이 열릴 때마다 데이터 새로고침
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadNotices();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 화면이 다시 활성화될 때 데이터 새로고침
+    final route = ModalRoute.of(context);
+    if (route != null && route.isCurrent) {
+      if (_tabController.index == 0) {
+        _loadNotices();
+      } else {
+        _loadEvents();
+      }
+    }
   }
 
   void _onTabChanged() {

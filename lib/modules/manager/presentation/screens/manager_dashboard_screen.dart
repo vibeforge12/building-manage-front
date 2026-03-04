@@ -32,6 +32,20 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
     _loadNotices();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 화면이 다시 활성화될 때 데이터 새로고침
+    final route = ModalRoute.of(context);
+    if (route != null && route.isCurrent) {
+      if (_tabIndex == 0) {
+        _loadPendingComplaints();
+      } else {
+        _loadNotices();
+      }
+    }
+  }
+
   Future<void> _loadPendingComplaints() async {
     setState(() {
       _isLoadingComplaints = true;
@@ -203,7 +217,15 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   child: _DashboardTabs(
                     index: _tabIndex,
-                    onChanged: (i) => setState(() => _tabIndex = i),
+                    onChanged: (i) {
+                      setState(() => _tabIndex = i);
+                      // 탭 변경 시 데이터 새로고침
+                      if (i == 0) {
+                        _loadPendingComplaints();
+                      } else {
+                        _loadNotices();
+                      }
+                    },
                   ),
                 ),
                 if (_tabIndex == 0) ...[
@@ -796,6 +818,8 @@ class _DashboardTabs extends StatelessWidget {
           onPressed: () {
             if (index == 0) {
               context.push('/manager/complaints');
+            } else {
+              context.push('/manager/notices');
             }
           },
           child: const Text('전체보기'),

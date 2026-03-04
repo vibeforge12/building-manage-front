@@ -205,23 +205,12 @@ class _ManagerDetailScreenState extends ConsumerState<ManagerDetailScreen> {
       final response = await managerDataSource.deleteManager(widget.managerId);
 
       if (response['success'] == true && mounted) {
-        // 삭제 완료 모달 표시
-        await showCustomConfirmationDialog(
-          context: context,
-          title: '관리자가 삭제되었습니다.',
-          content: const SizedBox.shrink(),
-          confirmText: '확인',
-          cancelText: '',  // 빈 문자열로 취소 버튼 숨김
-          barrierDismissible: false,
-        );
-
-        if (mounted) {
-          // 목록으로 돌아가기
-          context.pop(true);  // true를 반환하여 목록 새로고침 신호
-        }
+        // 먼저 목록으로 돌아가기 (삭제 완료 신호 전달)
+        context.pop({'deleted': true, 'message': '관리자가 삭제되었습니다.'});
       }
     } catch (e) {
       // 관리자 삭제 실패
+      debugPrint('❌ Manager Delete Error: $e');
     } finally {
       if (mounted) {
         setState(() {
