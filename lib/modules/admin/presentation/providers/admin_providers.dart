@@ -152,13 +152,22 @@ final updateComplaintStatusUseCaseProvider = Provider<UpdateComplaintStatusUseCa
 /// 신규 입주민(승인 대기) 존재 여부 Provider
 final hasPendingResidentsProvider = FutureProvider.autoDispose<bool>((ref) async {
   try {
-    final getResidentsUseCase = ref.read(getResidentsUseCaseProvider);
-    // status: 'ACTIVE'로 DELETED 상태 입주민 제외
-    final residents = await getResidentsUseCase.execute(
+    final dataSource = ref.read(residentRemoteDataSourceProvider);
+    // status: 'ACTIVE'로 DELETED 상태 입주민 제외, limit: 1로 존재 여부만 확인
+    final response = await dataSource.getResidents(
+      page: 1,
+      limit: 1,
       isVerified: false,
       status: 'ACTIVE',
     );
-    return residents.isNotEmpty;
+
+    if (response['success'] == true && response['data'] != null) {
+      final data = response['data'] as Map<String, dynamic>;
+      final meta = data['meta'] as Map<String, dynamic>?;
+      final total = meta?['total'] as int? ?? 0;
+      return total > 0;
+    }
+    return false;
   } catch (e) {
     return false;
   }

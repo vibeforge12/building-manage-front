@@ -77,6 +77,25 @@ class AttendanceRemoteDataSource {
     }
   }
 
+  /// 오늘 출퇴근 상태 조회 (월별 API 재활용)
+  /// 반환값: 'checkedOut' | 'checkedIn' | 'notCheckedIn'
+  Future<String> getTodayAttendanceStatus() async {
+    final now = DateTime.now();
+    final monthly = await getMonthlyAttendance(year: now.year, month: now.month);
+
+    final todayRecords = monthly.records.where((r) {
+      final local = r.createdAt.toLocal();
+      return local.year == now.year && local.month == now.month && local.day == now.day;
+    }).toList();
+
+    final hasCheckOut = todayRecords.any((r) => r.type == AttendanceRecordType.checkOut);
+    final hasCheckIn = todayRecords.any((r) => r.type == AttendanceRecordType.checkIn);
+
+    if (hasCheckOut) return 'checkedOut';
+    if (hasCheckIn) return 'checkedIn';
+    return 'notCheckedIn';
+  }
+
   /// 월별 출퇴근 기록 조회
   /// GET /staffs/attendance?year={year}&month={month}
   Future<MonthlyAttendanceResponse> getMonthlyAttendance({

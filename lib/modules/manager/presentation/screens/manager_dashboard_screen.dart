@@ -15,7 +15,8 @@ class ManagerDashboardScreen extends ConsumerStatefulWidget {
   ConsumerState<ManagerDashboardScreen> createState() => _ManagerDashboardScreenState();
 }
 
-class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen> {
+class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
+    with WidgetsBindingObserver {
   int _tabIndex = 0; // 0: 민원 관리, 1: 공지사항
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   bool _isLoadingComplaints = false;
@@ -28,8 +29,22 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadPendingComplaints();
     _loadNotices();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.read(attendanceProvider.notifier).initialize();
+    }
   }
 
   @override
@@ -160,52 +175,85 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
             ),
           ),
           SliverToBoxAdapter(
-            child: Container(
-              color: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => _handleCheckIn(context),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: const Color(0xFF006FFF),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      ),
-                      child: const Text(
-                        '출근',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+            child: Builder(
+              builder: (context) {
+                final attendanceState = ref.watch(attendanceProvider);
+                final isButtonDisabled = attendanceState.isLoading || attendanceState.isInitFailed;
+
+                return Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+                  child: Column(
+                    children: [
+                      if (attendanceState.isInitFailed)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.warning_amber_rounded, color: Color(0xFFFF6B00), size: 16),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  attendanceState.error ?? '출퇴근 상태를 확인할 수 없습니다.',
+                                  style: const TextStyle(fontSize: 12, color: Color(0xFFFF6B00)),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () => ref.read(attendanceProvider.notifier).initialize(),
+                                child: const Text('재시도', style: TextStyle(fontSize: 12, color: Color(0xFF006FFF))),
+                              ),
+                            ],
+                          ),
                         ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: isButtonDisabled ? null : () => _handleCheckIn(context),
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                backgroundColor: const Color(0xFF006FFF),
+                                foregroundColor: Colors.white,
+                                disabledBackgroundColor: const Color(0xFFCCCCCC),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              ),
+                              child: attendanceState.isLoading
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                    )
+                                  : const Text(
+                                      '출근',
+                                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: isButtonDisabled ? null : () => _handleCheckOut(context),
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                backgroundColor: const Color(0xFFEAF2FF),
+                                foregroundColor: const Color(0xFF0A66FF),
+                                disabledBackgroundColor: const Color(0xFFEEEEEE),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              ),
+                              child: const Text(
+                                '퇴근',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => _handleCheckOut(context),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: const Color(0xFFEAF2FF),
-                        foregroundColor: const Color(0xFF0A66FF),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      ),
-                      child: const Text(
-                        '퇴근',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                      ),),
-                    ),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
           ),
           const SliverToBoxAdapter(child: Divider(height: 10)),

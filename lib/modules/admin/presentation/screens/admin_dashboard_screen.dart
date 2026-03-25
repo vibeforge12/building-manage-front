@@ -19,6 +19,17 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 화면이 다시 활성화될 때 NEW 뱃지 상태 갱신
+    final route = ModalRoute.of(context);
+    if (route != null && route.isCurrent) {
+      ref.invalidate(hasPendingResidentsProvider);
+      ref.invalidate(hasPendingComplaintsProvider);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,

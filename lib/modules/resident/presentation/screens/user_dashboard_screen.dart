@@ -32,6 +32,7 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
   final Map<String, String> _departmentIcons = {
     '미화': 'assets/icons/deco_filled.svg',
     '소방': 'assets/icons/flame_filled.svg',
+    '소화': 'assets/icons/flame_filled.svg',
     '방제': 'assets/icons/warning_filled.svg',
     '관리': 'assets/icons/calendar_check_filled.svg',
     '기계': 'assets/icons/settings_filled.svg',
@@ -503,38 +504,7 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
                 ),
               ),
             ),
-            // 메뉴 아이템 3: 알림함
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  // TODO: 알림함 화면으로 이동
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        '알림함',
-                        style: TextStyle(
-                          fontFamily: 'Pretendard',
-                          fontWeight: FontWeight.w400,
-                          fontSize: 16,
-                          color: Color(0xFF17191A),
-                        ),
-                      ),
-                      const Icon(
-                        Icons.arrow_forward_ios,
-                        size: 16,
-                        color: Color(0xFF757B80),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            // 메뉴 아이템 4: 로그아웃
+            // 메뉴 아이템 3: 로그아웃
             Material(
               color: Colors.transparent,
               child: InkWell(

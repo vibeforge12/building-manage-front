@@ -86,7 +86,7 @@ class HeadquartersDashboardScreen extends ConsumerWidget {
                     width: double.infinity,
                     child: FilledButton(
                       onPressed: () {
-                        context.go('/headquarters/admin-account-issuance');
+                        context.push('/headquarters/admin-account-issuance');
                       },
                       style: FilledButton.styleFrom(
                         backgroundColor: const Color(0xFF006FFF),
@@ -168,7 +168,7 @@ class HeadquartersDashboardScreen extends ConsumerWidget {
                             child: InkWell(
                               borderRadius: BorderRadius.circular(16),
                               onTap: () {
-                                context.goNamed('managementSelection');
+                                context.pushNamed('managementSelection');
                               },
                               child: Padding(
                                 padding: EdgeInsets.all(12),
