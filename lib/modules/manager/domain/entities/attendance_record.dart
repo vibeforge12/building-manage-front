@@ -23,7 +23,7 @@ class AttendanceRecord extends Equatable {
     return AttendanceRecord(
       id: json['id'] as String,
       type: _parseType(json['type'] as String),
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt: DateTime.parse(json['createdAt'] as String).toLocal(),
     );
   }
 
@@ -46,6 +46,18 @@ class AttendanceRecord extends Equatable {
       'type': type == AttendanceRecordType.checkIn ? 'CHECK_IN' : 'CHECK_OUT',
       'createdAt': createdAt.toIso8601String(),
     };
+  }
+
+  AttendanceRecord copyWith({
+    String? id,
+    AttendanceRecordType? type,
+    DateTime? createdAt,
+  }) {
+    return AttendanceRecord(
+      id: id ?? this.id,
+      type: type ?? this.type,
+      createdAt: createdAt ?? this.createdAt,
+    );
   }
 
   @override
@@ -75,6 +87,29 @@ class MonthlyAttendanceResponse extends Equatable {
       records: recordsList
           .map((record) => AttendanceRecord.fromJson(record as Map<String, dynamic>))
           .toList(),
+    );
+  }
+
+  /// JSON으로 변환
+  Map<String, dynamic> toJson() {
+    return {
+      'data': {
+        'year': year,
+        'month': month,
+        'records': records.map((record) => record.toJson()).toList(),
+      },
+    };
+  }
+
+  MonthlyAttendanceResponse copyWith({
+    int? year,
+    int? month,
+    List<AttendanceRecord>? records,
+  }) {
+    return MonthlyAttendanceResponse(
+      year: year ?? this.year,
+      month: month ?? this.month,
+      records: records ?? this.records,
     );
   }
 
