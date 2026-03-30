@@ -3,9 +3,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/utils/device_info_helper.dart';
 import '../data/datasources/push_token_remote_datasource.dart';
-import '../../../modules/auth/presentation/providers/auth_state_provider.dart';
-import '../../../domain/entities/user.dart';
 
 /// FCM 푸시 알림을 관리하는 싱글톤 서비스
 class NotificationService {
@@ -89,7 +88,7 @@ class NotificationService {
       String? token;
       try {
         token = await _messaging.getToken();
-      } catch (e, stackTrace) {
+      } catch (e) {
         // Token acquisition failed (simulator/emulator may not support FCM)
         return;
       }
@@ -111,7 +110,7 @@ class NotificationService {
 
       // 3. 서버에 초기 토큰 등록
       await _registerTokenToServer(token, userType);
-    } catch (e, stackTrace) {
+    } catch (e) {
       // FCM token registration failed
     }
   }
@@ -126,27 +125,48 @@ class NotificationService {
         return;
       }
 
+      // 디바이스 정보 수집 (실패해도 토큰 등록은 진행)
+      final deviceInfo = await DeviceInfoHelper.getDeviceInfo();
+      final deviceId = deviceInfo['deviceId'];
+      final deviceName = deviceInfo['deviceName'];
+      final platform = deviceInfo['platform'];
+
       final lowerUserType = userType.toLowerCase();
 
       switch (lowerUserType) {
         case 'user':
-          // 유저(입주민) → /users/push-token
-          await _pushTokenDataSource!.registerUserPushToken(pushToken: token);
+          await _pushTokenDataSource!.registerUserPushToken(
+            pushToken: token,
+            deviceId: deviceId,
+            deviceName: deviceName,
+            platform: platform,
+          );
           break;
         case 'manager':
-          // 관리자 (서버 role: MANAGER) → /managers/push-token
-          await _pushTokenDataSource!.registerManagerPushToken(pushToken: token);
+          await _pushTokenDataSource!.registerManagerPushToken(
+            pushToken: token,
+            deviceId: deviceId,
+            deviceName: deviceName,
+            platform: platform,
+          );
           break;
         case 'staff':
-          // 담당자 (서버 role: STAFF) → /staffs/push-token
-          await _pushTokenDataSource!.registerStaffPushToken(pushToken: token);
+          await _pushTokenDataSource!.registerStaffPushToken(
+            pushToken: token,
+            deviceId: deviceId,
+            deviceName: deviceName,
+            platform: platform,
+          );
           break;
         case 'headquarters':
-          // 본사 → /headquarters/push-token
-          await _pushTokenDataSource!.registerHeadquartersPushToken(pushToken: token);
+          await _pushTokenDataSource!.registerHeadquartersPushToken(
+            pushToken: token,
+            deviceId: deviceId,
+            deviceName: deviceName,
+            platform: platform,
+          );
           break;
         default:
-          // Unknown user type
           break;
       }
     } on DioException catch (e) {
@@ -154,13 +174,10 @@ class NotificationService {
 
       // 401 Unauthorized 에러 시 재시도
       if (statusCode == 401 && retryCount < maxRetries) {
-        // 잠시 대기 후 재시도 (토큰 갱신 시간 확보)
         await Future.delayed(const Duration(milliseconds: 500));
-
-        // 재시도
         await _registerTokenToServer(token, userType, retryCount: retryCount + 1);
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       // Token registration to server failed
     }
   }
@@ -216,7 +233,7 @@ class NotificationService {
       title,
       body,
       notificationDetails,
-      payload: payload != null ? payload.toString() : null,
+      payload: payload?.toString(),
     );
   }
 
@@ -263,7 +280,7 @@ class NotificationService {
       } else {
         return false;
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       return false;
     }
   }
