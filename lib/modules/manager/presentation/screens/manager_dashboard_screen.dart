@@ -404,7 +404,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
   Future<void> _handleCheckIn(BuildContext context) async {
     final attendanceState = ref.read(attendanceProvider);
 
-    // 이미 퇴근한 경우 (출근과 퇴근을 모두 완료한 경우)
+    // UI 가드: 이미 퇴근/출근 상태면 안내 (서버에서도 거절하지만, UX를 위해 유지)
     if (attendanceState.isCheckedOut) {
       await showCustomConfirmationDialog(
         context: context,
@@ -417,7 +417,6 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
       return;
     }
 
-    // 이미 출근한 경우
     if (attendanceState.isCheckedIn) {
       await showCustomConfirmationDialog(
         context: context,
@@ -442,24 +441,19 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
 
     if (confirmed != true || !context.mounted) return;
 
-    // Provider를 통한 출근 처리
+    // 서버 권위 방식: 항상 서버에 요청하고, 결과에 따라 상태가 자동 동기화됨
     final success = await ref.read(attendanceProvider.notifier).checkIn();
 
     if (!context.mounted) return;
 
-    if (success) {
-      // 출근 등록 성공
-    } else {
-      // 상태를 다시 읽어서 서버 동기화 여부 확인
+    if (!success) {
+      // 실패 시 서버에서 동기화된 최신 상태 확인 후 안내
       final updatedState = ref.read(attendanceProvider);
-      final error = updatedState.error;
-
-      // 서버에서 "이미 출근"이라고 응답하여 상태가 동기화된 경우
-      if (updatedState.isCheckedIn && error?.contains('이미 출근') == true) {
+      if (updatedState.error != null) {
         await showCustomConfirmationDialog(
           context: context,
-          title: '이미 출근하셨습니다',
-          content: const Text('출근 처리가 완료되었습니다.'),
+          title: '출근 처리 실패',
+          content: Text(updatedState.error!, style: const TextStyle(fontSize: 16)),
           confirmText: '확인',
           cancelText: '',
           barrierDismissible: false,
@@ -471,7 +465,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
   Future<void> _handleCheckOut(BuildContext context) async {
     final attendanceState = ref.read(attendanceProvider);
 
-    // 이미 퇴근한 경우
+    // UI 가드: 이미 퇴근 상태면 안내
     if (attendanceState.isCheckedOut) {
       await showCustomConfirmationDialog(
         context: context,
@@ -509,13 +503,23 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
 
     if (confirmed != true || !context.mounted) return;
 
-    // Provider를 통한 퇴근 처리
+    // 서버 권위 방식: 항상 서버에 요청하고, 결과에 따라 상태가 자동 동기화됨
     final success = await ref.read(attendanceProvider.notifier).checkOut();
 
     if (!context.mounted) return;
 
-    if (success) {
-      // 퇴근 등록 성공
+    if (!success) {
+      final updatedState = ref.read(attendanceProvider);
+      if (updatedState.error != null) {
+        await showCustomConfirmationDialog(
+          context: context,
+          title: '퇴근 처리 실패',
+          content: Text(updatedState.error!, style: const TextStyle(fontSize: 16)),
+          confirmText: '확인',
+          cancelText: '',
+          barrierDismissible: false,
+        );
+      }
     }
   }
 

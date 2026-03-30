@@ -81,11 +81,25 @@ void main() {
       expect(notifier.state.isInitFailed, true);
       expect(notifier.state.error, isNotNull);
     });
+
+    test('초기 상태는 loading이어야 한다 (버튼 비활성화)', () {
+      // getTodayAttendanceStatus를 호출하지 않아 초기 상태를 확인
+      final state = AttendanceState();
+      expect(state.status, AttendanceStatus.loading);
+      expect(state.isLoading, true);
+    });
   });
 
-  group('checkIn()', () {
-    test('출근 전 상태에서 출근 성공 → checkedIn', () async {
-      when(mockDataSource.getTodayAttendanceStatus()).thenAnswer((_) async => 'notCheckedIn');
+  group('checkIn() - 서버 권위(server-authoritative) 방식', () {
+    test('출근 전 상태에서 출근 성공 → 서버 동기화 후 checkedIn', () async {
+      // initialize() 용: notCheckedIn 반환
+      // checkIn 후 _syncFromServer(): checkedIn 반환
+      var callCount = 0;
+      when(mockDataSource.getTodayAttendanceStatus()).thenAnswer((_) async {
+        callCount++;
+        if (callCount == 1) return 'notCheckedIn'; // initialize()
+        return 'checkedIn'; // _syncFromServer() after checkIn
+      });
       when(mockCheckInUseCase.execute()).thenAnswer((_) async => {'success': true});
 
       final notifier = buildNotifier();
@@ -95,10 +109,15 @@ void main() {
 
       expect(result, true);
       expect(notifier.state.status, AttendanceStatus.checkedIn);
+      verify(mockCheckInUseCase.execute()).called(1);
     });
 
-    test('이미 출근 상태에서 출근 시도 → false 반환, 상태 유지', () async {
+    test('이미 출근 상태에서도 서버에 요청함 (서버가 거절)', () async {
+      // 서버 권위: 로컬 가드 없이 항상 서버에 요청
       when(mockDataSource.getTodayAttendanceStatus()).thenAnswer((_) async => 'checkedIn');
+      when(mockCheckInUseCase.execute()).thenThrow(
+        const ApiException(message: '이미 출근하셨습니다.', errorCode: 'ALREADY_CHECKED_IN'),
+      );
 
       final notifier = buildNotifier();
       await Future.delayed(Duration.zero);
@@ -106,12 +125,15 @@ void main() {
       final result = await notifier.checkIn();
 
       expect(result, false);
-      expect(notifier.state.status, AttendanceStatus.checkedIn);
-      verifyNever(mockCheckInUseCase.execute());
+      expect(notifier.state.status, AttendanceStatus.checkedIn); // 서버 동기화로 유지
+      verify(mockCheckInUseCase.execute()).called(1); // 서버에 요청함
     });
 
-    test('이미 퇴근 상태에서 출근 시도 → false 반환', () async {
+    test('이미 퇴근 상태에서도 서버에 요청함 (서버가 거절)', () async {
       when(mockDataSource.getTodayAttendanceStatus()).thenAnswer((_) async => 'checkedOut');
+      when(mockCheckInUseCase.execute()).thenThrow(
+        const ApiException(message: '이미 퇴근하셨습니다.', errorCode: 'ALREADY_CHECKED_OUT'),
+      );
 
       final notifier = buildNotifier();
       await Future.delayed(Duration.zero);
@@ -119,13 +141,14 @@ void main() {
       final result = await notifier.checkIn();
 
       expect(result, false);
-      verifyNever(mockCheckInUseCase.execute());
+      expect(notifier.state.status, AttendanceStatus.checkedOut); // 서버 동기화로 유지
+      verify(mockCheckInUseCase.execute()).called(1);
     });
 
-    test('출근 API 실패 → notCheckedIn 유지', () async {
+    test('출근 API 실패 → 서버 동기화 후 상태 결정', () async {
       when(mockDataSource.getTodayAttendanceStatus()).thenAnswer((_) async => 'notCheckedIn');
       when(mockCheckInUseCase.execute()).thenThrow(
-        ApiException(message: '서버 오류', errorCode: 'SERVER_ERROR'),
+        const ApiException(message: '서버 오류', errorCode: 'SERVER_ERROR'),
       );
 
       final notifier = buildNotifier();
@@ -135,12 +158,36 @@ void main() {
 
       expect(result, false);
       expect(notifier.state.status, AttendanceStatus.notCheckedIn);
+      expect(notifier.state.error, isNotNull);
+    });
+
+    test('checkIn 성공 후 _syncFromServer 실패 → 에러 없이 이전 loading 상태 유지', () async {
+      var callCount = 0;
+      when(mockDataSource.getTodayAttendanceStatus()).thenAnswer((_) async {
+        callCount++;
+        if (callCount == 1) return 'notCheckedIn'; // initialize()
+        throw Exception('network error'); // _syncFromServer() 실패
+      });
+      when(mockCheckInUseCase.execute()).thenAnswer((_) async => {'success': true});
+
+      final notifier = buildNotifier();
+      await Future.delayed(Duration.zero);
+
+      final result = await notifier.checkIn();
+
+      // API 성공이므로 true 반환, 동기화 실패해도 크래시 안 함
+      expect(result, true);
     });
   });
 
-  group('checkOut()', () {
-    test('출근 상태에서 퇴근 성공 → checkedOut', () async {
-      when(mockDataSource.getTodayAttendanceStatus()).thenAnswer((_) async => 'checkedIn');
+  group('checkOut() - 서버 권위(server-authoritative) 방식', () {
+    test('출근 상태에서 퇴근 성공 → 서버 동기화 후 checkedOut', () async {
+      var callCount = 0;
+      when(mockDataSource.getTodayAttendanceStatus()).thenAnswer((_) async {
+        callCount++;
+        if (callCount == 1) return 'checkedIn'; // initialize()
+        return 'checkedOut'; // _syncFromServer() after checkOut
+      });
       when(mockCheckOutUseCase.execute()).thenAnswer((_) async => {'success': true});
 
       final notifier = buildNotifier();
@@ -150,10 +197,14 @@ void main() {
 
       expect(result, true);
       expect(notifier.state.status, AttendanceStatus.checkedOut);
+      verify(mockCheckOutUseCase.execute()).called(1);
     });
 
-    test('출근 안 한 상태에서 퇴근 시도 → false 반환 (핵심 버그 케이스)', () async {
+    test('출근 안 한 상태에서도 서버에 요청함 (서버가 거절)', () async {
       when(mockDataSource.getTodayAttendanceStatus()).thenAnswer((_) async => 'notCheckedIn');
+      when(mockCheckOutUseCase.execute()).thenThrow(
+        const ApiException(message: '출근 처리 후 퇴근이 가능합니다.', errorCode: 'NOT_CHECKED_IN'),
+      );
 
       final notifier = buildNotifier();
       await Future.delayed(Duration.zero);
@@ -162,11 +213,14 @@ void main() {
 
       expect(result, false);
       expect(notifier.state.status, AttendanceStatus.notCheckedIn);
-      verifyNever(mockCheckOutUseCase.execute());
+      verify(mockCheckOutUseCase.execute()).called(1); // 서버에 요청함
     });
 
-    test('이미 퇴근 상태에서 퇴근 시도 → false 반환', () async {
+    test('이미 퇴근 상태에서도 서버에 요청함 (서버가 거절)', () async {
       when(mockDataSource.getTodayAttendanceStatus()).thenAnswer((_) async => 'checkedOut');
+      when(mockCheckOutUseCase.execute()).thenThrow(
+        const ApiException(message: '이미 퇴근하셨습니다.', errorCode: 'ALREADY_CHECKED_OUT'),
+      );
 
       final notifier = buildNotifier();
       await Future.delayed(Duration.zero);
@@ -174,13 +228,14 @@ void main() {
       final result = await notifier.checkOut();
 
       expect(result, false);
-      verifyNever(mockCheckOutUseCase.execute());
+      expect(notifier.state.status, AttendanceStatus.checkedOut);
+      verify(mockCheckOutUseCase.execute()).called(1);
     });
 
-    test('퇴근 API 실패 → checkedIn 상태 유지', () async {
+    test('퇴근 API 실패 → 서버 동기화 후 checkedIn 상태 유지', () async {
       when(mockDataSource.getTodayAttendanceStatus()).thenAnswer((_) async => 'checkedIn');
       when(mockCheckOutUseCase.execute()).thenThrow(
-        ApiException(message: '서버 오류', errorCode: 'SERVER_ERROR'),
+        const ApiException(message: '서버 오류', errorCode: 'SERVER_ERROR'),
       );
 
       final notifier = buildNotifier();
@@ -196,7 +251,12 @@ void main() {
   group('앱 재시작 시뮬레이션', () {
     test('출근 후 앱 종료 → 재시작 시 checkedIn 복원 후 퇴근 가능', () async {
       // 앱 재시작: 서버에 출근 기록 있음
-      when(mockDataSource.getTodayAttendanceStatus()).thenAnswer((_) async => 'checkedIn');
+      var callCount = 0;
+      when(mockDataSource.getTodayAttendanceStatus()).thenAnswer((_) async {
+        callCount++;
+        if (callCount <= 1) return 'checkedIn'; // initialize()
+        return 'checkedOut'; // _syncFromServer() after checkOut
+      });
       when(mockCheckOutUseCase.execute()).thenAnswer((_) async => {'success': true});
 
       final notifier = buildNotifier();
@@ -206,6 +266,41 @@ void main() {
       final result = await notifier.checkOut();
 
       expect(result, true);
+      expect(notifier.state.status, AttendanceStatus.checkedOut);
+    });
+  });
+
+  group('다중 기기 시나리오', () {
+    test('기기A에서 출근 → 기기B initialize() → checkedIn 동기화', () async {
+      // 기기B가 시작되면 서버에서 최신 상태를 가져옴
+      when(mockDataSource.getTodayAttendanceStatus()).thenAnswer((_) async => 'checkedIn');
+
+      final notifier = buildNotifier();
+      await Future.delayed(Duration.zero);
+
+      expect(notifier.state.status, AttendanceStatus.checkedIn);
+    });
+
+    test('기기A에서 출근 + 퇴근 → 기기B에서 출근 시도 → 서버가 거절 + 동기화', () async {
+      // 기기B의 initialize()는 아직 notCheckedIn (이전 상태)
+      // 하지만 출근 시도하면 서버가 이미 퇴근이라고 거절
+      var callCount = 0;
+      when(mockDataSource.getTodayAttendanceStatus()).thenAnswer((_) async {
+        callCount++;
+        if (callCount == 1) return 'notCheckedIn'; // initialize() (stale)
+        return 'checkedOut'; // _syncFromServer() (fresh)
+      });
+      when(mockCheckInUseCase.execute()).thenThrow(
+        const ApiException(message: '이미 퇴근하셨습니다.', errorCode: 'ALREADY_CHECKED_OUT'),
+      );
+
+      final notifier = buildNotifier();
+      await Future.delayed(Duration.zero);
+
+      final result = await notifier.checkIn();
+
+      expect(result, false);
+      // 핵심: 서버 동기화로 정확한 상태 반영
       expect(notifier.state.status, AttendanceStatus.checkedOut);
     });
   });

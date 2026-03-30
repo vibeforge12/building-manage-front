@@ -22,7 +22,7 @@ class AttendanceState {
   final DateTime? checkOutTime;
 
   AttendanceState({
-    this.status = AttendanceStatus.notCheckedIn,
+    this.status = AttendanceStatus.loading,
     this.error,
     this.checkInTime,
     this.checkOutTime,
@@ -92,110 +92,71 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
     }
   }
 
-  /// 출근 처리
+  /// 출근 처리 — 서버 권위(server-authoritative) 방식
+  /// 로컬 상태 가드 없이 항상 서버에 요청하고, 성공/실패 후 서버에서 상태를 재동기화
   Future<bool> checkIn() async {
-    // 이미 출근한 경우
-    if (state.isCheckedIn) {
-      state = state.copyWith(error: '이미 출근하셨습니다.');
-      return false;
-    }
-
-    // 이미 퇴근한 경우
-    if (state.isCheckedOut) {
-      state = state.copyWith(error: '이미 퇴근하였습니다.');
-      return false;
-    }
-
     state = state.copyWith(
       status: AttendanceStatus.loading,
       clearError: true,
     );
 
     try {
+      await _checkInUseCase.execute();
 
-      final response = await _checkInUseCase.execute();
-
-      state = state.copyWith(
-        status: AttendanceStatus.checkedIn,
-        checkInTime: DateTime.now(),
-        clearError: true,
-      );
-
+      // 성공 후 서버에서 정확한 상태를 다시 가져옴
+      await _syncFromServer();
       return true;
     } on ApiException catch (e) {
-
-      // 서버에서 이미 출근 처리되었다고 응답한 경우, 클라이언트 상태도 출근으로 변경
-      if (e.message?.contains('이미 출근') == true) {
-        state = state.copyWith(
-          status: AttendanceStatus.checkedIn,
-          checkInTime: DateTime.now(),
-          error: e.userFriendlyMessage,
-        );
-      } else {
-        state = state.copyWith(
-          status: AttendanceStatus.notCheckedIn,
-          error: e.userFriendlyMessage,
-        );
-      }
-
+      // 서버 에러 후에도 서버에서 실제 상태를 가져와 동기화
+      await _syncFromServer();
+      state = state.copyWith(error: e.userFriendlyMessage);
       return false;
     } catch (e) {
-
-      state = state.copyWith(
-        status: AttendanceStatus.notCheckedIn,
-        error: '출근 처리 중 오류가 발생했습니다.',
-      );
-
+      // 네트워크 에러 등 — 서버 동기화 시도, 실패 시 initFailed
+      await _syncFromServer();
+      state = state.copyWith(error: '출근 처리 중 오류가 발생했습니다.');
       return false;
     }
   }
 
-  /// 퇴근 처리
+  /// 퇴근 처리 — 서버 권위(server-authoritative) 방식
   Future<bool> checkOut() async {
-    // 출근하지 않은 경우
-    if (!state.isCheckedIn) {
-      state = state.copyWith(error: '출근하지 않았습니다.');
-      return false;
-    }
-
-    // 이미 퇴근한 경우
-    if (state.isCheckedOut) {
-      state = state.copyWith(error: '이미 퇴근하였습니다.');
-      return false;
-    }
-
     state = state.copyWith(
       status: AttendanceStatus.loading,
       clearError: true,
     );
 
     try {
+      await _checkOutUseCase.execute();
 
-      final response = await _checkOutUseCase.execute();
-
-      state = state.copyWith(
-        status: AttendanceStatus.checkedOut,
-        checkOutTime: DateTime.now(),
-        clearError: true,
-      );
-
+      // 성공 후 서버에서 정확한 상태를 다시 가져옴
+      await _syncFromServer();
       return true;
     } on ApiException catch (e) {
-
-      state = state.copyWith(
-        status: AttendanceStatus.checkedIn,
-        error: e.userFriendlyMessage,
-      );
-
+      // 서버 에러 후에도 서버에서 실제 상태를 가져와 동기화
+      await _syncFromServer();
+      state = state.copyWith(error: e.userFriendlyMessage);
       return false;
     } catch (e) {
-
-      state = state.copyWith(
-        status: AttendanceStatus.checkedIn,
-        error: '퇴근 처리 중 오류가 발생했습니다.',
-      );
-
+      await _syncFromServer();
+      state = state.copyWith(error: '퇴근 처리 중 오류가 발생했습니다.');
       return false;
+    }
+  }
+
+  /// 서버에서 오늘 출퇴근 상태를 가져와 로컬 상태 동기화 (에러 시 이전 상태 유지)
+  Future<void> _syncFromServer() async {
+    try {
+      final todayStatus = await _dataSource.getTodayAttendanceStatus();
+      final syncedStatus = switch (todayStatus) {
+        'checkedOut' => AttendanceStatus.checkedOut,
+        'checkedIn' => AttendanceStatus.checkedIn,
+        _ => AttendanceStatus.notCheckedIn,
+      };
+      state = state.copyWith(status: syncedStatus, clearError: true);
+    } catch (_) {
+      // 동기화 실패 시 — 이전 상태 유지하되 initFailed로 표시하지 않음
+      // (checkIn/checkOut API 자체는 성공했을 수 있으므로)
     }
   }
 
