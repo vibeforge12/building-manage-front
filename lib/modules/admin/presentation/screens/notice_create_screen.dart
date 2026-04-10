@@ -42,9 +42,10 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
       return hasTitle && hasContent;
     }
 
-    // 공지사항: 담당자(STAFF) 대상일 때만 부서 선택 필수
+    // 공지사항: 담당자(STAFF) 대상일 때 부서 선택은 선택적
+    // "전체 부서"(departmentId 없음) 또는 특정 부서 선택 가능
     if (_selectedTarget == 'STAFF') {
-      return _selectedDepartmentId != null && hasTitle && hasContent;
+      return hasTitle && hasContent;
     }
 
     // 전체(BOTH) 또는 유저(RESIDENT)는 부서 선택 불필요
@@ -163,13 +164,20 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
       return;
     }
 
-    // 담당자(STAFF) 대상일 때만 부서 선택 필수
-    if (!widget.isEvent && _selectedTarget == 'STAFF' && _selectedDepartmentId == null) {
-      return;
-    }
+    // BOTH 또는 RESIDENT 선택 시 departmentId를 보내면 백엔드 400 에러
+    // STAFF + "전체 부서"(ALL) 선택 시에도 departmentId를 보내지 않음
 
     try {
       final noticeDataSource = ref.read(noticeRemoteDataSourceProvider);
+
+      // STAFF + 특정 부서일 때만 departmentId 전송
+      // BOTH/RESIDENT이거나 "전체 부서"(ALL) 선택 시 null
+      final effectiveDepartmentId =
+          (_selectedTarget == 'STAFF' &&
+           _selectedDepartmentId != null &&
+           _selectedDepartmentId != 'ALL')
+              ? _selectedDepartmentId
+              : null;
 
       if (_isEditing && widget.noticeId != null) {
         // 수정 모드
@@ -186,7 +194,7 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
             title: _titleController.text.trim(),
             content: _contentController.text.trim(),
             target: _selectedTarget,
-            departmentId: _selectedDepartmentId,
+            departmentId: effectiveDepartmentId,
             imageUrl: _existingImageUrl,
           );
         }
@@ -203,7 +211,7 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
             title: _titleController.text.trim(),
             content: _contentController.text.trim(),
             target: _selectedTarget,
-            departmentId: _selectedDepartmentId,
+            departmentId: effectiveDepartmentId,
             imageUrl: _existingImageUrl,
           );
         }
@@ -397,12 +405,18 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
                                       vertical: 16,
                                     ),
                                   ),
-                                  dropdownMenuEntries: _departments.map((dept) {
-                                    return DropdownMenuEntry<String>(
-                                      value: dept['id'] as String,
-                                      label: dept['name'] as String,
-                                    );
-                                  }).toList(),
+                                  dropdownMenuEntries: [
+                                    const DropdownMenuEntry<String>(
+                                      value: 'ALL',
+                                      label: '전체 부서',
+                                    ),
+                                    ..._departments.map((dept) {
+                                      return DropdownMenuEntry<String>(
+                                        value: dept['id'] as String,
+                                        label: dept['name'] as String,
+                                      );
+                                    }),
+                                  ],
                                   onSelected: (value) {
                                     if (value != null) {
                                       setState(() {

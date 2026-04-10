@@ -144,7 +144,8 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
     }
   }
 
-  /// 서버에서 오늘 출퇴근 상태를 가져와 로컬 상태 동기화 (에러 시 이전 상태 유지)
+  /// 서버에서 오늘 출퇴근 상태를 가져와 로컬 상태 동기화
+  /// 동기화 실패 시 loading 상태에 멈추지 않도록 fallback 처리
   Future<void> _syncFromServer() async {
     try {
       final todayStatus = await _dataSource.getTodayAttendanceStatus();
@@ -155,8 +156,13 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
       };
       state = state.copyWith(status: syncedStatus, clearError: true);
     } catch (_) {
-      // 동기화 실패 시 — 이전 상태 유지하되 initFailed로 표시하지 않음
-      // (checkIn/checkOut API 자체는 성공했을 수 있으므로)
+      // 동기화 실패 시 — loading 상태에서 벗어나도록 fallback 설정
+      if (state.isLoading) {
+        state = state.copyWith(
+          status: AttendanceStatus.notCheckedIn,
+          error: '상태 동기화에 실패했습니다. 새로고침해 주세요.',
+        );
+      }
     }
   }
 

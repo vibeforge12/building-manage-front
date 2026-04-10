@@ -85,6 +85,10 @@ class ApiEndpoints {
   static const String staffNotices = '/staffs/notices';
   static const String staffNoticeDetail = '$staffNotices/{noticeId}';
 
+  // Manager Staff Attendance - 관리자 직원 출퇴근 조회
+  static const String managerStaffAttendanceMonthly = '/managers/staffs/attendance/monthly';
+  static const String managerStaffAttendanceDaily = '/managers/staffs/attendance/daily';
+
   // Upload - 파일 업로드
   static const String uploadPresignedUrl = '/upload/presigned-url';
   static const String uploadPresignedUrls = '/upload/presigned-urls';  // 다중 파일용

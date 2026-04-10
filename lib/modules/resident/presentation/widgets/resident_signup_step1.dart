@@ -140,7 +140,7 @@ class _ResidentSignupStep1State extends ConsumerState<ResidentSignupStep1> {
             // 아이디 입력
             CommonInputField(
               label: '아이디',
-              hint: '이메일을 입력 해주세요',
+              hint: '아이디를 입력 해주세요 (영문/숫자 4~20자)',
               controller: _usernameController,
               keyboardType: TextInputType.text,
               validator: (value) {

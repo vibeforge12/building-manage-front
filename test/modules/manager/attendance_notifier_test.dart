@@ -161,7 +161,7 @@ void main() {
       expect(notifier.state.error, isNotNull);
     });
 
-    test('checkIn 성공 후 _syncFromServer 실패 → 에러 없이 이전 loading 상태 유지', () async {
+    test('checkIn 성공 후 _syncFromServer 실패 → loading에서 탈출하여 notCheckedIn + 에러 메시지', () async {
       var callCount = 0;
       when(mockDataSource.getTodayAttendanceStatus()).thenAnswer((_) async {
         callCount++;
@@ -175,8 +175,12 @@ void main() {
 
       final result = await notifier.checkIn();
 
-      // API 성공이므로 true 반환, 동기화 실패해도 크래시 안 함
+      // API 성공이므로 true 반환
       expect(result, true);
+      // 핵심: loading 상태에 멈추지 않고 notCheckedIn으로 fallback
+      expect(notifier.state.status, isNot(AttendanceStatus.loading));
+      expect(notifier.state.status, AttendanceStatus.notCheckedIn);
+      expect(notifier.state.error, contains('동기화'));
     });
   });
 
@@ -245,6 +249,95 @@ void main() {
 
       expect(result, false);
       expect(notifier.state.status, AttendanceStatus.checkedIn);
+    });
+  });
+
+  group('[버그 리포트] 출퇴근 상태 꼬임 시나리오', () {
+    test('버그#1: 출근 성공 후 상태가 미출근으로 변경되지 않아야 함', () async {
+      var callCount = 0;
+      when(mockDataSource.getTodayAttendanceStatus()).thenAnswer((_) async {
+        callCount++;
+        if (callCount == 1) return 'notCheckedIn'; // initialize()
+        return 'checkedIn'; // _syncFromServer() after checkIn
+      });
+      when(mockCheckInUseCase.execute()).thenAnswer((_) async => {'success': true});
+
+      final notifier = buildNotifier();
+      await Future.delayed(Duration.zero);
+      expect(notifier.state.status, AttendanceStatus.notCheckedIn);
+
+      // 출근
+      final result = await notifier.checkIn();
+      expect(result, true);
+      expect(notifier.state.status, AttendanceStatus.checkedIn);
+
+      // 핵심: 출근 후 상태가 notCheckedIn으로 돌아가지 않음
+      expect(notifier.state.status, isNot(AttendanceStatus.notCheckedIn));
+    });
+
+    test('버그#2: 미출근 상태에서 재출근 시 서버가 "이미 출근" → 상태 checkedIn으로 동기화', () async {
+      // 시나리오: 출근했는데 UI가 미출근으로 표시 → 재출근 시도 → 서버 거절 → 서버 동기화
+      var callCount = 0;
+      when(mockDataSource.getTodayAttendanceStatus()).thenAnswer((_) async {
+        callCount++;
+        if (callCount == 1) return 'notCheckedIn'; // initialize() — stale 상태
+        return 'checkedIn'; // _syncFromServer() — 서버의 실제 상태
+      });
+      when(mockCheckInUseCase.execute()).thenThrow(
+        const ApiException(message: '이미 출근하셨습니다.', errorCode: 'ALREADY_CHECKED_IN'),
+      );
+
+      final notifier = buildNotifier();
+      await Future.delayed(Duration.zero);
+
+      final result = await notifier.checkIn();
+
+      expect(result, false);
+      // 핵심: 서버 동기화로 정확한 상태 반영 (미출근이 아님)
+      expect(notifier.state.status, AttendanceStatus.checkedIn);
+      expect(notifier.state.error, contains('이미 출근'));
+    });
+
+    test('버그#3: 퇴근 후 상태가 미출근이 아닌 checkedOut으로 표시되어야 함', () async {
+      var callCount = 0;
+      when(mockDataSource.getTodayAttendanceStatus()).thenAnswer((_) async {
+        callCount++;
+        if (callCount == 1) return 'checkedIn'; // initialize()
+        return 'checkedOut'; // _syncFromServer() after checkOut
+      });
+      when(mockCheckOutUseCase.execute()).thenAnswer((_) async => {'success': true});
+
+      final notifier = buildNotifier();
+      await Future.delayed(Duration.zero);
+      expect(notifier.state.status, AttendanceStatus.checkedIn);
+
+      // 퇴근
+      final result = await notifier.checkOut();
+
+      expect(result, true);
+      // 핵심: 퇴근 후 미출근이 아닌 checkedOut으로 표시
+      expect(notifier.state.status, AttendanceStatus.checkedOut);
+      expect(notifier.state.status, isNot(AttendanceStatus.notCheckedIn));
+    });
+
+    test('버그#4: checkOut 성공 후 _syncFromServer 실패 → loading에 멈추지 않아야 함', () async {
+      var callCount = 0;
+      when(mockDataSource.getTodayAttendanceStatus()).thenAnswer((_) async {
+        callCount++;
+        if (callCount == 1) return 'checkedIn'; // initialize()
+        throw Exception('network error'); // _syncFromServer() 실패
+      });
+      when(mockCheckOutUseCase.execute()).thenAnswer((_) async => {'success': true});
+
+      final notifier = buildNotifier();
+      await Future.delayed(Duration.zero);
+
+      final result = await notifier.checkOut();
+
+      expect(result, true);
+      // 핵심: loading 상태에 멈추지 않음
+      expect(notifier.state.status, isNot(AttendanceStatus.loading));
+      expect(notifier.state.error, contains('동기화'));
     });
   });
 
