@@ -73,6 +73,41 @@ class _StaffComplaintDetailScreenState extends State<StaffComplaintDetailScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      bottomNavigationBar: _complaintData != null &&
+              _complaintData!['isResolved'] != true
+          ? SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: FilledButton(
+                    onPressed: () {
+                      context.push(
+                        '/manager/complaint-resolve/${widget.complaintId}',
+                        extra: _complaintData?['title'] ?? '민원',
+                      );
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF006FFF),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text(
+                      '처리 등록',
+                      style: TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            )
+          : null,
       body: SafeArea(
         child: _isLoading
             ? const Center(
