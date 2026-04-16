@@ -51,6 +51,11 @@ class CommonInputField extends StatelessWidget {
           textInputAction: textInputAction,
           decoration: InputDecoration(
             hintText: hint,
+            hintStyle: const TextStyle(
+              color: Color(0xFFA4ADB2),
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+            ),
             // ✅ 인풋 필드 스타일 (Figma 기준)
             contentPadding:
             const EdgeInsets.symmetric(horizontal: 8, vertical: 8), // ← 높이 제어

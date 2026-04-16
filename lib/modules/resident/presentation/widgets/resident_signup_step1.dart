@@ -92,14 +92,15 @@ class _ResidentSignupStep1State extends ConsumerState<ResidentSignupStep1> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Container(
-      color: Colors.white, 
-      padding: const EdgeInsets.all(24.0),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+    return SingleChildScrollView(
+      child: Container(
+        color: Colors.white,
+        padding: const EdgeInsets.all(24.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
             // 동 입력
             CommonInputField(
               label: '동',
@@ -109,9 +110,6 @@ class _ResidentSignupStep1State extends ConsumerState<ResidentSignupStep1> {
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
                   return '동을 입력해주세요';
-                }
-                if (!RegExp(r'^\d+동?$').hasMatch(value.trim())) {
-                  return '올바른 동 형식을 입력해주세요 (예: 101동)';
                 }
                 return null;
               },
@@ -127,9 +125,6 @@ class _ResidentSignupStep1State extends ConsumerState<ResidentSignupStep1> {
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
                   return '호수를 입력해주세요';
-                }
-                if (!RegExp(r'^[A-Za-z0-9]+호?$').hasMatch(value.trim())) {
-                  return '올바른 호수 형식을 입력해주세요 (예: 1001호, B001호)';
                 }
                 return null;
               },
@@ -237,7 +232,8 @@ class _ResidentSignupStep1State extends ConsumerState<ResidentSignupStep1> {
                 ),
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );

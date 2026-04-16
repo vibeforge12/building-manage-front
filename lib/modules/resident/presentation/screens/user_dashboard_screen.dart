@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:building_manage_front/modules/resident/data/datasources/notice_remote_datasource.dart';
 import 'package:building_manage_front/modules/resident/data/datasources/department_remote_datasource.dart';
@@ -541,6 +542,25 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
               ),
             ),
             const Spacer(),
+            FutureBuilder<PackageInfo>(
+              future: PackageInfo.fromPlatform(),
+              builder: (context, snapshot) {
+                final version = snapshot.data?.version ?? '';
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Center(
+                    child: Text(
+                      'v$version',
+                      style: const TextStyle(
+                        color: Color(0xFFA4ADB2),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
             ],
           ),
         ),

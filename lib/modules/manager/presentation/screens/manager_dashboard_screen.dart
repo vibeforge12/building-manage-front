@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 import 'package:building_manage_front/modules/manager/presentation/providers/attendance_provider.dart';
 import 'package:building_manage_front/modules/manager/data/datasources/staff_complaints_remote_datasource.dart';
@@ -705,6 +706,26 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
                   },
                 ),
               ],
+            ),
+            const Spacer(),
+            FutureBuilder<PackageInfo>(
+              future: PackageInfo.fromPlatform(),
+              builder: (context, snapshot) {
+                final version = snapshot.data?.version ?? '';
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Center(
+                    child: Text(
+                      'v$version',
+                      style: const TextStyle(
+                        color: Color(0xFFA4ADB2),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           ],
         ),

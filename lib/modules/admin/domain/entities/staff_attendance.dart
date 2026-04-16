@@ -9,8 +9,8 @@ class StaffDepartment extends Equatable {
 
   factory StaffDepartment.fromJson(Map<String, dynamic> json) {
     return StaffDepartment(
-      id: json['id'] as String,
-      name: json['name'] as String,
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
     );
   }
 
@@ -32,7 +32,7 @@ class StaffDayRecord extends Equatable {
 
   factory StaffDayRecord.fromJson(Map<String, dynamic> json) {
     return StaffDayRecord(
-      date: json['date'] as String,
+      date: json['date'] as String? ?? '',
       checkIn: json['checkIn'] != null
           ? DateTime.parse(json['checkIn'] as String).toLocal()
           : null,
@@ -62,14 +62,14 @@ class StaffMonthlyData extends Equatable {
 
   factory StaffMonthlyData.fromJson(Map<String, dynamic> json) {
     return StaffMonthlyData(
-      staffId: json['staffId'] as String,
-      name: json['name'] as String,
+      staffId: json['staffId'] as String? ?? '',
+      name: json['name'] as String? ?? '',
       department: json['department'] != null
           ? StaffDepartment.fromJson(json['department'] as Map<String, dynamic>)
           : null,
-      days: (json['days'] as List<dynamic>)
-          .map((d) => StaffDayRecord.fromJson(d as Map<String, dynamic>))
-          .toList(),
+      days: (json['days'] as List<dynamic>?)
+          ?.map((d) => StaffDayRecord.fromJson(d as Map<String, dynamic>))
+          .toList() ?? [],
     );
   }
 
@@ -91,11 +91,11 @@ class StaffAttendanceMonthly extends Equatable {
 
   factory StaffAttendanceMonthly.fromJson(Map<String, dynamic> json) {
     return StaffAttendanceMonthly(
-      year: json['year'] as int,
-      month: json['month'] as int,
-      staffs: (json['staffs'] as List<dynamic>)
-          .map((s) => StaffMonthlyData.fromJson(s as Map<String, dynamic>))
-          .toList(),
+      year: json['year'] as int? ?? 0,
+      month: json['month'] as int? ?? 0,
+      staffs: (json['staffs'] as List<dynamic>?)
+          ?.map((s) => StaffMonthlyData.fromJson(s as Map<String, dynamic>))
+          .toList() ?? [],
     );
   }
 
@@ -123,8 +123,8 @@ class StaffDailyAttendance extends Equatable {
 
   factory StaffDailyAttendance.fromJson(Map<String, dynamic> json) {
     return StaffDailyAttendance(
-      staffId: json['staffId'] as String,
-      name: json['name'] as String,
+      staffId: json['staffId'] as String? ?? '',
+      name: json['name'] as String? ?? '',
       department: json['department'] != null
           ? StaffDepartment.fromJson(json['department'] as Map<String, dynamic>)
           : null,
@@ -134,7 +134,7 @@ class StaffDailyAttendance extends Equatable {
       checkOut: json['checkOut'] != null
           ? DateTime.parse(json['checkOut'] as String).toLocal()
           : null,
-      status: json['status'] as String,
+      status: json['status'] as String? ?? 'NOT_ARRIVED',
     );
   }
 
@@ -196,11 +196,13 @@ class StaffAttendanceDaily extends Equatable {
 
   factory StaffAttendanceDaily.fromJson(Map<String, dynamic> json) {
     return StaffAttendanceDaily(
-      date: json['date'] as String,
-      staffs: (json['staffs'] as List<dynamic>)
-          .map((s) => StaffDailyAttendance.fromJson(s as Map<String, dynamic>))
-          .toList(),
-      summary: AttendanceSummary.fromJson(json['summary'] as Map<String, dynamic>),
+      date: json['date'] as String? ?? '',
+      staffs: (json['staffs'] as List<dynamic>?)
+          ?.map((s) => StaffDailyAttendance.fromJson(s as Map<String, dynamic>))
+          .toList() ?? [],
+      summary: json['summary'] != null
+          ? AttendanceSummary.fromJson(json['summary'] as Map<String, dynamic>)
+          : const AttendanceSummary(total: 0, working: 0, left: 0, notArrived: 0),
     );
   }
 

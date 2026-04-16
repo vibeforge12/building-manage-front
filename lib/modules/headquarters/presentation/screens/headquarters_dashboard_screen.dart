@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:building_manage_front/shared/widgets/full_screen_image_background.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 
@@ -201,6 +202,23 @@ class HeadquartersDashboardScreen extends ConsumerWidget {
                   ),
 
                   const SizedBox(height: 40),
+                  FutureBuilder<PackageInfo>(
+                    future: PackageInfo.fromPlatform(),
+                    builder: (context, snapshot) {
+                      final version = snapshot.data?.version ?? '';
+                      return Center(
+                        child: Text(
+                          'v$version',
+                          style: const TextStyle(
+                            color: Color(0xFFA4ADB2),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),

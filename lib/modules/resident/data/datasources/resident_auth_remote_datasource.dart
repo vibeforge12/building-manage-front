@@ -28,7 +28,8 @@ class ResidentAuthRemoteDataSource {
     } on DioException catch (e) {
 
       if (e.response?.statusCode == 401) {
-        throw Exception('아이디 또는 비밀번호가 일치하지 않습니다.');
+        final message = e.response?.data?['message'] as String?;
+        throw Exception(message ?? '아이디 또는 비밀번호가 일치하지 않습니다.');
       }
 
       throw Exception('로그인 중 오류가 발생했습니다: ${e.message}');

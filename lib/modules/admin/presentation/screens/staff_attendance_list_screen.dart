@@ -44,11 +44,12 @@ class _StaffAttendanceListScreenState extends ConsumerState<StaffAttendanceListS
         _dailyData = result;
       });
     } catch (e) {
+      debugPrint('출퇴근 조회 에러: $e');
       setState(() {
         if (e is ApiException) {
           _errorMessage = e.userFriendlyMessage;
         } else {
-          _errorMessage = '출퇴근 현황을 불러오는 중 오류가 발생했습니다.';
+          _errorMessage = '출퇴근 현황을 불러오는 중 오류가 발생했습니다.\n$e';
         }
       });
     } finally {

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:building_manage_front/core/network/api_client.dart';
 import 'package:building_manage_front/core/constants/api_endpoints.dart';
@@ -47,12 +48,15 @@ class StaffAttendanceRemoteDataSource {
     required int day,
   }) async {
     try {
+      debugPrint('출퇴근 일별 API 호출: year=$year, month=$month, day=$day');
       final response = await _apiClient.get(
         ApiEndpoints.managerStaffAttendanceDaily,
         queryParameters: {'year': year, 'month': month, 'day': day},
       );
+      debugPrint('출퇴근 일별 API 응답: ${response.data}');
       return StaffAttendanceDaily.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
+      debugPrint('출퇴근 일별 DioException: ${e.message}, response: ${e.response?.data}');
       if (e.response?.data != null && e.response!.data is Map) {
         final errorData = e.response!.data as Map<String, dynamic>;
         throw ApiException(

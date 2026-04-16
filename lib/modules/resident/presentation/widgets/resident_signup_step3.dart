@@ -70,15 +70,16 @@ class _ResidentSignupStep3State extends ConsumerState<ResidentSignupStep3> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.all(24.0),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // 이름 입력
+    return SingleChildScrollView(
+      child: Container(
+        color: Colors.white,
+        padding: const EdgeInsets.all(24.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // 이름 입력
             CommonInputField(
               label: '이름',
               hint: '이름을 입력해주세요',
@@ -132,7 +133,8 @@ class _ResidentSignupStep3State extends ConsumerState<ResidentSignupStep3> {
                 ),
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );
