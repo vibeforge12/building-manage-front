@@ -75,7 +75,7 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
   String _formatDate(String? dateString) {
     if (dateString == null) return '';
     try {
-      final dateTime = DateTime.parse(dateString);
+      final dateTime = DateTime.parse(dateString).toLocal();
       return DateFormat('yyyy.MM.dd').format(dateTime);
     } catch (e) {
       return '';

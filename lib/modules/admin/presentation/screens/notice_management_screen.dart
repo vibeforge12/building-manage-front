@@ -513,7 +513,7 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
     // 날짜 포맷팅 (ISO 8601 → 간단한 형식)
     String formatDate(String dateStr) {
       try {
-        final date = DateTime.parse(dateStr);
+        final date = DateTime.parse(dateStr).toLocal();
         return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
       } catch (e) {
         return dateStr;

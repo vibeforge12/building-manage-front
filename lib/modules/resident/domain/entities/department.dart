@@ -23,7 +23,7 @@ class Department extends Equatable {
       name: json['name'] as String,
       description: json['description'] as String?,
       buildingId: json['buildingId'] as String,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt: DateTime.parse(json['createdAt'] as String).toLocal(),
     );
   }
 

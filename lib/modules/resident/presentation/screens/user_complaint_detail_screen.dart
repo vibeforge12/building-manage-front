@@ -30,7 +30,7 @@ class _UserComplaintDetailScreenState extends State<UserComplaintDetailScreen> {
   String _formatDate(String? dateString) {
     if (dateString == null) return '';
     try {
-      final dateTime = DateTime.parse(dateString);
+      final dateTime = DateTime.parse(dateString).toLocal();
       return DateFormat('yyyy-MM-dd HH:mm').format(dateTime);
     } catch (e) {
       return '';

@@ -51,12 +51,12 @@ class Notice extends Equatable {
       type: _parseType(json['type'] as String? ?? json['isEvent'] as String?),
       imageUrl: json['imageUrl'] as String?,
       buildingId: json['buildingId'] as String,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt: DateTime.parse(json['createdAt'] as String).toLocal(),
       eventStartDate: json['eventStartDate'] != null
-          ? DateTime.parse(json['eventStartDate'] as String)
+          ? DateTime.parse(json['eventStartDate'] as String).toLocal()
           : null,
       eventEndDate: json['eventEndDate'] != null
-          ? DateTime.parse(json['eventEndDate'] as String)
+          ? DateTime.parse(json['eventEndDate'] as String).toLocal()
           : null,
     );
   }

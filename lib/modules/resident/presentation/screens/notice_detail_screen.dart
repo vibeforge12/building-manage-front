@@ -66,7 +66,7 @@ class _NoticeDetailScreenState extends State<NoticeDetailScreen> {
   String _formatDate(String? dateString) {
     if (dateString == null) return '';
     try {
-      final dateTime = DateTime.parse(dateString);
+      final dateTime = DateTime.parse(dateString).toLocal();
       return DateFormat('yyyy년 MM월 dd일 HH:mm').format(dateTime);
     } catch (e) {
       return '';

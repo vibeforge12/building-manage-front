@@ -84,7 +84,7 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
   String _formatDate(String? dateString) {
     if (dateString == null) return '';
     try {
-      final dateTime = DateTime.parse(dateString);
+      final dateTime = DateTime.parse(dateString).toLocal();
       return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}';
     } catch (e) {
       return '';

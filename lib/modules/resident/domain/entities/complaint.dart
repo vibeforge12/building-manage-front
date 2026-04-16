@@ -48,9 +48,9 @@ class Complaint extends Equatable {
       departmentName: json['departmentName'] as String? ?? '',
       residentId: json['residentId'] as String,
       response: json['response'] as String?,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt: DateTime.parse(json['createdAt'] as String).toLocal(),
       updatedAt: json['updatedAt'] != null
-          ? DateTime.parse(json['updatedAt'] as String)
+          ? DateTime.parse(json['updatedAt'] as String).toLocal()
           : null,
     );
   }

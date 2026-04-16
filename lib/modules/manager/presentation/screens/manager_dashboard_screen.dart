@@ -378,7 +378,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
                       String formattedDate = '';
                       if (createdAt != null) {
                         try {
-                          final dateTime = DateTime.parse(createdAt);
+                          final dateTime = DateTime.parse(createdAt).toLocal();
                           formattedDate = '${dateTime.year.toString().padLeft(4, '0')}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}';
                         } catch (e) {
                           formattedDate = '';
