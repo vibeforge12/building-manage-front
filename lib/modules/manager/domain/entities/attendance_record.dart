@@ -21,9 +21,11 @@ class AttendanceRecord extends Equatable {
   /// JSON에서 엔티티 생성
   factory AttendanceRecord.fromJson(Map<String, dynamic> json) {
     return AttendanceRecord(
-      id: json['id'] as String,
-      type: _parseType(json['type'] as String),
-      createdAt: DateTime.parse(json['createdAt'] as String).toLocal(),
+      id: json['id'] as String? ?? '',
+      type: _parseType(json['type'] as String? ?? 'CHECK_IN'),
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String).toLocal()
+          : DateTime.now(),
     );
   }
 
@@ -78,12 +80,12 @@ class MonthlyAttendanceResponse extends Equatable {
 
   /// JSON에서 엔티티 생성
   factory MonthlyAttendanceResponse.fromJson(Map<String, dynamic> json) {
-    final data = json['data'] as Map<String, dynamic>;
-    final recordsList = data['records'] as List<dynamic>;
+    final data = (json['data'] as Map<String, dynamic>?) ?? json;
+    final recordsList = (data['records'] as List<dynamic>?) ?? [];
 
     return MonthlyAttendanceResponse(
-      year: data['year'] as int,
-      month: data['month'] as int,
+      year: data['year'] as int? ?? 0,
+      month: data['month'] as int? ?? 0,
       records: recordsList
           .map((record) => AttendanceRecord.fromJson(record as Map<String, dynamic>))
           .toList(),

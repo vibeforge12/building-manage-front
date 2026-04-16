@@ -72,9 +72,9 @@ class User extends Equatable {
     }
 
     final user = User(
-      id: json['id'] as String,
+      id: json['id'] as String? ?? '',
       email: json['email'] as String? ?? '',
-      name: json['name'] as String,
+      name: json['name'] as String? ?? '',
       userType: userType,
       buildingId: buildingId,
       buildingName: buildingName,

@@ -45,13 +45,15 @@ class Notice extends Equatable {
   /// JSON에서 엔티티 생성
   factory Notice.fromJson(Map<String, dynamic> json) {
     return Notice(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      content: json['content'] as String,
+      id: json['id'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      content: json['content'] as String? ?? '',
       type: _parseType(json['type'] as String? ?? json['isEvent'] as String?),
       imageUrl: json['imageUrl'] as String?,
-      buildingId: json['buildingId'] as String,
-      createdAt: DateTime.parse(json['createdAt'] as String).toLocal(),
+      buildingId: json['buildingId'] as String? ?? '',
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String).toLocal()
+          : DateTime.now(),
       eventStartDate: json['eventStartDate'] != null
           ? DateTime.parse(json['eventStartDate'] as String).toLocal()
           : null,

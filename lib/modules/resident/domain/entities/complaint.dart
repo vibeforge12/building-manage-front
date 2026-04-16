@@ -39,16 +39,18 @@ class Complaint extends Equatable {
   /// JSON에서 엔티티 생성
   factory Complaint.fromJson(Map<String, dynamic> json) {
     return Complaint(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      content: json['content'] as String,
+      id: json['id'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      content: json['content'] as String? ?? '',
       imageUrl: json['imageUrl'] as String?,
-      status: _parseStatus(json['status'] as String),
-      departmentId: json['departmentId'] as String,
+      status: _parseStatus(json['status'] as String? ?? 'PENDING'),
+      departmentId: json['departmentId'] as String? ?? '',
       departmentName: json['departmentName'] as String? ?? '',
-      residentId: json['residentId'] as String,
+      residentId: json['residentId'] as String? ?? '',
       response: json['response'] as String?,
-      createdAt: DateTime.parse(json['createdAt'] as String).toLocal(),
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String).toLocal()
+          : DateTime.now(),
       updatedAt: json['updatedAt'] != null
           ? DateTime.parse(json['updatedAt'] as String).toLocal()
           : null,

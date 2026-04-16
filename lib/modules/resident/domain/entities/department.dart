@@ -19,11 +19,13 @@ class Department extends Equatable {
   /// JSON에서 엔티티 생성
   factory Department.fromJson(Map<String, dynamic> json) {
     return Department(
-      id: json['id'] as String,
-      name: json['name'] as String,
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
       description: json['description'] as String?,
-      buildingId: json['buildingId'] as String,
-      createdAt: DateTime.parse(json['createdAt'] as String).toLocal(),
+      buildingId: json['buildingId'] as String? ?? '',
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String).toLocal()
+          : DateTime.now(),
     );
   }
 

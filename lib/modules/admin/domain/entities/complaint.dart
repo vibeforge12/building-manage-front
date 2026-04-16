@@ -84,7 +84,9 @@ class AdminComplaint extends Equatable {
       response: response,
       responseImageUrl: responseImageUrl,
       handledBy: null, // API 응답에 없음
-      createdAt: DateTime.parse(json['createdAt'] as String? ?? DateTime.now().toIso8601String()).toLocal(),
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String).toLocal()
+          : DateTime.now(),
       updatedAt: json['updatedAt'] != null
           ? DateTime.parse(json['updatedAt'] as String).toLocal()
           : null,
