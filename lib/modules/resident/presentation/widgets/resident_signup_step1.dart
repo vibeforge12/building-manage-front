@@ -122,14 +122,14 @@ class _ResidentSignupStep1State extends ConsumerState<ResidentSignupStep1> {
             // 호수 입력
             CommonInputField(
               label: '호수',
-              hint: '예: 1001호',
+              hint: '예: 1001호, B001호',
               controller: _hosuController,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
                   return '호수를 입력해주세요';
                 }
-                if (!RegExp(r'^\d+호?$').hasMatch(value.trim())) {
-                  return '올바른 호수 형식을 입력해주세요 (예: 1001호)';
+                if (!RegExp(r'^[A-Za-z0-9]+호?$').hasMatch(value.trim())) {
+                  return '올바른 호수 형식을 입력해주세요 (예: 1001호, B001호)';
                 }
                 return null;
               },
