@@ -323,7 +323,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
                       final residentName = resident?['name'] as String? ?? '거주자명';
                       final dong = resident?['dong'] as String? ?? '';
                       final hosu = resident?['hosu'] as String? ?? '';
-                      final subtitle = '${dong}동 $hosu호 $residentName'.trim();
+                      final subtitle = '$dong $hosu $residentName'.trim();
 
                       return _ComplaintTile(
                         complaintId: complaintId,

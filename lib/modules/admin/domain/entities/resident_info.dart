@@ -61,7 +61,7 @@ class ResidentInfo extends Equatable {
   });
 
   /// 호수 전체 표시 (예: "101동 1001호")
-  String get fullHosu => dong.isNotEmpty ? '$dong동 $hosu호' : hosu;
+  String get fullHosu => dong.isNotEmpty ? '$dong $hosu' : hosu;
 
   /// JSON에서 ResidentInfo 엔티티 생성
   factory ResidentInfo.fromJson(Map<String, dynamic> json) {

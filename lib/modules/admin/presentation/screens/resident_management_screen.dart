@@ -497,7 +497,7 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
               // 시안은 "105호"만 보이지만, 필요하면 '$dong동 $hosu호'로 바꿔도 됨
               final subText = (dong.isEmpty)
                   ? hosu
-                  : '$dong동 $hosu호';
+                  : '$dong $hosu';
 
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -597,7 +597,7 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
     if (hosu.endsWith('호')) {
       return hosu;
     }
-    return '$hosu호';
+    return hosu;
   }
 
   /// 에러 공통 위젯

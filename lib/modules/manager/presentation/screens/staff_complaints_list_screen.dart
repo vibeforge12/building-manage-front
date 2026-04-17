@@ -334,7 +334,7 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
                                               ),
                                               const SizedBox(height: 4),
                                               Text(
-                                                '$dong동 $hosu호 $residentName',
+                                                '$dong $hosu $residentName',
                                                 style: const TextStyle(
                                                   fontFamily: 'Pretendard',
                                                   fontWeight: FontWeight.w400,

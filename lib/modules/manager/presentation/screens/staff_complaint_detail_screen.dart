@@ -40,9 +40,12 @@ class _StaffComplaintDetailScreenState extends State<StaffComplaintDetailScreen>
       final dataSource = container.read(staffComplaintsRemoteDataSourceProvider);
       final response = await dataSource.getComplaintDetail(widget.complaintId);
 
+      debugPrint('민원 상세 응답: $response');
       if (response['success'] == true && response['data'] != null) {
         setState(() {
           _complaintData = response['data'] as Map<String, dynamic>;
+          debugPrint('민원 results: ${_complaintData?['results']}');
+          debugPrint('민원 isResolved: ${_complaintData?['isResolved']}');
           _isLoading = false;
         });
       } else {
@@ -63,7 +66,7 @@ class _StaffComplaintDetailScreenState extends State<StaffComplaintDetailScreen>
     if (dateString == null) return '';
     try {
       final dateTime = DateTime.parse(dateString).toLocal();
-      return DateFormat('yyyy.MM.dd').format(dateTime);
+      return DateFormat('yyyy.MM.dd HH:mm').format(dateTime);
     } catch (e) {
       return '';
     }
@@ -237,102 +240,241 @@ class _StaffComplaintDetailScreenState extends State<StaffComplaintDetailScreen>
                               ),
                             ),
                           ),
+                        // 처리 상태
                         Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              // 제목
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        _complaintData?['resident']?['name'] ??
-                                            '거주자명',
-                                        style: const TextStyle(
-                                          fontFamily: 'Pretendard',
-                                          fontWeight: FontWeight.w400,
-                                          fontSize: 14,
-                                          color: Color(0xFF17191A),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        '${_complaintData?['resident']?['dong'] ?? ''}동 ${_complaintData?['resident']?['hosu'] ?? ''}호',
-                                        style: const TextStyle(
-                                          fontFamily: 'Pretendard',
-                                          fontWeight: FontWeight.w400,
-                                          fontSize: 12,
-                                          color: Color(0xFF757B80),
-                                        ),
-                                      ),
-                                    ],
+                              const Text(
+                                '처리 상태',
+                                style: TextStyle(
+                                  fontFamily: 'Pretendard',
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                  color: Color(0xFF17191A),
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: _complaintData?['isResolved'] == true
+                                      ? const Color(0xFFECFDF5)
+                                      : const Color(0xFFFEF3C7),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  _complaintData?['isResolved'] == true ? '처리 완료' : '미처리',
+                                  style: TextStyle(
+                                    fontFamily: 'Pretendard',
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                    color: _complaintData?['isResolved'] == true
+                                        ? const Color(0xFF059669)
+                                        : const Color(0xFFD97706),
                                   ),
-                                  Text(
-                                    _formatDate(
-                                      _complaintData?['createdAt'] as String?,
-                                    ),
-                                    style: const TextStyle(
-                                      fontFamily: 'Pretendard',
-                                      fontWeight: FontWeight.w400,
-                                      fontSize: 12,
-                                      color: Color(0xFF757B80),
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
                             ],
                           ),
                         ),
-                        // 거주자명 밑 구분선 (화면 끝에서 끝까지)
-                        Container(
-                          height: 1,
-                          color: const Color(0xFFE8EEF2),
-                        ),
-                        // 제목 (수직 중앙정)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                          ),
-                          height: 56,
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            _complaintData?['title'] ?? '제목없음',
-                            style: const TextStyle(
-                              fontFamily: 'Pretendard',
-                              fontWeight: FontWeight.w700,
-                              fontSize: 18,
-                              color: Color(0xFF17191A),
-                            ),
-                          ),
-                        ),
-                        // 제목 밑 구분선 (화면 끝에서 끝까지)
-                        Container(
-                          height: 1,
-                          color: const Color(0xFFE8EEF2),
-                        ),
+                        Container(height: 1, color: const Color(0xFFE8EEF2)),
+                        // 접수 시간
                         Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 20,
-                          ),
-                          child: Text(
-                            _complaintData?['content'] ?? '',
-                            style: const TextStyle(
-                              fontFamily: 'Pretendard',
-                              fontWeight: FontWeight.w400,
-                              fontSize: 14,
-                              color: Color(0xFF17191A),
-                              height: 1.6,
-                            ),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                '접수 시간',
+                                style: TextStyle(
+                                  fontFamily: 'Pretendard',
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                  color: Color(0xFF17191A),
+                                ),
+                              ),
+                              Text(
+                                _formatDate(_complaintData?['createdAt'] as String?),
+                                style: const TextStyle(
+                                  fontFamily: 'Pretendard',
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 14,
+                                  color: Color(0xFF757B80),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
+                        Container(height: 1, color: const Color(0xFFE8EEF2)),
+                        // 작성자
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                '작성자',
+                                style: TextStyle(
+                                  fontFamily: 'Pretendard',
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                  color: Color(0xFF17191A),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                '${_complaintData?['resident']?['name'] ?? '거주자명'} (${_complaintData?['resident']?['dong'] ?? ''} ${_complaintData?['resident']?['hosu'] ?? ''})',
+                                style: const TextStyle(
+                                  fontFamily: 'Pretendard',
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 14,
+                                  color: Color(0xFF17191A),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(height: 1, color: const Color(0xFFE8EEF2)),
+                        // 제목
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                '제목',
+                                style: TextStyle(
+                                  fontFamily: 'Pretendard',
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                  color: Color(0xFF17191A),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                _complaintData?['title'] ?? '제목없음',
+                                style: const TextStyle(
+                                  fontFamily: 'Pretendard',
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 16,
+                                  color: Color(0xFF17191A),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(height: 1, color: const Color(0xFFE8EEF2)),
+                        // 내용
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                '내용',
+                                style: TextStyle(
+                                  fontFamily: 'Pretendard',
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                  color: Color(0xFF17191A),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                _complaintData?['content'] ?? '',
+                                style: const TextStyle(
+                                  fontFamily: 'Pretendard',
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 14,
+                                  color: Color(0xFF17191A),
+                                  height: 1.6,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // 처리 결과 표시
+                        if (_complaintData?['isResolved'] == true &&
+                            _complaintData?['results'] != null &&
+                            (_complaintData!['results'] as List).isNotEmpty)
+                          ...[
+                            Container(
+                              height: 8,
+                              color: const Color(0xFFF2F8FC),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    '처리 내용',
+                                    style: TextStyle(
+                                      fontFamily: 'Pretendard',
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 16,
+                                      color: Color(0xFF17191A),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  ...(_complaintData!['results'] as List).map((result) {
+                                    final content = result['content'] as String? ?? '';
+                                    final imageUrl = result['imageUrl'] as String?;
+                                    final createdAt = result['createdAt'] as String?;
+                                    String formattedDate = '';
+                                    if (createdAt != null) {
+                                      try {
+                                        final dt = DateTime.parse(createdAt).toLocal();
+                                        formattedDate = '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+                                      } catch (_) {}
+                                    }
+                                    return Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        if (formattedDate.isNotEmpty)
+                                          Text(
+                                            formattedDate,
+                                            style: const TextStyle(
+                                              fontFamily: 'Pretendard',
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 12,
+                                              color: Color(0xFF757B80),
+                                            ),
+                                          ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          content,
+                                          style: const TextStyle(
+                                            fontFamily: 'Pretendard',
+                                            fontWeight: FontWeight.w400,
+                                            fontSize: 14,
+                                            color: Color(0xFF17191A),
+                                            height: 1.6,
+                                          ),
+                                        ),
+                                        if (imageUrl != null && imageUrl.isNotEmpty)
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 12),
+                                            child: ClipRRect(
+                                              borderRadius: BorderRadius.circular(8),
+                                              child: Image.network(
+                                                imageUrl,
+                                                fit: BoxFit.cover,
+                                                width: double.infinity,
+                                                errorBuilder: (context, error, stackTrace) =>
+                                                    const SizedBox.shrink(),
+                                              ),
+                                            ),
+                                          ),
+                                        const SizedBox(height: 8),
+                                      ],
+                                    );
+                                  }),
+                                ],
+                              ),
+                            ),
+                          ],
                       ],
                     ),
                   ),
