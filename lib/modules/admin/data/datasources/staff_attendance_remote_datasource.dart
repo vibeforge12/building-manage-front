@@ -22,7 +22,9 @@ class StaffAttendanceRemoteDataSource {
         ApiEndpoints.managerStaffAttendanceMonthly,
         queryParameters: {'year': year, 'month': month},
       );
-      return StaffAttendanceMonthly.fromJson(response.data as Map<String, dynamic>);
+      final responseData = response.data as Map<String, dynamic>;
+      final data = responseData['data'] as Map<String, dynamic>? ?? responseData;
+      return StaffAttendanceMonthly.fromJson(data);
     } on DioException catch (e) {
       if (e.response?.data != null && e.response!.data is Map) {
         final errorData = e.response!.data as Map<String, dynamic>;
@@ -54,7 +56,9 @@ class StaffAttendanceRemoteDataSource {
         queryParameters: {'year': year, 'month': month, 'day': day},
       );
       debugPrint('출퇴근 일별 API 응답: ${response.data}');
-      return StaffAttendanceDaily.fromJson(response.data as Map<String, dynamic>);
+      final responseData = response.data as Map<String, dynamic>;
+      final data = responseData['data'] as Map<String, dynamic>? ?? responseData;
+      return StaffAttendanceDaily.fromJson(data);
     } on DioException catch (e) {
       debugPrint('출퇴근 일별 DioException: ${e.message}, response: ${e.response?.data}');
       if (e.response?.data != null && e.response!.data is Map) {
