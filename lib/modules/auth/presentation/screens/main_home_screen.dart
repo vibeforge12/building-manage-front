@@ -44,7 +44,7 @@ class MainHomeScreen extends StatelessWidget {
                       const _LandingHeader(),
                       SizedBox(height: screenHeight * 0.05),
                       PrimaryActionButton(
-                        label: '유저 로그인',
+                        label: '입주민 로그인',
                         backgroundColor: const Color(0xFFEDF9FF),
                         foregroundColor: Colors.black,
                         onPressed: () => _openUserLogin(context),

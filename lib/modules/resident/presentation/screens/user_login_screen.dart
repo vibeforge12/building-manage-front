@@ -81,7 +81,8 @@ class _UserLoginScreenState extends ConsumerState<UserLoginScreen> {
             final hasShownApproval = prefs.getBool(approvalShownKey) ?? false;
 
             if (!hasShownApproval) {
-              // 첫 로그인: 승인 완료 화면 표시
+              // 첫 로그인: 승인 완료 화면 표시 전에 플래그 저장 (재방문 방지)
+              await prefs.setBool(approvalShownKey, true);
               context.goNamed('residentApprovalCompleted');
               return;
             }
