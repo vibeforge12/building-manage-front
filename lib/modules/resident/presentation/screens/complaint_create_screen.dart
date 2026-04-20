@@ -50,7 +50,7 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
   }
 
   bool get _isFormValid {
-    return _titleController.text.trim().length >= 3 &&
+    return _titleController.text.trim().isNotEmpty &&
         _contentController.text.trim().isNotEmpty;
   }
 
@@ -412,7 +412,7 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
                             color: Color(0xFF17191A),
                           ),
                           decoration: const InputDecoration(
-                            hintText: '제목 입력 (최소 3자)',
+                            hintText: '제목 입력',
                             hintStyle: TextStyle(
                               fontFamily: 'Pretendard',
                               fontWeight: FontWeight.w700,

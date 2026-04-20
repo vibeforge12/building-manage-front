@@ -318,40 +318,37 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   }
 
   Widget _buildFixedBottomButton(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      color: Colors.white,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: FilledButton(
-              onPressed: () {
-                context.push('/admin/staff-attendance-list');
-              },
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFEDF9FF),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.all(16),
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+        color: Colors.white,
+        child: SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: FilledButton(
+            onPressed: () {
+              context.push('/admin/staff-attendance-list');
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFEDF9FF),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: const Text(
-                '담당자 출근 / 퇴근 목록',
-                style: TextStyle(
-                  fontFamily: 'Pretendard',
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                  height: 1.5,
-                  color: Color(0xFF0683FF),
-                ),
+              padding: const EdgeInsets.all(16),
+            ),
+            child: const Text(
+              '담당자 출근 / 퇴근 목록',
+              style: TextStyle(
+                fontFamily: 'Pretendard',
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                height: 1.5,
+                color: Color(0xFF0683FF),
               ),
             ),
           ),
-          const SizedBox(height: 16),
-        ],
+        ),
       ),
     );
   }

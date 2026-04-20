@@ -145,7 +145,7 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                height: 54,
+                height: 60,
                 child: Row(
                   children: [
                     // 탭 (좌측 정렬)
@@ -171,7 +171,7 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
                               fontWeight: FontWeight.w700,
                               fontSize: 16,
                             ),
-                            labelPadding: const EdgeInsets.only(right: 32, top: 16, bottom: 16),
+                            labelPadding: const EdgeInsets.only(right: 32, top: 12, bottom: 12),
                             padding: EdgeInsets.zero,
                             dividerColor: Colors.transparent,
                             onTap: (index) {

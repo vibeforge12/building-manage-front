@@ -869,6 +869,7 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
         }
       },
       child: Container(
+        height: 104,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -897,15 +898,22 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
                 ),
               ),
             const SizedBox(height: 8),
-            Text(
-              deptName,
-              style: const TextStyle(
-                fontFamily: 'Pretendard',
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
-                color: Color(0xFF17191A),
+            Expanded(
+              child: Center(
+                child: Text(
+                  deptName,
+                  style: const TextStyle(
+                    fontFamily: 'Pretendard',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    height: 1.2,
+                    color: Color(0xFF17191A),
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              textAlign: TextAlign.center,
             ),
           ],
         ),

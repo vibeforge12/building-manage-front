@@ -356,12 +356,12 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
       );
     }
 
-    // 호수별로 그룹화: "101동 1001호" 형태로
+    // 동/호수별로 그룹화: "101동 1001호" 형태로
     final Map<String, List<Map<String, dynamic>>> groupedByHosu = {};
     for (final resident in _verifiedResidents) {
       final dong = resident['dong'] ?? '';
       final hosu = resident['hosu'] ?? '';
-      final key = hosu;
+      final key = [dong, hosu].where((e) => e.toString().isNotEmpty).join(' ');
 
       if (!groupedByHosu.containsKey(key)) {
         groupedByHosu[key] = [];
@@ -397,44 +397,40 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: residents.map((resident) {
-                  final residentId = resident['id']?.toString() ?? '';
                   final name = resident['name'] ?? '이름 없음';
 
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            name,
-                            style: const TextStyle(
-                              fontFamily: 'Pretendard',
-                              fontWeight: FontWeight.w700,
-                              fontSize: 16,
-                              color: Color(0xFF17191A),
-                            ),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () => _deleteVerifiedResident(residentId, name),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF006FFF),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Text(
-                              '삭제',
-                              style: TextStyle(
+                  return InkWell(
+                    onTap: () async {
+                      final result = await context.pushNamed(
+                        'residentDetail',
+                        extra: resident,
+                      );
+                      if (result == true && mounted) {
+                        await _loadVerifiedResidents();
+                      }
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              name,
+                              style: const TextStyle(
                                 fontFamily: 'Pretendard',
                                 fontWeight: FontWeight.w700,
-                                fontSize: 14,
-                                color: Colors.white,
+                                fontSize: 16,
+                                color: Color(0xFF17191A),
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                          const Icon(
+                            Icons.arrow_forward_ios,
+                            size: 16,
+                            color: Color(0xFF757B80),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 }).toList(),

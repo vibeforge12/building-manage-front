@@ -31,6 +31,7 @@ import 'package:building_manage_front/modules/admin/presentation/screens/staff_a
 import 'package:building_manage_front/modules/admin/presentation/screens/staff_management_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/staff_edit_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/resident_management_screen.dart';
+import 'package:building_manage_front/modules/admin/presentation/screens/resident_detail_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/notice_management_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/notice_create_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/complaint_management_screen.dart';
@@ -403,6 +404,16 @@ class RouterNotifier extends ChangeNotifier {
       path: '/admin/resident-management',
       name: 'residentManagement',
       builder: (context, state) => const ResidentManagementScreen(),
+    ),
+
+    // 입주민 상세 (관리자 전용)
+    GoRoute(
+      path: '/admin/resident-detail',
+      name: 'residentDetail',
+      builder: (context, state) {
+        final resident = state.extra as Map<String, dynamic>? ?? {};
+        return ResidentDetailScreen(resident: resident);
+      },
     ),
 
     // 공지사항 관리 (보호된 경로)

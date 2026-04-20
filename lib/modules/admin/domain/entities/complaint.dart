@@ -51,10 +51,10 @@ class AdminComplaint extends Equatable {
     final residentId = resident['id'] as String? ?? '';
     final residentName = resident['name'] as String? ?? '';
 
-    // 동/호수 조합 (dong: "101", hosu: "1003" → "101-1003")
+    // 동/호수 조합 (DB에 이미 "101동", "1003호" 형태로 저장되어 있음)
     final dong = resident['dong'] as String? ?? '';
     final hosu = resident['hosu'] as String? ?? '';
-    final residentUnit = [dong, hosu].where((e) => e.isNotEmpty).join('-');
+    final residentUnit = [dong, hosu].where((e) => e.isNotEmpty).join(' ');
 
     // isResolved 값으로 status 결정
     final isResolved = json['isResolved'] as bool? ?? false;

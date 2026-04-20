@@ -36,10 +36,6 @@ class CreateComplaintUseCase {
       throw Exception('제목을 입력해 주세요.');
     }
 
-    if (title.length < 3) {
-      throw Exception('제목은 최소 3자 이상이어야 합니다.');
-    }
-
     if (title.length > 500) {
       throw Exception('제목은 500자를 초과할 수 없습니다.');
     }

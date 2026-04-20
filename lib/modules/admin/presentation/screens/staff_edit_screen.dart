@@ -472,46 +472,49 @@ class _StaffEditScreenState extends ConsumerState<StaffEditScreen> {
                     ),
 
                     // 저장 버튼
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        border: Border(
-                          top: BorderSide(
-                            color: Color(0xFFE8EEF2),
-                            width: 1,
-                          ),
-                        ),
-                      ),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: FilledButton(
-                          onPressed: _isSaving ? null : _saveStaff,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF006FFF),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                    SafeArea(
+                      top: false,
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          border: Border(
+                            top: BorderSide(
+                              color: Color(0xFFE8EEF2),
+                              width: 1,
                             ),
                           ),
-                          child: _isSaving
-                              ? const SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: FilledButton(
+                            onPressed: _isSaving ? null : _saveStaff,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFF006FFF),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: _isSaving
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
+                                  )
+                                : const Text(
+                                    '저장',
+                                    style: TextStyle(
+                                      fontFamily: 'Pretendard',
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 16,
+                                      color: Colors.white,
+                                    ),
                                   ),
-                                )
-                              : const Text(
-                                  '저장',
-                                  style: TextStyle(
-                                    fontFamily: 'Pretendard',
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 16,
-                                    color: Colors.white,
-                                  ),
-                                ),
+                          ),
                         ),
                       ),
                     ),

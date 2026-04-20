@@ -106,27 +106,30 @@ class ResidentApprovalCompletedScreen extends ConsumerWidget {
             ),
 
             // Footer Button
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: FilledButton(
-                onPressed: () async {
-                  // 승인 완료 화면을 봤다는 플래그 저장
-                  await _markApprovalAsShown(ref);
-                  context.goNamed('userDashboard');
-                },
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(56),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            SafeArea(
+              top: false,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: FilledButton(
+                  onPressed: () async {
+                    // 승인 완료 화면을 봤다는 플래그 저장
+                    await _markApprovalAsShown(ref);
+                    context.goNamed('userDashboard');
+                  },
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(56),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    backgroundColor: const Color(0xFF006FFF),
                   ),
-                  backgroundColor: const Color(0xFF006FFF),
-                ),
-                child: const Text(
-                  '홈으로 이동',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Pretendard',
+                  child: const Text(
+                    '홈으로 이동',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Pretendard',
+                    ),
                   ),
                 ),
               ),

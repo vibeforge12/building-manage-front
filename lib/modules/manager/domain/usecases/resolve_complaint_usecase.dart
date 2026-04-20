@@ -20,8 +20,8 @@ class ResolveComplaintUseCase {
       throw Exception('민원 ID가 유효하지 않습니다.');
     }
 
-    if (content.trim().length < 10) {
-      throw Exception('처리 내용은 최소 10자 이상이어야 합니다.');
+    if (content.trim().isEmpty) {
+      throw Exception('처리 내용을 입력해 주세요.');
     }
 
     // 레포지토리를 통해 API 호출

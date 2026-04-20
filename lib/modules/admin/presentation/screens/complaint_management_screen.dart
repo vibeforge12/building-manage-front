@@ -365,13 +365,8 @@ class _ComplaintListTile extends StatelessWidget {
     );
   }
 
-  /// 동호수 포맷팅 (101-1003 → 101동 1003호)
+  /// 동호수 포맷팅 (DB에 이미 "101동 1003호" 형태로 저장되어 그대로 반환)
   String _formatUnit(String unit) {
-    if (unit.isEmpty) return '';
-    final parts = unit.split('-');
-    if (parts.length == 2) {
-      return '${parts[0]}동 ${parts[1]}호';
-    }
     return unit;
   }
 
