@@ -27,6 +27,9 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
   List<Map<String, dynamic>> _notices = [];
   String? _noticesError;
 
+  // 출퇴근 버튼 연타 방지 (5초 쿨다운)
+  bool _isAttendanceCooldown = false;
+
   @override
   void initState() {
     super.initState();
@@ -179,7 +182,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
             child: Builder(
               builder: (context) {
                 final attendanceState = ref.watch(attendanceProvider);
-                final isButtonDisabled = attendanceState.isLoading || attendanceState.isInitFailed;
+                final isButtonDisabled = attendanceState.isLoading || attendanceState.isInitFailed || _isAttendanceCooldown;
 
                 return Container(
                   color: Colors.white,
@@ -219,7 +222,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                               ),
-                              child: attendanceState.isLoading
+                              child: (attendanceState.isLoading || _isAttendanceCooldown)
                                   ? const SizedBox(
                                       width: 20,
                                       height: 20,
@@ -243,10 +246,16 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                               ),
-                              child: const Text(
-                                '퇴근',
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                              ),
+                              child: (attendanceState.isLoading || _isAttendanceCooldown)
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0A66FF)),
+                                    )
+                                  : const Text(
+                                      '퇴근',
+                                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                                    ),
                             ),
                           ),
                         ],
@@ -402,34 +411,16 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
     );
   }
 
+  void _startAttendanceCooldown() {
+    setState(() => _isAttendanceCooldown = true);
+    Future.delayed(const Duration(seconds: 5), () {
+      if (mounted) {
+        setState(() => _isAttendanceCooldown = false);
+      }
+    });
+  }
+
   Future<void> _handleCheckIn(BuildContext context) async {
-    final attendanceState = ref.read(attendanceProvider);
-
-    // UI 가드: 이미 퇴근/출근 상태면 안내 (서버에서도 거절하지만, UX를 위해 유지)
-    if (attendanceState.isCheckedOut) {
-      await showCustomConfirmationDialog(
-        context: context,
-        title: '이미 퇴근 하셨습니다',
-        content: const Text('금일 근무가 완료되었습니다.'),
-        confirmText: '확인',
-        cancelText: '',
-        barrierDismissible: false,
-      );
-      return;
-    }
-
-    if (attendanceState.isCheckedIn) {
-      await showCustomConfirmationDialog(
-        context: context,
-        title: '',
-        content: const Text('이미 출근 처리가 완료되었습니다.', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20),),
-        confirmText: '확인',
-        cancelText: '',
-        barrierDismissible: false,
-      );
-      return;
-    }
-
     // 출근 확인 다이얼로그
     final confirmed = await showCustomConfirmationDialog(
       context: context,
@@ -442,13 +433,15 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
 
     if (confirmed != true || !context.mounted) return;
 
-    // 서버 권위 방식: 항상 서버에 요청하고, 결과에 따라 상태가 자동 동기화됨
+    // 5초 쿨다운 시작 (연타 방지)
+    _startAttendanceCooldown();
+
+    // 서버에 API 호출 → 서버가 모든 검증 담당
     final success = await ref.read(attendanceProvider.notifier).checkIn();
 
     if (!context.mounted) return;
 
     if (!success) {
-      // 실패 시 서버에서 동기화된 최신 상태 확인 후 안내
       final updatedState = ref.read(attendanceProvider);
       if (updatedState.error != null) {
         await showCustomConfirmationDialog(
@@ -464,34 +457,6 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
   }
 
   Future<void> _handleCheckOut(BuildContext context) async {
-    final attendanceState = ref.read(attendanceProvider);
-
-    // UI 가드: 이미 퇴근 상태면 안내
-    if (attendanceState.isCheckedOut) {
-      await showCustomConfirmationDialog(
-        context: context,
-        title: '이미 퇴근하였습니다',
-        content: const Text('퇴근 처리가 완료되었습니다.'),
-        confirmText: '확인',
-        cancelText: '',
-        barrierDismissible: false,
-      );
-      return;
-    }
-
-    // 출근하지 않은 경우
-    if (!attendanceState.isCheckedIn) {
-      await showCustomConfirmationDialog(
-        context: context,
-        title: '',
-        content: const Text('출근 처리 후 퇴근이 가능합니다.', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20),),
-        confirmText: '확인',
-        cancelText: '',
-        barrierDismissible: false,
-      );
-      return;
-    }
-
     // 퇴근 확인 다이얼로그
     final confirmed = await showCustomConfirmationDialog(
       context: context,
@@ -504,7 +469,10 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
 
     if (confirmed != true || !context.mounted) return;
 
-    // 서버 권위 방식: 항상 서버에 요청하고, 결과에 따라 상태가 자동 동기화됨
+    // 5초 쿨다운 시작 (연타 방지)
+    _startAttendanceCooldown();
+
+    // 서버에 API 호출 → 서버가 모든 검증 담당
     final success = await ref.read(attendanceProvider.notifier).checkOut();
 
     if (!context.mounted) return;
