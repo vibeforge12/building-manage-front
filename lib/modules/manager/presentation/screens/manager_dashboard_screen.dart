@@ -413,7 +413,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
 
   void _startAttendanceCooldown() {
     setState(() => _isAttendanceCooldown = true);
-    Future.delayed(const Duration(seconds: 5), () {
+    Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
         setState(() => _isAttendanceCooldown = false);
       }
