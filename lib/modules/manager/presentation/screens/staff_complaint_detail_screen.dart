@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:building_manage_front/modules/manager/data/datasources/staff_complaints_remote_datasource.dart';
+import 'package:building_manage_front/shared/widgets/full_screen_image_viewer.dart';
 
 class StaffComplaintDetailScreen extends StatefulWidget {
   final String complaintId;
@@ -209,13 +210,18 @@ class _StaffComplaintDetailScreenState extends State<StaffComplaintDetailScreen>
                         // 이미지
                         if (_complaintData?['imageUrl'] != null &&
                             (_complaintData?['imageUrl'] as String?)?.isNotEmpty == true)
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(0),
-                            child: CachedNetworkImage(
-                              imageUrl: _complaintData!['imageUrl'] as String,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: 240,
+                          GestureDetector(
+                            onTap: () => FullScreenImageViewer.show(
+                              context,
+                              _complaintData!['imageUrl'] as String,
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(0),
+                              child: CachedNetworkImage(
+                                imageUrl: _complaintData!['imageUrl'] as String,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: 240,
                               progressIndicatorBuilder: (context, url, downloadProgress) {
                                 return Container(
                                   color: const Color(0xFFF2F8FC),
@@ -237,6 +243,7 @@ class _StaffComplaintDetailScreenState extends State<StaffComplaintDetailScreen>
                                     color: Color(0xFFA4ADB2),
                                   ),
                                 ),
+                              ),
                               ),
                             ),
                           ),
@@ -456,14 +463,17 @@ class _StaffComplaintDetailScreenState extends State<StaffComplaintDetailScreen>
                                         if (imageUrl != null && imageUrl.isNotEmpty)
                                           Padding(
                                             padding: const EdgeInsets.only(top: 12),
-                                            child: ClipRRect(
-                                              borderRadius: BorderRadius.circular(8),
-                                              child: Image.network(
-                                                imageUrl,
-                                                fit: BoxFit.cover,
-                                                width: double.infinity,
-                                                errorBuilder: (context, error, stackTrace) =>
-                                                    const SizedBox.shrink(),
+                                            child: GestureDetector(
+                                              onTap: () => FullScreenImageViewer.show(context, imageUrl),
+                                              child: ClipRRect(
+                                                borderRadius: BorderRadius.circular(8),
+                                                child: Image.network(
+                                                  imageUrl,
+                                                  fit: BoxFit.cover,
+                                                  width: double.infinity,
+                                                  errorBuilder: (context, error, stackTrace) =>
+                                                      const SizedBox.shrink(),
+                                                ),
                                               ),
                                             ),
                                           ),

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
+import 'package:building_manage_front/shared/widgets/full_screen_image_viewer.dart';
 
 class UserComplaintDetailScreen extends StatefulWidget {
   final String complaintId;
@@ -31,7 +31,7 @@ class _UserComplaintDetailScreenState extends State<UserComplaintDetailScreen> {
     if (dateString == null) return '';
     try {
       final dateTime = DateTime.parse(dateString).toLocal();
-      return DateFormat('yyyy-MM-dd HH:mm').format(dateTime);
+      return DateFormat('yyyy.MM.dd HH:mm').format(dateTime);
     } catch (e) {
       return '';
     }
@@ -39,27 +39,252 @@ class _UserComplaintDetailScreenState extends State<UserComplaintDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isResolved = _complaint['isResolved'] == true;
+    final imageUrl = _complaint['imageUrl'] as String?;
+    final resident = _complaint['resident'] as Map<String, dynamic>?;
+    final residentName = resident?['name'] as String? ?? '거주자명';
+    final residentDong = resident?['dong'] as String? ?? '';
+    final residentHosu = resident?['hosu'] as String? ?? '';
+    final unit = [residentDong, residentHosu].where((e) => e.toString().isNotEmpty).join(' ');
+    final title = _complaint['title'] as String? ?? '제목없음';
+    final content = _complaint['content'] as String? ?? '';
+    final results = _complaint['results'] as List? ?? [];
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Column(
-          children: [
-            // 고정 헤더 (스크롤되지 않음)
-            Container(
-              height: 48,
-              color: Colors.white,
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, size: 24, color: Color(0xFF17191A)),
-                    onPressed: () => context.pop(),
-                    padding: const EdgeInsets.all(12),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 네비게이션 바
+              Container(
+                height: 48,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    bottom: BorderSide(color: Color(0xFFE8EEF2), width: 1),
                   ),
-                  const Expanded(
-                    child: Align(
-                      alignment: Alignment.center,
+                ),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, size: 24),
+                      onPressed: () => context.pop(),
+                      padding: const EdgeInsets.all(12),
+                    ),
+                    const Expanded(
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: Text(
+                          '민원 상세',
+                          style: TextStyle(
+                            fontFamily: 'Pretendard',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                            color: Color(0xFF17191A),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 48),
+                  ],
+                ),
+              ),
+              // 이미지
+              if (imageUrl != null && imageUrl.isNotEmpty)
+                GestureDetector(
+                  onTap: () => FullScreenImageViewer.show(context, imageUrl),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(0),
+                    child: CachedNetworkImage(
+                      imageUrl: imageUrl,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: 240,
+                    progressIndicatorBuilder: (context, url, downloadProgress) => Container(
+                      color: const Color(0xFFF2F8FC),
+                      height: 240,
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          value: downloadProgress.progress,
+                          color: const Color(0xFF006FFF),
+                        ),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      color: const Color(0xFFF2F8FC),
+                      height: 240,
+                      child: const Center(child: Icon(Icons.error, color: Color(0xFFA4ADB2))),
+                    ),
+                    ),
+                  ),
+                ),
+              // 처리 상태
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      '처리 상태',
+                      style: TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: Color(0xFF17191A),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isResolved
+                            ? const Color(0xFFECFDF5)
+                            : const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       child: Text(
-                        '내 민원 보기',
+                        isResolved ? '처리 완료' : '미처리',
+                        style: TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                          color: isResolved
+                              ? const Color(0xFF059669)
+                              : const Color(0xFFD97706),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(height: 1, color: const Color(0xFFE8EEF2)),
+              // 접수 시간
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      '접수 시간',
+                      style: TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: Color(0xFF17191A),
+                      ),
+                    ),
+                    Text(
+                      _formatDate(_complaint['createdAt'] as String?),
+                      style: const TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w400,
+                        fontSize: 14,
+                        color: Color(0xFF757B80),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(height: 1, color: const Color(0xFFE8EEF2)),
+              // 작성자
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '작성자',
+                      style: TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: Color(0xFF17191A),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      unit.isEmpty ? residentName : '$residentName ($unit)',
+                      style: const TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w400,
+                        fontSize: 14,
+                        color: Color(0xFF17191A),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(height: 1, color: const Color(0xFFE8EEF2)),
+              // 제목
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '제목',
+                      style: TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: Color(0xFF17191A),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w400,
+                        fontSize: 16,
+                        color: Color(0xFF17191A),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(height: 1, color: const Color(0xFFE8EEF2)),
+              // 내용
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '내용',
+                      style: TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: Color(0xFF17191A),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      content,
+                      style: const TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w400,
+                        fontSize: 14,
+                        color: Color(0xFF17191A),
+                        height: 1.6,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // 처리 내용
+              if (isResolved && results.isNotEmpty) ...[
+                Container(height: 8, color: const Color(0xFFF2F8FC)),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '처리 내용',
                         style: TextStyle(
                           fontFamily: 'Pretendard',
                           fontWeight: FontWeight.w700,
@@ -67,351 +292,62 @@ class _UserComplaintDetailScreenState extends State<UserComplaintDetailScreen> {
                           color: Color(0xFF17191A),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 48),
-                ],
-              ),
-            ),
-            // 콘텐츠 (스크롤 가능)
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    // 원본 민원 댓글
-                    _buildComplaintComment(_complaint),
-
-                    // 처리 결과가 있을 경우
-                    if (_complaint['isResolved'] == true &&
-                        (_complaint['results'] as List?)?.isNotEmpty == true)
-                      ...[
-                        // 처리 결과 댓글들
-                        ...(_complaint['results'] as List<dynamic>)
-                            .map((result) => _buildResultComment(result))
-                            .toList(),
-                      ]
-                    else if (_complaint['isResolved'] != true)
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFEEEE6),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Row(
-                            children: [
-                              Icon(
-                                Icons.info_outline,
-                                size: 16,
-                                color: Color(0xFFFF6B35),
+                      const SizedBox(height: 12),
+                      ...results.map((result) {
+                        final resultContent = result['content'] as String? ?? '';
+                        final resultImageUrl = result['imageUrl'] as String?;
+                        final resultCreatedAt = result['createdAt'] as String?;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (resultCreatedAt != null)
+                              Text(
+                                _formatDate(resultCreatedAt),
+                                style: const TextStyle(
+                                  fontFamily: 'Pretendard',
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 12,
+                                  color: Color(0xFF757B80),
+                                ),
                               ),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  '처리 중입니다. 곧 결과를 알려드리겠습니다.',
-                                  style: TextStyle(
-                                    fontFamily: 'Pretendard',
-                                    fontWeight: FontWeight.w400,
-                                    fontSize: 12,
-                                    color: Color(0xFFFF6B35),
+                            const SizedBox(height: 8),
+                            Text(
+                              resultContent,
+                              style: const TextStyle(
+                                fontFamily: 'Pretendard',
+                                fontWeight: FontWeight.w400,
+                                fontSize: 14,
+                                color: Color(0xFF17191A),
+                                height: 1.6,
+                              ),
+                            ),
+                            if (resultImageUrl != null && resultImageUrl.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 12),
+                                child: GestureDetector(
+                                  onTap: () => FullScreenImageViewer.show(context, resultImageUrl),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.network(
+                                      resultImageUrl,
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      errorBuilder: (context, error, stackTrace) =>
+                                          const SizedBox.shrink(),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                    const SizedBox(height: 22),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// 원본 민원 댓글 구성
-  Widget _buildComplaintComment(Map<String, dynamic> complaint) {
-    final title = complaint['title'] as String? ?? '';
-    final content = complaint['content'] as String? ?? '';
-    final imageUrl = complaint['imageUrl'] as String?;
-    final createdAt = complaint['createdAt'] as String?;
-    final departmentName = (complaint['department'] as Map<String, dynamic>?)
-        ?['name'] as String? ?? '부서명';
-    final isResolved = complaint['isResolved'] as bool? ?? false;
-
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 사용자 정보 + 시간
-          Row(
-            children: [
-              const Icon(Icons.person, size: 20, color: Color(0xFF464A4D)),
-              const SizedBox(width: 8),
-              const Text(
-                '나',
-                style: TextStyle(
-                  fontFamily: 'Pretendard',
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                  color: Color(0xFF17191A),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                _formatDate(createdAt),
-                style: const TextStyle(
-                  fontFamily: 'Pretendard',
-                  fontWeight: FontWeight.w400,
-                  fontSize: 12,
-                  color: Color(0xFF757B80),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // 부서 정보
-          Row(
-            children: [
-              const Icon(Icons.business, size: 16, color: Color(0xFF757B80)),
-              const SizedBox(width: 8),
-              Text(
-                '부서: $departmentName',
-                style: const TextStyle(
-                  fontFamily: 'Pretendard',
-                  fontWeight: FontWeight.w400,
-                  fontSize: 12,
-                  color: Color(0xFF757B80),
-                ),
-              ),
-              const SizedBox(width: 8),
-              // 상태 배지
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isResolved ? const Color(0xFFEEF5FF) : const Color(0xFFFEEEE6),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  isResolved ? '처리완료' : '처리필요',
-                  style: TextStyle(
-                    fontFamily: 'Pretendard',
-                    fontWeight: FontWeight.w600,
-                    fontSize: 11,
-                    color: isResolved ? const Color(0xFF006FFF) : const Color(0xFFFF6B35),
+                            const SizedBox(height: 8),
+                          ],
+                        );
+                      }),
+                    ],
                   ),
                 ),
-              ),
+              ],
             ],
           ),
-          const SizedBox(height: 8),
-
-          // 제목
-          Text(
-            '제목: $title',
-            style: const TextStyle(
-              fontFamily: 'Pretendard',
-              fontWeight: FontWeight.w700,
-              fontSize: 16,
-              color: Color(0xFF17191A),
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          // 내용
-          Text(
-            content,
-            style: const TextStyle(
-              fontFamily: 'Pretendard',
-              fontWeight: FontWeight.w400,
-              fontSize: 14,
-              color: Color(0xFF464A4D),
-              height: 1.6,
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // 이미지
-          if (imageUrl != null)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: CachedNetworkImage(
-                imageUrl: imageUrl,
-                fit: BoxFit.cover,
-                placeholder: (context, url) {
-                  return Container(
-                    height: 200,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF2F8FC),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFF006FFF),
-                        strokeWidth: 2,
-                      ),
-                    ),
-                  );
-                },
-                errorWidget: (context, url, error) {
-                  return Container(
-                    height: 200,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFEBEE),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.error_outline,
-                        size: 48,
-                        color: Color(0xFFFF6B6B),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  /// 처리 결과 댓글 구성
-  Widget _buildResultComment(dynamic result) {
-    final content = result['content'] as String? ?? '';
-    final imageUrl = result['imageUrl'] as String?;
-    final createdAt = result['createdAt'] as String?;
-
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 담당자 정보 + 시간
-          Row(
-            children: [
-              const Icon(Icons.verified, size: 20, color: Color(0xFF006FFF)),
-              const SizedBox(width: 8),
-              const Text(
-                '담당자',
-                style: TextStyle(
-                  fontFamily: 'Pretendard',
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                  color: Color(0xFF17191A),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                _formatDate(createdAt),
-                style: const TextStyle(
-                  fontFamily: 'Pretendard',
-                  fontWeight: FontWeight.w400,
-                  fontSize: 12,
-                  color: Color(0xFF757B80),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // 처리 내용
-          Text(
-            content,
-            style: const TextStyle(
-              fontFamily: 'Pretendard',
-              fontWeight: FontWeight.w400,
-              fontSize: 14,
-              color: Color(0xFF464A4D),
-              height: 1.6,
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // 처리 이미지
-          if (imageUrl != null)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: CachedNetworkImage(
-                imageUrl: imageUrl,
-                fit: BoxFit.cover,
-                placeholder: (context, url) {
-                  return Container(
-                    height: 200,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF2F8FC),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFF006FFF),
-                        strokeWidth: 2,
-                      ),
-                    ),
-                  );
-                },
-                errorWidget: (context, url, error) {
-                  return Container(
-                    height: 200,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFEBEE),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.error_outline,
-                        size: 48,
-                        color: Color(0xFFFF6B6B),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-
-          const SizedBox(height: 16),
-
-          // 상태 배지
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: const Color(0xFFEEF5FF),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: const Text(
-              '처리완료',
-              style: TextStyle(
-                fontFamily: 'Pretendard',
-                fontWeight: FontWeight.w600,
-                fontSize: 11,
-                color: Color(0xFF006FFF),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 진행 라인
-  Widget _buildProgressLine() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Column(
-          children: [
-            Container(
-              width: 2,
-              height: 32,
-              color: const Color(0xFFE8EEF2),
-            ),
-          ],
         ),
       ),
     );

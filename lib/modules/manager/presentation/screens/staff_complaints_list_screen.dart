@@ -304,19 +304,18 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
 
                                 final isResolved = complaint['isResolved'] as bool? ?? false;
 
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 8),
-                                  child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                    children: [
-                                      // 좌측: 제목 및 거주자 정보 (탭 가능)
-                                      Expanded(
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            if (complaintId != null) {
-                                              context.push('/manager/complaint-detail/$complaintId');
-                                            }
-                                          },
+                                return InkWell(
+                                  onTap: () {
+                                    if (complaintId != null) {
+                                      context.push('/manager/complaint-detail/$complaintId');
+                                    }
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        Expanded(
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             mainAxisAlignment: MainAxisAlignment.center,
@@ -334,7 +333,7 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
                                               ),
                                               const SizedBox(height: 4),
                                               Text(
-                                                '$dong $hosu $residentName',
+                                                '$dong $hosu $residentName'.trim(),
                                                 style: const TextStyle(
                                                   fontFamily: 'Pretendard',
                                                   fontWeight: FontWeight.w400,
@@ -345,68 +344,25 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
                                             ],
                                           ),
                                         ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      SizedBox(
-                                        width: 40,
-                                        height: 32,
-                                        child: ElevatedButton(
-                                          onPressed: () {
-                                            // 탭에 따라 다른 동작
-                                            if (complaintId != null) {
-                                              if (_tabIndex == 0) {
-                                                // 미완료 민원: 처리 등록 화면으로 이동
-                                                context.push(
-                                                  '/manager/complaint-resolve/$complaintId',
-                                                  extra: title,
-                                                );
-                                              } else {
-                                                // 처리된 민원: 상세 조회 화면으로 이동
-                                                context.push('/manager/complaint-detail/$complaintId');
-                                              }
-                                            }
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.white,
-                                            foregroundColor: const Color(0xFF464A4D),
-                                            elevation: 0,
-                                            side: const BorderSide(
-                                              color: Color(0xFFE8EEF2),
-                                              width: 1,
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(6),
-                                            ),
-                                            padding: EdgeInsets.zero,
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: isResolved ? const Color(0xFFEEF5FF) : const Color(0xFFFEEEE6),
+                                            borderRadius: BorderRadius.circular(4),
                                           ),
                                           child: Text(
-                                            _tabIndex == 0 ? '확인' : '보기',
-                                            style: const TextStyle(
+                                            isResolved ? '처리완료' : '처리필요',
+                                            style: TextStyle(
                                               fontFamily: 'Pretendard',
                                               fontWeight: FontWeight.w600,
-                                              fontSize: 12,
+                                              fontSize: 11,
+                                              color: isResolved ? const Color(0xFF006FFF) : const Color(0xFFFF6B35),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: isResolved ? const Color(0xFFEEF5FF) : const Color(0xFFFEEEE6),
-                                          borderRadius: BorderRadius.circular(4),
-                                        ),
-                                        child: Text(
-                                          isResolved ? '처리완료' : '처리필요',
-                                          style: TextStyle(
-                                            fontFamily: 'Pretendard',
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 11,
-                                            color: isResolved ? const Color(0xFF006FFF) : const Color(0xFFFF6B35),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 );
                               },

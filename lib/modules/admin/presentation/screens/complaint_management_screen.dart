@@ -13,14 +13,13 @@ class ComplaintManagementScreen extends ConsumerStatefulWidget {
 }
 
 class _ComplaintManagementScreenState extends ConsumerState<ComplaintManagementScreen> {
-  int _selectedTabIndex = 0;
+  int _tabIndex = 0; // 0: 받은 민원, 1: 처리된 민원
   int _currentPage = 1;
   final int _pageSize = 20;
 
   @override
   void initState() {
     super.initState();
-    // 화면이 열릴 때마다 데이터 새로고침
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _refreshComplaintData();
     });
@@ -29,348 +28,316 @@ class _ComplaintManagementScreenState extends ConsumerState<ComplaintManagementS
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // 화면이 다시 활성화될 때 데이터 새로고침
     final route = ModalRoute.of(context);
     if (route != null && route.isCurrent) {
       _refreshComplaintData();
     }
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
-  void _onTabChanged(int index) {
+  void _changeTab(int index) {
     setState(() {
-      _selectedTabIndex = index;
+      _tabIndex = index;
       _currentPage = 1;
     });
-    // 탭 변경 시 데이터 새로고침
     _refreshComplaintData();
   }
 
   void _refreshComplaintData() {
-    // 탭에 따라 해당 provider를 무효화하여 새로운 데이터를 요청
-    switch (_selectedTabIndex) {
-      case 0:
-        ref.refresh(getAllComplaintsUseCaseProvider);
-        break;
-      case 1:
-        ref.refresh(getPendingComplaintsUseCaseProvider);
-        break;
-      case 2:
-        ref.refresh(getResolvedComplaintsUseCaseProvider);
-        break;
+    if (_tabIndex == 0) {
+      ref.refresh(getPendingComplaintsUseCaseProvider);
+    } else {
+      ref.refresh(getResolvedComplaintsUseCaseProvider);
     }
-  }
-
-  Future<void> _onComplaintTap(String complaintId) async {
-    context.push('/admin/complaint-detail/$complaintId');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF464A4D)),
-          onPressed: () => context.pop(),
-        ),
-        title: const Text(
-          '민원 관리',
-          style: TextStyle(
-            fontFamily: 'Pretendard',
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-            color: Color(0xFF464A4D),
-          ),
-        ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(
-            height: 1,
-            color: const Color(0xFFE8EEF2),
-          ),
-        ),
-      ),
-      body: Column(
-        children: [
-          // Chips Tab Style (전체 / 신규 민원 / 완료된 민원)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            child: Row(
-              spacing: 8,
-              children: [
-                _buildChip(0, '전체'),
-                _buildChip(1, '신규 민원'),
-                _buildChip(2, '완료된 민원'),
-              ],
-            ),
-          ),
-
-          // Tab Content
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: _buildComplaintListForTab(_selectedTabIndex),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChip(int index, String label) {
-    final isSelected = _selectedTabIndex == index;
-    return GestureDetector(
-      onTap: () => _onTabChanged(index),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF006FFF) : Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF006FFF) : const Color(0xFFE8EEF2),
-            width: 1,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Pretendard',
-            fontWeight: FontWeight.w700,
-            fontSize: 14,
-            color: isSelected ? Colors.white : const Color(0xFF464A4D),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildComplaintListForTab(int tabIndex) {
-    // 탭 인덱스에 따라 적절한 useCase 선택
-    late dynamic useCase;
-
-    switch (tabIndex) {
-      case 0: // 전체 민원
-        useCase = ref.watch(getAllComplaintsUseCaseProvider);
-        break;
-      case 1: // 신규 민원
-        useCase = ref.watch(getPendingComplaintsUseCaseProvider);
-        break;
-      case 2: // 완료된 민원
-        useCase = ref.watch(getResolvedComplaintsUseCaseProvider);
-        break;
-      default:
-        useCase = ref.watch(getAllComplaintsUseCaseProvider);
-    }
-
-    return _buildComplaintList(
-      useCase: useCase,
-      page: _currentPage,
-    );
-  }
-
-  Widget _buildComplaintList({
-    required dynamic useCase,
-    required int page,
-  }) {
-    return FutureBuilder(
-      future: useCase.execute(page: page, limit: _pageSize),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF006FFF)),
-          );
-        }
-
-        if (snapshot.hasError) {
-          return const Center(
-            child: Text(
-              '아직 등록된 민원이 없습니다.',
-              style: TextStyle(
-                fontFamily: 'Pretendard',
-                fontWeight: FontWeight.w500,
-                fontSize: 14,
-                color: Color(0xFFA4ADB2),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // 네비게이션 바
+            Container(
+              height: 48,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  bottom: BorderSide(color: Color(0xFFE8EEF2), width: 1),
+                ),
               ),
-            ),
-          );
-        }
-
-        if (!snapshot.hasData) {
-          return const Center(
-            child: Text(
-              '아직 등록된 민원이 없습니다.',
-              style: TextStyle(
-                fontFamily: 'Pretendard',
-                fontWeight: FontWeight.w500,
-                fontSize: 14,
-                color: Color(0xFFA4ADB2),
-              ),
-            ),
-          );
-        }
-
-        final response = snapshot.data as PaginatedComplaintResponse?;
-        final complaints = response?.data ?? <AdminComplaint>[];
-
-        if (complaints.isEmpty) {
-          return const Center(
-            child: Text(
-              '아직 등록된 민원이 없습니다.',
-              style: TextStyle(
-                fontFamily: 'Pretendard',
-                fontWeight: FontWeight.w500,
-                fontSize: 14,
-                color: Color(0xFFA4ADB2),
-              ),
-            ),
-          );
-        }
-
-        return SingleChildScrollView(
-          child: Column(
-            children: [
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: complaints.length,
-                itemBuilder: (context, index) {
-                  final complaint = complaints[index];
-                  return _ComplaintListTile(
-                    complaint: complaint,
-                    onTap: () => _onComplaintTap(complaint.id),
-                  );
-                },
-              ),
-              // Pagination
-              if (response!.totalPages > 1)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 24),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton(
-                        onPressed: page > 1
-                            ? () {
-                                setState(() {
-                                  _currentPage--;
-                                });
-                              }
-                            : null,
-                        icon: const Icon(Icons.chevron_left),
-                      ),
-                      Text(
-                        '$page / ${response.totalPages}',
-                        style: const TextStyle(
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, size: 24),
+                    onPressed: () => context.pop(),
+                    padding: const EdgeInsets.all(12),
+                  ),
+                  const Expanded(
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: Text(
+                        '민원 관리',
+                        style: TextStyle(
                           fontFamily: 'Pretendard',
-                          fontWeight: FontWeight.w500,
-                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: Color(0xFF17191A),
                         ),
                       ),
-                      IconButton(
-                        onPressed: page < response.totalPages
-                            ? () {
-                                setState(() {
-                                  _currentPage++;
-                                });
-                              }
-                            : null,
-                        icon: const Icon(Icons.chevron_right),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _ComplaintListTile extends StatelessWidget {
-  final AdminComplaint complaint;
-  final VoidCallback onTap;
-
-  const _ComplaintListTile({
-    required this.complaint,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF2F8FC),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            // 왼쪽 컨텐츠 영역
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 제목 (Label L: 16px, 700, #17191A)
-                  Text(
-                    complaint.title,
-                    style: const TextStyle(
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                      height: 1.5,
-                      color: Color(0xFF17191A),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 6),
-                  // 입주민 이름 + 부서 + 동호수 한 줄로 (Caption M: 14px, 400, #464A4D)
-                  Text(
-                    '${complaint.residentName} · ${complaint.departmentName} · ${_formatUnit(complaint.residentUnit)}',
-                    style: const TextStyle(
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w400,
-                      fontSize: 14,
-                      height: 1.4285714285714286,
-                      color: Color(0xFF464A4D),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  const SizedBox(width: 48),
                 ],
               ),
             ),
-            const SizedBox(width: 8),
-            // 오른쪽 화살표
-            const Icon(
-              Icons.chevron_right,
-              color: Color(0xFF757B80),
-              size: 24,
+            // 탭 바 (Segmented Controls)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: const BoxDecoration(color: Colors.white),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF2F8FC),
+                  borderRadius: BorderRadius.circular(9),
+                  border: Border.all(color: const Color(0xFFE8EEF2), width: 1),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(child: _buildTabButton('받은 민원', 0)),
+                    Expanded(child: _buildTabButton('처리된 민원', 1)),
+                  ],
+                ),
+              ),
             ),
+            // 콘텐츠
+            Expanded(child: _buildContent()),
           ],
         ),
       ),
     );
   }
 
-  /// 동호수 포맷팅 (DB에 이미 "101동 1003호" 형태로 저장되어 그대로 반환)
-  String _formatUnit(String unit) {
-    return unit;
+  Widget _buildTabButton(String label, int index) {
+    final isSelected = _tabIndex == index;
+    return GestureDetector(
+      onTap: () => _changeTab(index),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : Colors.transparent,
+          borderRadius: isSelected ? BorderRadius.circular(8) : BorderRadius.zero,
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  )
+                ]
+              : [],
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontFamily: 'Pretendard',
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+            fontSize: 14,
+            color: const Color(0xFF17191A),
+          ),
+        ),
+      ),
+    );
   }
 
-  String _formatDate(DateTime dateTime) {
-    return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}';
+  Widget _buildContent() {
+    final Future<PaginatedComplaintResponse> future = _tabIndex == 0
+        ? ref.watch(getPendingComplaintsUseCaseProvider).execute(page: _currentPage, limit: _pageSize)
+        : ref.watch(getResolvedComplaintsUseCaseProvider).execute(page: _currentPage, limit: _pageSize);
+
+    return FutureBuilder<PaginatedComplaintResponse>(
+      future: future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(
+              strokeWidth: 2.5,
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF006FFF)),
+            ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Color(0xFF757B80)),
+                const SizedBox(height: 16),
+                const Text(
+                  '민원을 불러올 수 없습니다.',
+                  style: TextStyle(
+                    fontFamily: 'Pretendard',
+                    fontWeight: FontWeight.w400,
+                    fontSize: 14,
+                    color: Color(0xFF757B80),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: _refreshComplaintData,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF006FFF),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  ),
+                  child: const Text(
+                    '다시 시도',
+                    style: TextStyle(
+                      fontFamily: 'Pretendard',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        final data = snapshot.data;
+        final items = data?.data ?? [];
+        final total = data?.total ?? 0;
+
+        if (items.isEmpty) {
+          return const Center(
+            child: Text(
+              '민원이 없습니다.',
+              style: TextStyle(
+                fontFamily: 'Pretendard',
+                fontWeight: FontWeight.w400,
+                fontSize: 14,
+                color: Color(0xFF757B80),
+              ),
+            ),
+          );
+        }
+
+        return Column(
+          children: [
+            Expanded(
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                itemCount: items.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                itemBuilder: (context, index) {
+                  final complaint = items[index];
+                  final isResolved = complaint.status.toUpperCase() == 'COMPLETED';
+
+                  return InkWell(
+                    onTap: () => context.push('/admin/complaint-detail/${complaint.id}'),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // 좌측: 제목 및 거주자 정보
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  complaint.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontFamily: 'Pretendard',
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14,
+                                    color: Color(0xFF17191A),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${complaint.residentUnit} ${complaint.residentName}'.trim(),
+                                  style: const TextStyle(
+                                    fontFamily: 'Pretendard',
+                                    fontWeight: FontWeight.w400,
+                                    fontSize: 14,
+                                    color: Color(0xFF464A4D),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: isResolved ? const Color(0xFFEEF5FF) : const Color(0xFFFEEEE6),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              isResolved ? '처리완료' : '처리필요',
+                              style: TextStyle(
+                                fontFamily: 'Pretendard',
+                                fontWeight: FontWeight.w600,
+                                fontSize: 11,
+                                color: isResolved ? const Color(0xFF006FFF) : const Color(0xFFFF6B35),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            // 페이지네이션
+            if (total > _pageSize)
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    top: BorderSide(color: Color(0xFFE8EEF2), width: 1),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (_currentPage > 1)
+                      ElevatedButton.icon(
+                        onPressed: () => setState(() => _currentPage -= 1),
+                        icon: const Icon(Icons.chevron_left),
+                        label: const Text('이전'),
+                      ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '$_currentPage / ${(total / _pageSize).ceil()}',
+                      style: const TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
+                        color: Color(0xFF464A4D),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    if (_currentPage < (total / _pageSize).ceil())
+                      ElevatedButton.icon(
+                        onPressed: () => setState(() => _currentPage += 1),
+                        icon: const Icon(Icons.chevron_right),
+                        label: const Text('다음'),
+                      ),
+                  ],
+                ),
+              ),
+          ],
+        );
+      },
+    );
   }
 }

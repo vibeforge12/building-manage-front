@@ -406,9 +406,9 @@ class _ComplaintResolveScreenState extends ConsumerState<ComplaintResolveScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     '처리 대상 민원',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Pretendard',
                       fontWeight: FontWeight.w500,
                       fontSize: 12,
