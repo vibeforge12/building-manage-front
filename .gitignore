@@ -50,3 +50,21 @@ android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
 ios/Runner/Runner.entitlements
 .claude/skills/gstack/
+
+# Fastlane
+ios/fastlane/report.xml
+ios/fastlane/Preview.html
+ios/fastlane/screenshots
+ios/fastlane/test_output
+android/fastlane/report.xml
+android/fastlane/Preview.html
+
+# Ruby / Bundler
+vendor/bundle/
+.bundle/
+
+# Sensitive credentials
+*.p8
+*.jks
+*.keystore
+android/key.properties

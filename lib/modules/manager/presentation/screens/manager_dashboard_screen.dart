@@ -441,7 +441,19 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
 
     if (!context.mounted) return;
 
-    if (!success) {
+    if (success) {
+      await showCustomConfirmationDialog(
+        context: context,
+        title: '출근 처리 완료',
+        content: const Text(
+          '출근 처리되었습니다.',
+          style: TextStyle(fontSize: 16),
+        ),
+        confirmText: '확인',
+        cancelText: '',
+        barrierDismissible: false,
+      );
+    } else {
       final updatedState = ref.read(attendanceProvider);
       if (updatedState.error != null) {
         await showCustomConfirmationDialog(
@@ -477,7 +489,19 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
 
     if (!context.mounted) return;
 
-    if (!success) {
+    if (success) {
+      await showCustomConfirmationDialog(
+        context: context,
+        title: '퇴근 처리 완료',
+        content: const Text(
+          '퇴근 처리되었습니다.',
+          style: TextStyle(fontSize: 16),
+        ),
+        confirmText: '확인',
+        cancelText: '',
+        barrierDismissible: false,
+      );
+    } else {
       final updatedState = ref.read(attendanceProvider);
       if (updatedState.error != null) {
         await showCustomConfirmationDialog(
