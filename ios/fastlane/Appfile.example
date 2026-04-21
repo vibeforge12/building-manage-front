@@ -1,0 +1,4 @@
+app_identifier("com.j2partners.buildingManageFront")
+apple_id("your-apple-id@example.com")
+team_id("YOUR_TEAM_ID")
+itc_team_id("YOUR_TEAM_ID")
