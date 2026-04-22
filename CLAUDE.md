@@ -936,50 +936,48 @@ Data Layer (DataSources, Repositories Implementation)
 
 ## 배포 및 빌드 설정
 
-### iOS 배포 설정 (ios/ 디렉토리)
+**모든 스토어 배포는 Fastlane 으로 수행한다.** 상세 절차·인증·트러블슈팅은 [`docs/배포_가이드.md`](docs/배포_가이드.md) 를 참조. CLAUDE(AI) 가 배포 관련 명령을 받으면 이 섹션과 배포 가이드를 함께 읽고 따를 것.
+
+### 배포 4가지 모드
+
+| 목적 | 명령 |
+|---|---|
+| 양쪽 프로덕션 (iOS App Store 심사 + Android Play Production) | `bundle exec fastlane release_production` |
+| 양쪽 내부 테스트 (iOS TestFlight + Android Play Internal) | `bundle exec fastlane release_internal` |
+| iOS 프로덕션만 | `cd ios && bundle exec fastlane ios production` |
+| iOS TestFlight만 | `cd ios && bundle exec fastlane ios beta` |
+| Android 프로덕션만 | `cd android && bundle exec fastlane android production` |
+| Android 내부 테스트만 | `cd android && bundle exec fastlane android internal` |
+
+`release_*` 레인은 자동으로 `bump_build` (pubspec.yaml 빌드번호 +1) 를 수행. 마케팅 버전 변경은 `bundle exec fastlane bump_version version:X.Y.Z` 를 별도로 먼저 실행.
+
+### 배포 핵심 원칙
+
+- **버전 단일 소스**: `pubspec.yaml` 의 `version: X.Y.Z+B` 가 iOS `CFBundleVersion` + Android `versionCode` 양쪽 공통. 플랫폼 간 버전 드리프트 금지
+- **versionCode 재사용 금지**: Play Store 는 `versionCode` 영구 유일. 업로드 실패 시 `bump_build` 후 재시도
+- **심사 후 수동 출시**: iOS / Android 모두 심사 통과 후 각 콘솔에서 사용자가 직접 "출시"/"게시" 클릭하는 것이 기본값 (관리되는 게시 ON, `automatic_release: false`)
+- **민감 파일 repo 외부**: 서명 키·API 키는 `../private_keys/` 에 있고 git 에 올라가지 않음. 세부 배치 규칙은 배포 가이드 §3 참조
+- **CocoaPods ↔ Bundler 충돌 주의**: `bundle exec fastlane ios <build 포함 레인>` 이 `pod install` 단계에서 종종 깨짐. 증상 발생 시 IPA 빌드는 `bundle exec` 밖에서 직접 실행하고 업로드만 fastlane 으로 (배포 가이드 §8.6)
+
+### 로컬 빌드 (기기에 직접 설치할 때)
+
 ```bash
-# 1. 프로비저닝 프로파일 및 코드사이닝 설정
-cd ios
-pod install                              # CocoaPods 의존성 설치
-
-# 2. Xcode에서 설정
-# - Runner 프로젝트 선택
-# - Signing & Capabilities 탭
-# - Team 선택 및 Bundle ID 설정
-# - Provisioning Profile 확인
-
-# 3. 빌드
-cd ..
-flutter build ios --release              # Production 빌드
+fvm flutter build apk --release && fvm flutter install --release -d <android-device-id>
+fvm flutter build ios --release && fvm flutter install --release -d <ios-device-id>
 ```
 
-### Android 배포 설정 (android/ 디렉토리)
-```bash
-# 1. 키스토어 생성 (처음 한 번)
-keytool -genkey -v -keystore ~/my-release-key.jks \
-  -keyalg RSA -keysize 2048 -validity 10000 -alias my-key-alias
-
-# 2. build.gradle 설정
-# android/app/build.gradle에서 signingConfigs 및 buildTypes 설정
-
-# 3. 빌드
-flutter build appbundle --release        # Google Play용 App Bundle
-flutter build apk --release              # APK 직접 배포용
-```
+**debug 빌드는 standalone 실행 불가** (Dart VM service attach 필요). 단순 기기 설치 테스트는 반드시 release 모드.
 
 ### Web 배포
 ```bash
-# 1. 빌드
 flutter build web --release
-
-# 2. 배포 (AWS S3, Netlify, Firebase Hosting 등)
-# build/web/ 디렉토리의 파일들을 호스팅 서비스에 업로드
+# build/web/ 디렉토리를 AWS S3 / Netlify / Firebase Hosting 등으로 업로드
 ```
 
-### 환경별 설정 관리
-- **Development**: API_DEBUG=true로 설정하여 LoggingInterceptor 활성화
+### 환경별 설정
+- **Development**: `API_DEBUG=true` (LoggingInterceptor 활성화)
 - **Staging**: 현재 기본값 (AWS Elastic Beanstalk 스테이징)
-- **Production**: API_DEBUG=false, 타임아웃 조정, HTTPS 강제화
+- **Production**: `API_DEBUG=false`, 타임아웃 조정, HTTPS 강제
 
 ## 성능 최적화 팁
 
