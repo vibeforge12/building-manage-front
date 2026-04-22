@@ -262,25 +262,47 @@ class _StaffComplaintDetailScreenState extends State<StaffComplaintDetailScreen>
                                   color: Color(0xFF17191A),
                                 ),
                               ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: _complaintData?['isResolved'] == true
-                                      ? const Color(0xFFECFDF5)
-                                      : const Color(0xFFFEF3C7),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  _complaintData?['isResolved'] == true ? '처리 완료' : '미처리',
-                                  style: TextStyle(
-                                    fontFamily: 'Pretendard',
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 12,
-                                    color: _complaintData?['isResolved'] == true
-                                        ? const Color(0xFF059669)
-                                        : const Color(0xFFD97706),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: _complaintData?['isResolved'] == true
+                                          ? const Color(0xFFECFDF5)
+                                          : const Color(0xFFFEF3C7),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      _complaintData?['isResolved'] == true ? '처리 완료' : '미처리',
+                                      style: TextStyle(
+                                        fontFamily: 'Pretendard',
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 12,
+                                        color: _complaintData?['isResolved'] == true
+                                            ? const Color(0xFF059669)
+                                            : const Color(0xFFD97706),
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFEFF6FF),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      (_complaintData?['department']?['name'] as String?) ?? '-',
+                                      style: const TextStyle(
+                                        fontFamily: 'Pretendard',
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 12,
+                                        color: Color(0xFF1D4ED8),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
