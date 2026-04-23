@@ -36,27 +36,33 @@ class AttendanceHistoryState {
     );
   }
 
-  /// 특정 날짜에 출근 기록이 있는지 확인
-  bool hasCheckInOnDate(int day) {
+  /// 특정 날짜(year/month/day 전부)에 출근 기록이 있는지 확인
+  bool hasCheckInOnDate(DateTime date) {
     return records.any((record) =>
         record.type == AttendanceRecordType.checkIn &&
-        record.createdAt.day == day);
+        record.createdAt.year == date.year &&
+        record.createdAt.month == date.month &&
+        record.createdAt.day == date.day);
   }
 
-  /// 특정 날짜에 퇴근 기록이 있는지 확인
-  bool hasCheckOutOnDate(int day) {
+  /// 특정 날짜(year/month/day 전부)에 퇴근 기록이 있는지 확인
+  bool hasCheckOutOnDate(DateTime date) {
     return records.any((record) =>
         record.type == AttendanceRecordType.checkOut &&
-        record.createdAt.day == day);
+        record.createdAt.year == date.year &&
+        record.createdAt.month == date.month &&
+        record.createdAt.day == date.day);
   }
 
   /// 특정 날짜의 출근 시간 가져오기
-  String? getCheckInTime(int day) {
+  String? getCheckInTime(DateTime date) {
     try {
       final record = records.firstWhere(
         (record) =>
             record.type == AttendanceRecordType.checkIn &&
-            record.createdAt.day == day,
+            record.createdAt.year == date.year &&
+            record.createdAt.month == date.month &&
+            record.createdAt.day == date.day,
       );
       final hour = record.createdAt.hour.toString().padLeft(2, '0');
       final minute = record.createdAt.minute.toString().padLeft(2, '0');
@@ -67,12 +73,14 @@ class AttendanceHistoryState {
   }
 
   /// 특정 날짜의 퇴근 시간 가져오기
-  String? getCheckOutTime(int day) {
+  String? getCheckOutTime(DateTime date) {
     try {
       final record = records.firstWhere(
         (record) =>
             record.type == AttendanceRecordType.checkOut &&
-            record.createdAt.day == day,
+            record.createdAt.year == date.year &&
+            record.createdAt.month == date.month &&
+            record.createdAt.day == date.day,
       );
       final hour = record.createdAt.hour.toString().padLeft(2, '0');
       final minute = record.createdAt.minute.toString().padLeft(2, '0');
@@ -93,20 +101,37 @@ class AttendanceHistoryNotifier extends StateNotifier<AttendanceHistoryState> {
           month: DateTime.now().month,
         ));
 
-  /// 월별 출퇴근 기록 조회
+  /// 월별 출퇴근 기록 조회.
+  /// 월 경계 세션 페어링을 위해 **이전 월 + 현재 월 + 다음 월** 3개 월을 병렬 조회하여 병합.
   Future<void> fetchMonthlyAttendance() async {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
+      // 이전 월 / 다음 월 계산
+      final prev = (state.month == 1)
+          ? (year: state.year - 1, month: 12)
+          : (year: state.year, month: state.month - 1);
+      final next = (state.month == 12)
+          ? (year: state.year + 1, month: 1)
+          : (year: state.year, month: state.month + 1);
 
-      final response = await _getMonthlyAttendanceUseCase.execute(
-        year: state.year,
-        month: state.month,
-      );
+      // 3개월 병렬 fetch
+      final responses = await Future.wait([
+        _getMonthlyAttendanceUseCase.execute(year: prev.year, month: prev.month),
+        _getMonthlyAttendanceUseCase.execute(year: state.year, month: state.month),
+        _getMonthlyAttendanceUseCase.execute(year: next.year, month: next.month),
+      ]);
+
+      // 병합 + 시간순 정렬
+      final merged = [
+        ...responses[0].records,
+        ...responses[1].records,
+        ...responses[2].records,
+      ]..sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
       state = state.copyWith(
         isLoading: false,
-        records: response.records,
+        records: merged,
       );
     } on ApiException catch (e) {
 

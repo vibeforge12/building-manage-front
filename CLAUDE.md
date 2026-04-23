@@ -6,6 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **다중 역할 기반의 건물 관리 Flutter 애플리케이션** - 4가지 사용자 타입(입주민/유저, 관리자, 담당자, 본사)을 지원하는 프로덕션급 앱입니다.
 
+> ⚠️ **폴더명 ↔ 역할 매핑 (반드시 기억)**:
+> - `resident/` = **입주민/유저** (일반 거주자)
+> - `admin/` = **관리자** (건물 관리자, 사무직, 출퇴근 없음)
+> - `manager/` = **담당자** (유지보수 직원, 출퇴근 있음) — "매니저" 아님
+> - `headquarters/` = **본사**
+>
+> 영어 폴더명을 한국어로 직역하지 말 것. `manager` 는 "담당자(직원)" 을 의미.
+
 ### 프로젝트 핵심 특징
 - **Clean Architecture**: 모든 6개 모듈에 완전한 data/domain/presentation 레이어 적용
 - **모듈별 완전 분리**: 각 사용자 역할이 독립적인 모듈로 구성 (151개 Dart 파일)

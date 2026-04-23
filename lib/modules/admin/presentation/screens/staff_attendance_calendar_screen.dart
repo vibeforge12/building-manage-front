@@ -194,7 +194,11 @@ class _StaffAttendanceCalendarScreenState
                         });
                       },
                       onPageChanged: (focusedDay) {
-                        _focusedDay = focusedDay;
+                        setState(() {
+                          _focusedDay = focusedDay;
+                          // 월 변경 시 선택일도 새 달로 동기화 → 하단 리스트도 새 달 기준
+                          _selectedDay = focusedDay;
+                        });
                         _loadMonthlyData();
                       },
                     ),
@@ -317,17 +321,30 @@ class _StaffAttendanceCalendarScreenState
                 ),
               ),
               if (hasRecord)
-                Text(
-                  [
-                    if (checkIn != null) timeFormat.format(checkIn),
-                    if (checkOut != null) '~ ${timeFormat.format(checkOut)}',
-                  ].join(' '),
-                  style: const TextStyle(
-                    fontFamily: 'Pretendard',
-                    fontWeight: FontWeight.w500,
-                    fontSize: 13,
-                    color: Color(0xFF10B981),
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    if (checkIn != null)
+                      Text(
+                        '${timeFormat.format(checkIn)} 출근',
+                        style: const TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: Color(0xFF006FFF),
+                        ),
+                      ),
+                    if (checkOut != null)
+                      Text(
+                        '${timeFormat.format(checkOut)} 퇴근',
+                        style: const TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: Color(0xFFFF1E00),
+                        ),
+                      ),
+                  ],
                 )
               else
                 const Text(
