@@ -138,19 +138,6 @@ class StaffDailyAttendance extends Equatable {
     );
   }
 
-  String get statusText {
-    switch (status) {
-      case 'WORKING':
-        return '근무중';
-      case 'LEFT':
-        return '퇴근';
-      case 'NOT_ARRIVED':
-        return '미출근';
-      default:
-        return status;
-    }
-  }
-
   @override
   List<Object?> get props => [staffId, name, department, checkIn, checkOut, status];
 }

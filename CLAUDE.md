@@ -505,9 +505,12 @@ API_DEBUG=true  # true이면 LoggingInterceptor 활성화
 
 ### 담당자 출퇴근 관리 (Manager Module)
 - **출퇴근 기록** (`AttendanceHistoryScreen`):
-  - table_calendar 위젯으로 월별 출퇴근 기록 표시
-  - 일별 출근/퇴근 시간 확인
-  - **API**: `ApiEndpoints.attendanceHistory` (GET)
+  - table_calendar 월별 캘린더 + 하단 record 단위 리스트
+  - **리스트 항목 = 각 record 하나** (페어링/근무시간 개념 없음). 출근=파랑, 퇴근=빨강 배지
+  - **자정 넘는 세션 지원**: 월 조회 시 이전/현재/다음 월 3개 월을 병렬 fetch 해서 병합
+  - **필터**: 날짜 선택 시 해당 날 records, 미선택 시 focused 월 records 만
+  - 오늘 셀 = 연한 파랑, 선택 셀 = 진한 파랑
+  - **API**: `ApiEndpoints.attendanceHistory` (GET, `year/month` 만)
   - **데이터소스**: `AttendanceRemoteDataSource`
 - **출퇴근 체크** (`ManagerDashboardScreen`):
   - 출근/퇴근 버튼으로 실시간 기록
@@ -529,6 +532,11 @@ API_DEBUG=true  # true이면 LoggingInterceptor 활성화
   - 담당자 정보 수정 (`StaffEditScreen`)
   - 담당자 계정 발급 (`StaffAccountIssuanceScreen`)
   - **데이터소스**: `StaffRemoteDataSource`
+- **담당자 출퇴근 조회** (`StaffAttendanceListScreen` / `StaffAttendanceCalendarScreen`):
+  - **라벨은 "근무 / 미출근" 2단계만 사용** (`WORKING` / `LEFT` 구분 X). 기준: 해당 날짜에 `checkIn` 또는 `checkOut` 중 하나라도 있으면 "근무"
+  - 이유: 과거 날짜 열람 화면이라 실시간 `근무중` / `퇴근` 구분이 의미 없고, 자정 넘는 세션을 자연스럽게 처리하기 위함 (22일 checkIn만 / 23일 checkOut만 → 둘 다 "근무")
+  - 백엔드는 기존 `status` enum (`WORKING`/`LEFT`/`NOT_ARRIVED`) 그대로 내려주지만 **프론트에서 UI 라벨을 재계산** → 기존 배포 앱 호환 유지
+  - Summary 카드도 2단계 (전체/근무/미출근) 로 재집계
 - **입주민 관리**:
   - 입주민 목록 조회 및 관리 (`ResidentManagementScreen`)
   - **데이터소스**: `ResidentRemoteDataSource`

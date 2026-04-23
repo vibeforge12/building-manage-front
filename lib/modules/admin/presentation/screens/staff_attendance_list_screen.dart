@@ -140,7 +140,7 @@ class _StaffAttendanceListScreenState extends ConsumerState<StaffAttendanceListS
           ),
 
           // Summary 카드
-          if (_dailyData != null) _buildSummaryCards(_dailyData!.summary),
+          if (_dailyData != null) _buildSummaryCards(_dailyData!.staffs),
 
           // 직원 리스트
           Expanded(
@@ -167,18 +167,22 @@ class _StaffAttendanceListScreenState extends ConsumerState<StaffAttendanceListS
     );
   }
 
-  Widget _buildSummaryCards(AttendanceSummary summary) {
+  Widget _buildSummaryCards(List<StaffDailyAttendance> staffs) {
+    // 출근/퇴근 중 하나라도 있으면 "근무" (자정 넘는 세션 자동 처리)
+    final working = staffs
+        .where((s) => s.checkIn != null || s.checkOut != null)
+        .length;
+    final notArrived = staffs.length - working;
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          _buildSummaryItem('전체', summary.total, const Color(0xFF006FFF)),
+          _buildSummaryItem('전체', staffs.length, const Color(0xFF006FFF)),
           const SizedBox(width: 8),
-          _buildSummaryItem('근무중', summary.working, const Color(0xFF10B981)),
+          _buildSummaryItem('근무', working, const Color(0xFF006FFF)),
           const SizedBox(width: 8),
-          _buildSummaryItem('퇴근', summary.left, const Color(0xFFEF4444)),
-          const SizedBox(width: 8),
-          _buildSummaryItem('미출근', summary.notArrived, const Color(0xFF9CA3AF)),
+          _buildSummaryItem('미출근', notArrived, const Color(0xFF9CA3AF)),
         ],
       ),
     );
@@ -220,22 +224,11 @@ class _StaffAttendanceListScreenState extends ConsumerState<StaffAttendanceListS
   }
 
   Widget _buildStaffCard(StaffDailyAttendance staff) {
-    Color statusColor;
-    Color statusBgColor;
-
-    switch (staff.status) {
-      case 'WORKING':
-        statusColor = const Color(0xFF10B981);
-        statusBgColor = const Color(0xFFECFDF5);
-        break;
-      case 'LEFT':
-        statusColor = const Color(0xFFEF4444);
-        statusBgColor = const Color(0xFFFEF2F2);
-        break;
-      default:
-        statusColor = const Color(0xFF9CA3AF);
-        statusBgColor = const Color(0xFFF3F4F6);
-    }
+    // 출근/퇴근 기록이 하나라도 있으면 "근무" (자정 넘는 세션 포함)
+    final hasRecord = staff.checkIn != null || staff.checkOut != null;
+    final statusLabel = hasRecord ? '근무' : '미출근';
+    final statusColor = hasRecord ? const Color(0xFF006FFF) : const Color(0xFF9CA3AF);
+    final statusBgColor = hasRecord ? const Color(0xFFEFF6FF) : const Color(0xFFF3F4F6);
 
     final timeFormat = DateFormat('HH:mm');
 
@@ -314,7 +307,7 @@ class _StaffAttendanceListScreenState extends ConsumerState<StaffAttendanceListS
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
-              staff.statusText,
+              statusLabel,
               style: TextStyle(
                 fontFamily: 'Pretendard',
                 fontWeight: FontWeight.w600,
