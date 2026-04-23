@@ -1,0 +1,78 @@
+default_platform(:android)
+
+# Google Play Service Account JSON 경로 (실제 값으로 교체)
+JSON_KEY_FILE = File.expand_path("../../../private_keys/play-service-account.json", __dir__)
+AAB_PATH = File.expand_path("../../build/app/outputs/bundle/release/app-release.aab", __dir__)
+PACKAGE_NAME = "com.your.package.name"
+
+platform :android do
+  desc "Flutter Android 릴리즈 빌드 (.aab 생성)"
+  lane :build do
+    sh("cd ../.. && fvm flutter clean")
+    sh("cd ../.. && fvm flutter pub get")
+    sh("cd ../.. && fvm flutter build appbundle --release")
+    UI.success("AAB 빌드 완료: #{AAB_PATH}")
+  end
+
+  desc "기존 AAB를 Google Play 내부 테스트 트랙에 업로드 (빌드 안 함)"
+  lane :upload_internal do
+    unless File.exist?(AAB_PATH)
+      UI.user_error!("AAB 파일 없음: #{AAB_PATH}\n먼저 `fastlane android build` 실행")
+    end
+
+    upload_to_play_store(
+      json_key: JSON_KEY_FILE,
+      package_name: PACKAGE_NAME,
+      aab: AAB_PATH,
+      track: "internal",
+      release_status: "draft",
+      skip_upload_apk: true,
+      skip_upload_metadata: true,
+      skip_upload_changelogs: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+    )
+  end
+
+  desc "기존 AAB를 Google Play 프로덕션 트랙에 업로드 (빌드 안 함)"
+  lane :upload_production do
+    unless File.exist?(AAB_PATH)
+      UI.user_error!("AAB 파일 없음: #{AAB_PATH}\n먼저 `fastlane android build` 실행")
+    end
+
+    UI.important("⚠️  프로덕션 트랙 업로드 시도")
+    unless UI.confirm("정말 프로덕션(스토어)에 배포하시겠습니까?")
+      UI.user_error!("배포 취소됨")
+    end
+
+    # 심사 자동 제출 + 수동 게시 패턴 사용 시:
+    # Play Console > 게시 개요 > "관리되는 게시(Managed publishing)" ON 필요
+    upload_to_play_store(
+      json_key: JSON_KEY_FILE,
+      package_name: PACKAGE_NAME,
+      aab: AAB_PATH,
+      track: "production",
+      release_status: "completed",  # "draft" | "completed" | "inProgress" | "halted"
+      # rollout: "0.1",             # inProgress 일 때만 사용 (0.0~1.0)
+      skip_upload_apk: true,
+      skip_upload_metadata: true,
+      skip_upload_changelogs: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+    )
+  end
+
+  desc "빌드 + Google Play 내부 테스트 업로드 (iOS beta에 대응)"
+  lane :internal do
+    build
+    upload_internal
+  end
+
+  desc "빌드 + Google Play 프로덕션 업로드 (스토어 공개 배포)"
+  lane :production do
+    build
+    upload_production
+  end
+
+end
+

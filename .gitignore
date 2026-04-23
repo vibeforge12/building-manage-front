@@ -60,6 +60,8 @@ ios/fastlane/Fastfile
 ios/fastlane/Appfile
 android/fastlane/report.xml
 android/fastlane/Preview.html
+android/fastlane/screenshots
+android/fastlane/test_output
 android/fastlane/Fastfile
 android/fastlane/Appfile
 
@@ -72,3 +74,11 @@ vendor/bundle/
 *.jks
 *.keystore
 android/key.properties
+
+# FVM - Flutter SDK symlink (machine-specific); fvm_config.json IS tracked for team sync
+.fvm/flutter_sdk
+.fvm/versions/
+
+# fastlane root (크로스플랫폼 레인) 실행 생성물
+fastlane/report.xml
+fastlane/Preview.html

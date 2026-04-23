@@ -1,0 +1,2 @@
+json_key_file("../../../private_keys/play-service-account.json")
+package_name("com.your.package.name")

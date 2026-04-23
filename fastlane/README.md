@@ -13,47 +13,45 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 # Available Actions
 
-## iOS
-
-### ios build
+### show_version
 
 ```sh
-[bundle exec] fastlane ios build
+[bundle exec] fastlane show_version
 ```
 
-Flutter iOS 릴리즈 빌드 (.ipa 생성)
+현재 pubspec.yaml 버전 확인 (iOS/Android 공유 소스)
 
-### ios upload
+### bump_build
 
 ```sh
-[bundle exec] fastlane ios upload
+[bundle exec] fastlane bump_build
 ```
 
-기존 IPA를 TestFlight에 업로드 (빌드 안 함)
+빌드 번호 +1 (pubspec.yaml) - iOS/Android 모두 반영
 
-### ios beta
+### bump_version
 
 ```sh
-[bundle exec] fastlane ios beta
+[bundle exec] fastlane bump_version
 ```
 
-빌드 + TestFlight 업로드
+마케팅 버전 설정 (예: fastlane bump_version version:1.2.0)
 
-### ios submit_review
+### release_internal
 
 ```sh
-[bundle exec] fastlane ios submit_review
+[bundle exec] fastlane release_internal
 ```
 
-TestFlight 최신 빌드를 App Store 심사에 제출 (업로드 안 함)
+iOS TestFlight + Android 내부 테스트 동시 배포 (빌드번호 자동 +1)
 
-### ios production
+### release_production
 
 ```sh
-[bundle exec] fastlane ios production
+[bundle exec] fastlane release_production
 ```
 
-빌드 + TestFlight + App Store 심사 제출 (스토어 공개 배포)
+iOS App Store 심사 + Android 프로덕션(심사) 배포 (빌드번호 자동 +1)
 
 ----
 
