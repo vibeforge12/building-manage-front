@@ -100,12 +100,21 @@ class _StaffAttendanceCalendarScreenState
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.bolt, color: Color(0xFF006FFF)),
+            tooltip: '실시간 현황',
+            onPressed: () => context.push('/admin/staff-attendance-current'),
+          ),
+        ],
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(1),
           child: Divider(height: 1, thickness: 1, color: Color(0xFFE8EEF2)),
         ),
       ),
-      body: _isLoading
+      body: SafeArea(
+        top: false,
+        child: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
               ? _buildErrorView()
@@ -245,6 +254,7 @@ class _StaffAttendanceCalendarScreenState
                     ),
                   ],
                 ),
+      ),
     );
   }
 

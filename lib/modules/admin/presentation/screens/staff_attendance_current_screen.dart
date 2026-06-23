@@ -6,51 +6,52 @@ import 'package:building_manage_front/modules/admin/data/datasources/staff_atten
 import 'package:building_manage_front/modules/admin/domain/entities/staff_attendance.dart';
 import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 
-class StaffAttendanceListScreen extends ConsumerStatefulWidget {
-  const StaffAttendanceListScreen({super.key});
+/// 관리자용 실시간 담당자 출퇴근 현황 화면.
+/// 오늘 날짜의 daily endpoint 를 호출해 status(WORKING/LEFT/NOT_ARRIVED) 3단계로 표시.
+class StaffAttendanceCurrentScreen extends ConsumerStatefulWidget {
+  const StaffAttendanceCurrentScreen({super.key});
 
   @override
-  ConsumerState<StaffAttendanceListScreen> createState() => _StaffAttendanceListScreenState();
+  ConsumerState<StaffAttendanceCurrentScreen> createState() =>
+      _StaffAttendanceCurrentScreenState();
 }
 
-class _StaffAttendanceListScreenState extends ConsumerState<StaffAttendanceListScreen> {
-  StaffAttendanceDaily? _dailyData;
+class _StaffAttendanceCurrentScreenState
+    extends ConsumerState<StaffAttendanceCurrentScreen> {
+  StaffAttendanceDaily? _data;
   bool _isLoading = false;
-  String? _errorMessage;
-  late DateTime _selectedDate;
+  String? _error;
+  DateTime _refreshedAt = DateTime.now();
 
   @override
   void initState() {
     super.initState();
-    _selectedDate = DateTime.now();
-    _loadData();
+    _load();
   }
 
-  Future<void> _loadData() async {
+  Future<void> _load() async {
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
+      _error = null;
     });
 
     try {
+      final now = DateTime.now();
       final dataSource = ref.read(staffAttendanceRemoteDataSourceProvider);
       final result = await dataSource.getDailyStaffAttendance(
-        year: _selectedDate.year,
-        month: _selectedDate.month,
-        day: _selectedDate.day,
+        year: now.year,
+        month: now.month,
+        day: now.day,
       );
-
       setState(() {
-        _dailyData = result;
+        _data = result;
+        _refreshedAt = DateTime.now();
       });
     } catch (e) {
-      debugPrint('출퇴근 조회 에러: $e');
       setState(() {
-        if (e is ApiException) {
-          _errorMessage = e.userFriendlyMessage;
-        } else {
-          _errorMessage = '출퇴근 현황을 불러오는 중 오류가 발생했습니다.\n$e';
-        }
+        _error = e is ApiException
+            ? e.userFriendlyMessage
+            : '실시간 현황을 불러올 수 없습니다.';
       });
     } finally {
       setState(() {
@@ -59,25 +60,22 @@ class _StaffAttendanceListScreenState extends ConsumerState<StaffAttendanceListS
     }
   }
 
-  Future<void> _selectDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2024),
-      lastDate: DateTime.now(),
-      locale: const Locale('ko'),
-    );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
-      _loadData();
+  /// 정렬 순위: 근무중 → 퇴근완료 → 미출근
+  int _statusRank(String status) {
+    switch (status) {
+      case 'WORKING':
+        return 0;
+      case 'LEFT':
+        return 1;
+      default:
+        return 2;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final dateText = DateFormat('yyyy년 M월 d일 (E)', 'ko').format(_selectedDate);
+    final refreshedText =
+        '${DateFormat('yyyy년 M월 d일 HH:mm', 'ko').format(_refreshedAt)} 기준';
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -90,7 +88,7 @@ class _StaffAttendanceListScreenState extends ConsumerState<StaffAttendanceListS
           onPressed: () => context.pop(),
         ),
         title: const Text(
-          '담당자 출근 / 퇴근 목록',
+          '실시간 출퇴근 현황',
           style: TextStyle(
             fontFamily: 'Pretendard',
             fontWeight: FontWeight.w700,
@@ -101,14 +99,9 @@ class _StaffAttendanceListScreenState extends ConsumerState<StaffAttendanceListS
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.bolt, color: Color(0xFF006FFF)),
-            tooltip: '실시간 현황',
-            onPressed: () => context.push('/admin/staff-attendance-current'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.calendar_month, color: Color(0xFF006FFF)),
-            tooltip: '캘린더 보기',
-            onPressed: () => context.push('/admin/staff-attendance-calendar'),
+            icon: const Icon(Icons.refresh, color: Color(0xFF006FFF)),
+            onPressed: _load,
+            tooltip: '새로고침',
           ),
         ],
         bottom: const PreferredSize(
@@ -117,71 +110,66 @@ class _StaffAttendanceListScreenState extends ConsumerState<StaffAttendanceListS
         ),
       ),
       body: SafeArea(
-        top: false,
+        top: false, // AppBar 가 이미 상단 safe area 처리
         child: Column(
-        children: [
-          // 날짜 선택 바
-          GestureDetector(
-            onTap: _selectDate,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          children: [
+            // 갱신 시각 바
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               color: const Color(0xFFF2F8FC),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.calendar_today, size: 16, color: Color(0xFF006FFF)),
-                  const SizedBox(width: 8),
-                  Text(
-                    dateText,
-                    style: const TextStyle(
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                      color: Color(0xFF17191A),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  const Icon(Icons.arrow_drop_down, color: Color(0xFF006FFF)),
-                ],
+              width: double.infinity,
+              child: Text(
+                refreshedText,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontFamily: 'Pretendard',
+                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
+                  color: Color(0xFF464A4D),
+                ),
               ),
             ),
-          ),
 
-          // Summary 카드
-          if (_dailyData != null) _buildSummaryCards(_dailyData!.staffs),
+            if (_data != null) _buildSummaryCards(_data!.staffs),
 
-          // 직원 리스트
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _errorMessage != null
-                    ? _buildErrorView()
-                    : _dailyData == null || _dailyData!.staffs.isEmpty
-                        ? _buildEmptyView()
-                        : RefreshIndicator(
-                            onRefresh: _loadData,
-                            child: ListView.separated(
-                              padding: const EdgeInsets.all(16),
-                              itemCount: _dailyData!.staffs.length,
-                              separatorBuilder: (_, __) => const SizedBox(height: 12),
-                              itemBuilder: (context, index) {
-                                return _buildStaffCard(_dailyData!.staffs[index]);
-                              },
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _error != null
+                      ? _buildErrorView()
+                      : _data == null || _data!.staffs.isEmpty
+                          ? _buildEmptyView()
+                          : RefreshIndicator(
+                              onRefresh: _load,
+                              child: _buildStaffList(_data!.staffs),
                             ),
-                          ),
-          ),
-        ],
+            ),
+          ],
         ),
       ),
     );
   }
 
+  Widget _buildStaffList(List<StaffDailyAttendance> staffs) {
+    final sorted = [...staffs]
+      ..sort((a, b) {
+        final rankCompare = _statusRank(a.status).compareTo(_statusRank(b.status));
+        if (rankCompare != 0) return rankCompare;
+        return a.name.compareTo(b.name);
+      });
+
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemCount: sorted.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, index) => _buildStaffCard(sorted[index]),
+    );
+  }
+
   Widget _buildSummaryCards(List<StaffDailyAttendance> staffs) {
-    // 출근/퇴근 중 하나라도 있으면 "근무" (자정 넘는 세션 자동 처리)
-    final working = staffs
-        .where((s) => s.checkIn != null || s.checkOut != null)
-        .length;
-    final notArrived = staffs.length - working;
+    final working = staffs.where((s) => s.status == 'WORKING').length;
+    final left = staffs.where((s) => s.status == 'LEFT').length;
+    final notArrived = staffs.where((s) => s.status == 'NOT_ARRIVED').length;
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -189,7 +177,9 @@ class _StaffAttendanceListScreenState extends ConsumerState<StaffAttendanceListS
         children: [
           _buildSummaryItem('전체', staffs.length, const Color(0xFF006FFF)),
           const SizedBox(width: 8),
-          _buildSummaryItem('근무', working, const Color(0xFF006FFF)),
+          _buildSummaryItem('근무중', working, const Color(0xFF10B981)),
+          const SizedBox(width: 8),
+          _buildSummaryItem('퇴근', left, const Color(0xFFEF4444)),
           const SizedBox(width: 8),
           _buildSummaryItem('미출근', notArrived, const Color(0xFF9CA3AF)),
         ],
@@ -233,11 +223,26 @@ class _StaffAttendanceListScreenState extends ConsumerState<StaffAttendanceListS
   }
 
   Widget _buildStaffCard(StaffDailyAttendance staff) {
-    // 출근/퇴근 기록이 하나라도 있으면 "근무" (자정 넘는 세션 포함)
-    final hasRecord = staff.checkIn != null || staff.checkOut != null;
-    final statusLabel = hasRecord ? '근무' : '미출근';
-    final statusColor = hasRecord ? const Color(0xFF006FFF) : const Color(0xFF9CA3AF);
-    final statusBgColor = hasRecord ? const Color(0xFFEFF6FF) : const Color(0xFFF3F4F6);
+    final Color statusColor;
+    final Color statusBgColor;
+    final String statusLabel;
+
+    switch (staff.status) {
+      case 'WORKING':
+        statusColor = const Color(0xFF10B981);
+        statusBgColor = const Color(0xFFECFDF5);
+        statusLabel = '근무중';
+        break;
+      case 'LEFT':
+        statusColor = const Color(0xFFEF4444);
+        statusBgColor = const Color(0xFFFEF2F2);
+        statusLabel = '퇴근';
+        break;
+      default:
+        statusColor = const Color(0xFF9CA3AF);
+        statusBgColor = const Color(0xFFF3F4F6);
+        statusLabel = '미출근';
+    }
 
     final timeFormat = DateFormat('HH:mm');
 
@@ -295,8 +300,10 @@ class _StaffAttendanceListScreenState extends ConsumerState<StaffAttendanceListS
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
                       [
-                        if (staff.checkIn != null) '출근 ${timeFormat.format(staff.checkIn!)}',
-                        if (staff.checkOut != null) '퇴근 ${timeFormat.format(staff.checkOut!)}',
+                        if (staff.checkIn != null)
+                          '${timeFormat.format(staff.checkIn!)} 출근',
+                        if (staff.checkOut != null)
+                          '${timeFormat.format(staff.checkOut!)} 퇴근',
                       ].join(' · '),
                       style: const TextStyle(
                         fontFamily: 'Pretendard',
@@ -340,16 +347,21 @@ class _StaffAttendanceListScreenState extends ConsumerState<StaffAttendanceListS
             const Icon(Icons.error_outline, size: 48, color: Color(0xFF9CA3AF)),
             const SizedBox(height: 16),
             Text(
-              _errorMessage!,
-              style: const TextStyle(fontFamily: 'Pretendard', fontSize: 14, color: Color(0xFF6B7280)),
+              _error!,
+              style: const TextStyle(
+                fontFamily: 'Pretendard',
+                fontSize: 14,
+                color: Color(0xFF6B7280),
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: _loadData,
+              onPressed: _load,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF006FFF),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape:
+                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
               child: const Text('다시 시도', style: TextStyle(color: Colors.white)),
             ),
@@ -369,7 +381,7 @@ class _StaffAttendanceListScreenState extends ConsumerState<StaffAttendanceListS
             Icon(Icons.people_outline, size: 64, color: Color(0xFFE8EEF2)),
             SizedBox(height: 16),
             Text(
-              '출퇴근 기록이 없습니다.',
+              '등록된 담당자가 없습니다.',
               style: TextStyle(
                 fontFamily: 'Pretendard',
                 fontSize: 16,

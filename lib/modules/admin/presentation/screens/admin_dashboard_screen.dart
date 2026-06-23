@@ -323,31 +323,62 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
       child: Container(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
         color: Colors.white,
-        child: SizedBox(
-          width: double.infinity,
-          height: 56,
-          child: FilledButton(
-            onPressed: () {
-              context.push('/admin/staff-attendance-list');
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFEDF9FF),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+        child: Column(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: FilledButton(
+                onPressed: () {
+                  context.push('/admin/staff-attendance-current');
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF006FFF),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.all(16),
+                ),
+                child: const Text(
+                  '실시간 출퇴근 현황',
+                  style: TextStyle(
+                    fontFamily: 'Pretendard',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    height: 1.5,
+                    color: Colors.white,
+                  ),
+                ),
               ),
-              padding: const EdgeInsets.all(16),
             ),
-            child: const Text(
-              '담당자 출근 / 퇴근 목록',
-              style: TextStyle(
-                fontFamily: 'Pretendard',
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
-                height: 1.5,
-                color: Color(0xFF0683FF),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: FilledButton(
+                onPressed: () {
+                  context.push('/admin/staff-attendance-list');
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFEDF9FF),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.all(16),
+                ),
+                child: const Text(
+                  '담당자 출근 / 퇴근 목록',
+                  style: TextStyle(
+                    fontFamily: 'Pretendard',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    height: 1.5,
+                    color: Color(0xFF0683FF),
+                  ),
+                ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );

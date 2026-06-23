@@ -38,6 +38,7 @@ import 'package:building_manage_front/modules/admin/presentation/screens/complai
 import 'package:building_manage_front/modules/admin/presentation/screens/complaint_detail_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/staff_attendance_list_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/staff_attendance_calendar_screen.dart';
+import 'package:building_manage_front/modules/admin/presentation/screens/staff_attendance_current_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/manager_dashboard_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/manager_staff_login_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/attendance_history_screen.dart';
@@ -119,6 +120,7 @@ class RouterNotifier extends ChangeNotifier {
       '/admin/complaint-management',
       '/admin/staff-attendance-list',
       '/admin/staff-attendance-calendar',
+      '/admin/staff-attendance-current',
       '/admin/complaint-detail',
       '/admin/notice-detail',
       '/manager/dashboard',
@@ -467,6 +469,13 @@ class RouterNotifier extends ChangeNotifier {
       path: '/admin/staff-attendance-calendar',
       name: 'staffAttendanceCalendar',
       builder: (context, state) => const StaffAttendanceCalendarScreen(),
+    ),
+
+    // 실시간 출퇴근 현황 (관리자 전용)
+    GoRoute(
+      path: '/admin/staff-attendance-current',
+      name: 'staffAttendanceCurrent',
+      builder: (context, state) => const StaffAttendanceCurrentScreen(),
     ),
 
     // 민원 상세 (보호된 경로)
