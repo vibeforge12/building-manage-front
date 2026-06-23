@@ -16,11 +16,26 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
+  static const int _pageSize = 20;
+
+  final TextEditingController _searchController = TextEditingController();
+  String _keyword = '';
+
+  final ScrollController _verifiedScroll = ScrollController();
+  final ScrollController _pendingScroll = ScrollController();
+
   List<Map<String, dynamic>> _verifiedResidents = [];
   List<Map<String, dynamic>> _pendingResidents = [];
 
+  int _verifiedPage = 1;
+  int _pendingPage = 1;
+  bool _verifiedHasMore = true;
+  bool _pendingHasMore = true;
+
   bool _isLoadingVerified = false;
   bool _isLoadingPending = false;
+  bool _isLoadingMoreVerified = false;
+  bool _isLoadingMorePending = false;
 
   String? _errorMessageVerified;
   String? _errorMessagePending;
@@ -29,78 +44,139 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadVerifiedResidents();
-    _loadPendingResidents();
+    _verifiedScroll.addListener(() => _onScroll(isVerified: true));
+    _pendingScroll.addListener(() => _onScroll(isVerified: false));
+    _loadVerifiedResidents(reset: true);
+    _loadPendingResidents(reset: true);
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _searchController.dispose();
+    _verifiedScroll.dispose();
+    _pendingScroll.dispose();
     super.dispose();
   }
 
-  Future<void> _loadVerifiedResidents() async {
-    setState(() {
-      _isLoadingVerified = true;
-      _errorMessageVerified = null;
-    });
+  /// 입주민 한 페이지 조회 (20개 단위, 검색어 적용)
+  Future<List<Map<String, dynamic>>> _fetchResidentPage({
+    required bool isVerified,
+    required int page,
+  }) async {
+    final getResidentsUseCase = ref.read(getResidentsUseCaseProvider);
+    final batch = await getResidentsUseCase.execute(
+      isVerified: isVerified,
+      status: 'ACTIVE',
+      page: page,
+      limit: _pageSize,
+      keyword: _keyword.isEmpty ? null : _keyword,
+    );
+    return batch.map((resident) => resident.toJson()).toList();
+  }
 
-    try {
-      // UseCase를 통한 입주민 목록 조회 (비즈니스 로직 포함)
-      final getResidentsUseCase = ref.read(getResidentsUseCaseProvider);
-      final residents = await getResidentsUseCase.execute(
-        isVerified: true,
-        status: 'ACTIVE',
-      );
-
-      setState(() {
-        _verifiedResidents = residents.map((resident) => resident.toJson()).toList();
-      });
-    } catch (e) {
-      setState(() {
-        if (e is ApiException) {
-          _errorMessageVerified = e.userFriendlyMessage;
-        } else {
-          _errorMessageVerified = e.toString();
-        }
-      });
-    } finally {
-      setState(() {
-        _isLoadingVerified = false;
-      });
+  /// 스크롤 하단 근접 시 다음 페이지 로드
+  void _onScroll({required bool isVerified}) {
+    final sc = isVerified ? _verifiedScroll : _pendingScroll;
+    if (!sc.hasClients) return;
+    if (sc.position.pixels >= sc.position.maxScrollExtent - 300) {
+      if (isVerified) {
+        _loadMoreVerified();
+      } else {
+        _loadMorePending();
+      }
     }
   }
 
-  Future<void> _loadPendingResidents() async {
+  /// 검색 실행 (두 탭 모두 첫 페이지부터 다시 조회)
+  void _applySearch(String value) {
+    final next = value.trim();
+    if (next == _keyword) return;
+    setState(() => _keyword = next);
+    _loadVerifiedResidents(reset: true);
+    _loadPendingResidents(reset: true);
+  }
+
+  Future<void> _loadVerifiedResidents({bool reset = false}) async {
     setState(() {
-      _isLoadingPending = true;
-      _errorMessagePending = null;
+      _isLoadingVerified = true;
+      _errorMessageVerified = null;
+      if (reset) _verifiedResidents = [];
     });
 
     try {
-      // UseCase를 통한 입주민 목록 조회 (비즈니스 로직 포함)
-      // status: 'ACTIVE'로 DELETED 상태 입주민 제외
-      final getResidentsUseCase = ref.read(getResidentsUseCaseProvider);
-      final residents = await getResidentsUseCase.execute(
-        isVerified: false,
-        status: 'ACTIVE',
-      );
-
+      final items = await _fetchResidentPage(isVerified: true, page: 1);
       setState(() {
-        _pendingResidents = residents.map((resident) => resident.toJson()).toList();
+        _verifiedResidents = items;
+        _verifiedPage = 1;
+        _verifiedHasMore = items.length == _pageSize;
       });
     } catch (e) {
       setState(() {
-        if (e is ApiException) {
-          _errorMessagePending = e.userFriendlyMessage;
-        } else {
-          _errorMessagePending = e.toString();
-        }
+        _errorMessageVerified = e is ApiException ? e.userFriendlyMessage : e.toString();
       });
     } finally {
+      setState(() => _isLoadingVerified = false);
+    }
+  }
+
+  Future<void> _loadMoreVerified() async {
+    if (_isLoadingMoreVerified || _isLoadingVerified || !_verifiedHasMore) return;
+    setState(() => _isLoadingMoreVerified = true);
+    try {
+      final next = _verifiedPage + 1;
+      final items = await _fetchResidentPage(isVerified: true, page: next);
       setState(() {
-        _isLoadingPending = false;
+        _verifiedResidents = [..._verifiedResidents, ...items];
+        _verifiedPage = next;
+        _verifiedHasMore = items.length == _pageSize;
       });
+    } catch (_) {
+      // 추가 로드 실패는 조용히 무시 (다음 스크롤에서 재시도)
+    } finally {
+      if (mounted) setState(() => _isLoadingMoreVerified = false);
+    }
+  }
+
+  Future<void> _loadPendingResidents({bool reset = false}) async {
+    setState(() {
+      _isLoadingPending = true;
+      _errorMessagePending = null;
+      if (reset) _pendingResidents = [];
+    });
+
+    try {
+      // status: 'ACTIVE'로 DELETED 상태 입주민 제외
+      final items = await _fetchResidentPage(isVerified: false, page: 1);
+      setState(() {
+        _pendingResidents = items;
+        _pendingPage = 1;
+        _pendingHasMore = items.length == _pageSize;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessagePending = e is ApiException ? e.userFriendlyMessage : e.toString();
+      });
+    } finally {
+      setState(() => _isLoadingPending = false);
+    }
+  }
+
+  Future<void> _loadMorePending() async {
+    if (_isLoadingMorePending || _isLoadingPending || !_pendingHasMore) return;
+    setState(() => _isLoadingMorePending = true);
+    try {
+      final next = _pendingPage + 1;
+      final items = await _fetchResidentPage(isVerified: false, page: next);
+      setState(() {
+        _pendingResidents = [..._pendingResidents, ...items];
+        _pendingPage = next;
+        _pendingHasMore = items.length == _pageSize;
+      });
+    } catch (_) {
+      // 추가 로드 실패는 조용히 무시
+    } finally {
+      if (mounted) setState(() => _isLoadingMorePending = false);
     }
   }
 
@@ -297,12 +373,52 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
           ),
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
+      body: Column(
         children: [
-          _buildVerifiedResidentsTab(), // 건물
-          _buildPendingResidentsTab(),  // 신규 입주민
+          _buildSearchField(),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildVerifiedResidentsTab(), // 건물
+                _buildPendingResidentsTab(), // 신규 입주민
+              ],
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  /// 검색창 (이름/아이디) — 입력 후 엔터 시 두 탭 모두 재조회
+  Widget _buildSearchField() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: TextField(
+        controller: _searchController,
+        textInputAction: TextInputAction.search,
+        onSubmitted: _applySearch,
+        decoration: InputDecoration(
+          hintText: '이름 또는 아이디 검색',
+          hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+          prefixIcon: const Icon(Icons.search, color: Color(0xFF757B80)),
+          suffixIcon: _keyword.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.close, color: Color(0xFF757B80)),
+                  onPressed: () {
+                    _searchController.clear();
+                    _applySearch('');
+                  },
+                )
+              : null,
+          filled: true,
+          fillColor: const Color(0xFFF2F4F6),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+        ),
       ),
     );
   }
@@ -351,8 +467,11 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
       return _errorBox(_errorMessageVerified!, _loadVerifiedResidents);
     }
     if (_verifiedResidents.isEmpty) {
-      return const Center(
-        child: Text('등록된 입주민이 없습다.', style: TextStyle(color: Colors.grey)),
+      return Center(
+        child: Text(
+          _keyword.isNotEmpty ? '검색 결과가 없습니다.' : '등록된 입주민이 없습니다.',
+          style: const TextStyle(color: Colors.grey),
+        ),
       );
     }
 
@@ -369,11 +488,20 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
       groupedByHosu[key]!.add(resident);
     }
 
+    final hosuKeys = groupedByHosu.keys.toList();
+
     return ListView.builder(
+      controller: _verifiedScroll,
       padding: const EdgeInsets.symmetric(vertical: 16),
-      itemCount: groupedByHosu.length,
+      itemCount: hosuKeys.length + (_isLoadingMoreVerified ? 1 : 0),
       itemBuilder: (context, index) {
-        final hosuKey = groupedByHosu.keys.elementAt(index);
+        if (index >= hosuKeys.length) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          );
+        }
+        final hosuKey = hosuKeys[index];
         final residents = groupedByHosu[hosuKey]!;
 
         return Column(
@@ -458,8 +586,11 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
       return _errorBox(_errorMessagePending!, _loadPendingResidents);
     }
     if (_pendingResidents.isEmpty) {
-      return const Center(
-        child: Text('승인 대기 중인 입주민이 없습니다.', style: TextStyle(color: Colors.grey)),
+      return Center(
+        child: Text(
+          _keyword.isNotEmpty ? '검색 결과가 없습니다.' : '승인 대기 중인 입주민이 없습니다.',
+          style: const TextStyle(color: Colors.grey),
+        ),
       );
     }
 
@@ -480,10 +611,17 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
         ),
         Expanded(
           child: ListView.separated(
+            controller: _pendingScroll,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            itemCount: _pendingResidents.length,
+            itemCount: _pendingResidents.length + (_isLoadingMorePending ? 1 : 0),
             separatorBuilder: (_, __) => const SizedBox(height: 20),
             itemBuilder: (context, index) {
+              if (index >= _pendingResidents.length) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                );
+              }
               final r = _pendingResidents[index];
               final residentId = r['id']?.toString() ?? '';
               final name = r['name'] ?? '이름 없음';
