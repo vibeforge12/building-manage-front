@@ -356,6 +356,14 @@ class _ManagerDetailScreenState extends ConsumerState<ManagerDetailScreen> {
                                     keyboardType: TextInputType.phone,
                                   ),
                                   const SizedBox(height: 16),
+                                  // 관리자 종류 필드 (수정 불가)
+                                  _buildInfoField(
+                                    label: '관리자 종류',
+                                    value: _managerData?['managerType'] == 'HEAD'
+                                        ? '총관리자'
+                                        : '일반관리자',
+                                  ),
+                                  const SizedBox(height: 16),
                                   // 관리자 코드 필드 (수정 불가)
                                   _buildInfoField(
                                     label: '관리자 코드',

@@ -432,15 +432,25 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              currentUser?.name ?? '관리자명',
-                              style: const TextStyle(
-                                fontFamily: 'Pretendard',
-                                fontWeight: FontWeight.w400,
-                                fontSize: 16,
-                                height: 1.5,
-                                color: Color(0xFF17191A),
-                              ),
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    currentUser?.name ?? '관리자명',
+                                    style: const TextStyle(
+                                      fontFamily: 'Pretendard',
+                                      fontWeight: FontWeight.w400,
+                                      fontSize: 16,
+                                      height: 1.5,
+                                      color: Color(0xFF17191A),
+                                    ),
+                                  ),
+                                ),
+                                if (currentUser?.managerType != null) ...[
+                                  const SizedBox(width: 8),
+                                  _buildManagerTypeBadge(currentUser!.managerType!),
+                                ],
+                              ],
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -489,6 +499,14 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                     context.push('/admin/staff-management');
                   },
                 ),
+                // 일반관리자 추가 (총관리자 전용)
+                if (ref.watch(currentUserProvider)?.managerType == 'HEAD')
+                  _buildMenuItem(
+                    title: '일반관리자 추가',
+                    onTap: () {
+                      context.push('/manager/add-general-manager');
+                    },
+                  ),
                 const Divider(
                   height: 1,
                   thickness: 1,
@@ -528,6 +546,29 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               },
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// 관리자 종류 뱃지 (총관리자 / 일반관리자)
+  Widget _buildManagerTypeBadge(String managerType) {
+    final bool isHead = managerType == 'HEAD';
+    final Color fg = isHead ? const Color(0xFF006FFF) : const Color(0xFF757B80);
+    final Color bg = isHead ? const Color(0xFFEFF5FF) : const Color(0xFFF2F4F6);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        isHead ? '총관리자' : '일반관리자',
+        style: TextStyle(
+          fontFamily: 'Pretendard',
+          fontWeight: FontWeight.w600,
+          fontSize: 11,
+          color: fg,
         ),
       ),
     );

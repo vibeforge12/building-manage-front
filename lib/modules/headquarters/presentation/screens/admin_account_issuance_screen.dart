@@ -26,6 +26,9 @@ class _AdminAccountIssuanceScreenState extends ConsumerState<AdminAccountIssuanc
   bool _isSubmitting = false;
   String? _errorMessage;
 
+  // 관리자 종류: 'HEAD'(총관리자, 건물당 1명) / 'GENERAL'(일반관리자, 여러 명)
+  String _managerType = 'HEAD';
+
   @override
   void initState() {
     super.initState();
@@ -88,6 +91,7 @@ class _AdminAccountIssuanceScreenState extends ConsumerState<AdminAccountIssuanc
         name: _nameController.text.trim(),
         phoneNumber: _phoneController.text.trim(),
         buildingId: _selectedBuilding!['id'].toString(),
+        managerType: _managerType,
       );
 
       if (mounted) {
@@ -137,6 +141,67 @@ class _AdminAccountIssuanceScreenState extends ConsumerState<AdminAccountIssuanc
         });
       }
     }
+  }
+
+  /// 관리자 종류 선택 옵션 (총관리자 / 일반관리자)
+  Widget _buildManagerTypeOption({
+    required String value,
+    required String title,
+    required String description,
+  }) {
+    final isSelected = _managerType == value;
+    return Expanded(
+      child: GestureDetector(
+        onTap: _isSubmitting
+            ? null
+            : () => setState(() => _managerType = value),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFFEFF5FF) : const Color(0xFFF8F9FA),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? const Color(0xFF006FFF) : Colors.transparent,
+              width: 1.5,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                    size: 18,
+                    color: isSelected ? const Color(0xFF006FFF) : const Color(0xFF9CA3AF),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontFamily: 'Pretendard',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: isSelected ? const Color(0xFF006FFF) : const Color(0xFF464A4D),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                description,
+                style: const TextStyle(
+                  fontFamily: 'Pretendard',
+                  fontWeight: FontWeight.w400,
+                  fontSize: 11,
+                  color: Color(0xFF757B80),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -200,6 +265,27 @@ class _AdminAccountIssuanceScreenState extends ConsumerState<AdminAccountIssuanc
                   }
                   return null;
                 },
+              ),
+
+              const SizedBox(height: 24),
+
+              // 관리자 종류 선택
+              fieldLabel('관리자 종류', context),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  _buildManagerTypeOption(
+                    value: 'HEAD',
+                    title: '총관리자',
+                    description: '건물당 1명 · 모든 기능',
+                  ),
+                  const SizedBox(width: 12),
+                  _buildManagerTypeOption(
+                    value: 'GENERAL',
+                    title: '일반관리자',
+                    description: '여러 명 추가 가능',
+                  ),
+                ],
               ),
 
               const SizedBox(height: 24),

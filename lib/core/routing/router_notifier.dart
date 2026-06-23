@@ -41,6 +41,7 @@ import 'package:building_manage_front/modules/admin/presentation/screens/staff_a
 import 'package:building_manage_front/modules/manager/presentation/screens/manager_dashboard_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/manager_staff_login_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/attendance_history_screen.dart';
+import 'package:building_manage_front/modules/manager/presentation/screens/add_general_manager_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/staff_complaint_detail_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/staff_notice_detail_screen.dart';
 import 'package:building_manage_front/modules/manager/presentation/screens/staff_complaints_list_screen.dart';
@@ -490,6 +491,13 @@ class RouterNotifier extends ChangeNotifier {
       path: '/manager/attendance-history',
       name: 'attendanceHistory',
       builder: (context, state) => const AttendanceHistoryScreen(),
+    ),
+
+    // 일반관리자 추가 (총관리자 전용)
+    GoRoute(
+      path: '/manager/add-general-manager',
+      name: 'addGeneralManager',
+      builder: (context, state) => const AddGeneralManagerScreen(),
     ),
 
     // 민원 상세 조회 (담당자 전용)

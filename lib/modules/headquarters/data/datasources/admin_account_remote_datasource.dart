@@ -14,6 +14,7 @@ class AdminAccountRemoteDataSource {
     required String phoneNumber,
     required String buildingId,
     String? imageUrl,
+    String? managerType, // 'HEAD'(총관리자) / 'GENERAL'(일반관리자). 미지정 시 서버가 자동 결정
   }) async {
     try {
 
@@ -22,6 +23,7 @@ class AdminAccountRemoteDataSource {
         'phoneNumber': phoneNumber,
         'buildingId': buildingId,
         if (imageUrl != null) 'imageUrl': imageUrl,
+        if (managerType != null) 'managerType': managerType,
       };
 
       final response = await _apiClient.post(
@@ -35,8 +37,12 @@ class AdminAccountRemoteDataSource {
         throw Exception('잘못된 요청입니다. 입력값을 확인해주세요.');
       }
 
+      // 409: 건물당 총관리자 1명 제약 등 → 서버 메시지를 그대로 노출
       if (e.response?.statusCode == 409) {
-        throw Exception('이미 존재하는 관리자입니다.');
+        final serverMessage = (e.response?.data is Map<String, dynamic>)
+            ? (e.response?.data as Map<String, dynamic>)['message'] as String?
+            : null;
+        throw Exception(serverMessage ?? '이미 존재하는 관리자입니다.');
       }
 
       throw Exception('관리자 계정 발급 중 오류가 발생했습니다: ${e.message}');

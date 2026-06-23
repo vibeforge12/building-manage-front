@@ -172,6 +172,7 @@ class _ManagerListScreenState extends ConsumerState<ManagerListScreen> {
   Widget _buildManagerItem(Map<String, dynamic> manager) {
     final name = manager['name'] ?? '이름 없음';
     final managerId = manager['id']?.toString() ?? '';
+    final isHead = manager['managerType'] == 'HEAD';
 
     return GestureDetector(
       onTap: () async {
@@ -197,18 +198,20 @@ class _ManagerListScreenState extends ConsumerState<ManagerListScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
         child: Row(
           children: [
-            // 관리자 이름
-            Expanded(
-              child: Text(
-                name,
-                style: const TextStyle(
-                  fontFamily: 'Pretendard',
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12,
-                  color: Color(0xFF17191A),
-                ),
+            // 관리자 이름 (이하 종류 뱃지)
+            Text(
+              name,
+              style: const TextStyle(
+                fontFamily: 'Pretendard',
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+                color: Color(0xFF17191A),
               ),
             ),
+            const SizedBox(width: 8),
+            // 관리자 종류 뱃지
+            _buildTypeBadge(isHead),
+            const Spacer(),
             // 상세보기 아이콘
             const Icon(
               Icons.chevron_right,
@@ -216,6 +219,28 @@ class _ManagerListScreenState extends ConsumerState<ManagerListScreen> {
               color: Color(0xFF464A4D),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// 관리자 종류 뱃지 (총관리자 / 일반관리자)
+  Widget _buildTypeBadge(bool isHead) {
+    final Color fg = isHead ? const Color(0xFF006FFF) : const Color(0xFF757B80);
+    final Color bg = isHead ? const Color(0xFFEFF5FF) : const Color(0xFFF2F4F6);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        isHead ? '총관리자' : '일반관리자',
+        style: TextStyle(
+          fontFamily: 'Pretendard',
+          fontWeight: FontWeight.w600,
+          fontSize: 11,
+          color: fg,
         ),
       ),
     );

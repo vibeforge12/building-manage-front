@@ -16,6 +16,7 @@ class User extends Equatable {
     this.permissions = const {},
     this.profileImageUrl,
     this.approvalStatus,
+    this.managerType,
   });
 
   final String id;
@@ -31,6 +32,7 @@ class User extends Equatable {
   final Map<String, dynamic> permissions;
   final String? profileImageUrl;
   final String? approvalStatus; // PENDING, APPROVED, REJECTED
+  final String? managerType; // 관리자 종류: HEAD(총관리자) / GENERAL(일반관리자). 관리자 계정에만 존재
 
   // API 응답에서 User 객체 생성
   factory User.fromJson(Map<String, dynamic> json) {
@@ -85,6 +87,7 @@ class User extends Equatable {
       permissions: (json['permissions'] as Map<String, dynamic>?) ?? {},
       profileImageUrl: json['profileImageUrl'] as String?,
       approvalStatus: json['approvalStatus'] as String?,
+      managerType: json['managerType'] as String?,
     );
 
     return user;
@@ -106,6 +109,7 @@ class User extends Equatable {
       'permissions': permissions,
       'profileImageUrl': profileImageUrl,
       'approvalStatus': approvalStatus,
+      'managerType': managerType,
     };
   }
 
@@ -136,6 +140,7 @@ class User extends Equatable {
     Map<String, dynamic>? permissions,
     String? profileImageUrl,
     String? approvalStatus,
+    String? managerType,
   }) {
     return User(
       id: id ?? this.id,
@@ -151,6 +156,7 @@ class User extends Equatable {
       permissions: permissions ?? this.permissions,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       approvalStatus: approvalStatus ?? this.approvalStatus,
+      managerType: managerType ?? this.managerType,
     );
   }
 
@@ -169,5 +175,6 @@ class User extends Equatable {
         permissions,
         profileImageUrl,
         approvalStatus,
+        managerType,
       ];
 }
