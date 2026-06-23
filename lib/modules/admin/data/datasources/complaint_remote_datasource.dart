@@ -112,6 +112,32 @@ class ComplaintRemoteDataSource {
     }
   }
 
+  /// 이관 가능 부서 목록 조회 (본사 소속 + 해당 건물 담당자 존재)
+  Future<List<Map<String, dynamic>>> getTransferableDepartments() async {
+    try {
+      final response = await _apiClient.get('/managers/departments');
+      final data = response.data['data'] ?? response.data;
+      return List<Map<String, dynamic>>.from(data as List);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// 민원 이관 (다른 부서로)
+  Future<void> transferComplaint({
+    required String complaintId,
+    required String departmentId,
+  }) async {
+    try {
+      await _apiClient.patch(
+        '${ApiEndpoints.managerComplaints}/$complaintId/transfer',
+        data: {'departmentId': departmentId},
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   /// 민원 상태 업데이트
   Future<void> updateComplaintStatus({
     required String complaintId,

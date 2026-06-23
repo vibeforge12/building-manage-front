@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:building_manage_front/modules/admin/presentation/providers/admin_providers.dart';
+import 'package:building_manage_front/modules/admin/data/datasources/complaint_remote_datasource.dart';
 import 'package:building_manage_front/modules/admin/domain/entities/complaint.dart';
 import 'package:building_manage_front/shared/widgets/full_screen_image_viewer.dart';
 
@@ -20,9 +21,103 @@ class ComplaintDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
+  bool _isTransferring = false;
+
   String _formatDate(DateTime? dateTime) {
     if (dateTime == null) return '';
     return DateFormat('yyyy.MM.dd HH:mm').format(dateTime.toLocal());
+  }
+
+  void _toast(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
+    );
+  }
+
+  /// 민원 이관: 부서 선택 시트 → 이관 실행 → 새로고침
+  Future<void> _transferComplaint(AdminComplaint complaint) async {
+    final dataSource = ref.read(complaintRemoteDataSourceProvider);
+
+    List<Map<String, dynamic>> departments;
+    try {
+      departments = await dataSource.getTransferableDepartments();
+    } catch (_) {
+      _toast('부서 목록을 불러오지 못했습니다.');
+      return;
+    }
+    // 현재 담당 부서는 제외
+    final candidates =
+        departments.where((d) => d['id'] != complaint.departmentId).toList();
+    if (!mounted) return;
+    if (candidates.isEmpty) {
+      _toast('이관 가능한 다른 부서가 없습니다.');
+      return;
+    }
+
+    final selectedId = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(20, 20, 20, 8),
+                child: Text(
+                  '이관할 부서 선택',
+                  style: TextStyle(
+                    fontFamily: 'Pretendard',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    color: Color(0xFF17191A),
+                  ),
+                ),
+              ),
+              ...candidates.map(
+                (d) => ListTile(
+                  title: Text(
+                    d['name']?.toString() ?? '-',
+                    style: const TextStyle(
+                      fontFamily: 'Pretendard',
+                      fontWeight: FontWeight.w500,
+                      fontSize: 15,
+                      color: Color(0xFF17191A),
+                    ),
+                  ),
+                  trailing: const Icon(Icons.chevron_right, color: Color(0xFF757B80)),
+                  onTap: () => Navigator.of(sheetContext).pop(d['id']?.toString()),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (selectedId == null || !mounted) return;
+
+    setState(() => _isTransferring = true);
+    try {
+      await dataSource.transferComplaint(
+        complaintId: complaint.id,
+        departmentId: selectedId,
+      );
+      if (mounted) {
+        _toast('민원이 이관되었습니다.');
+        setState(() {}); // FutureBuilder 재조회
+      }
+    } catch (_) {
+      _toast('이관에 실패했습니다.');
+    } finally {
+      if (mounted) setState(() => _isTransferring = false);
+    }
   }
 
   @override
@@ -119,7 +214,42 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 48),
+                        // 이관 버튼 (미처리 민원만)
+                        if (!isResolved)
+                          SizedBox(
+                            width: 64,
+                            child: TextButton(
+                              onPressed: _isTransferring
+                                  ? null
+                                  : () => _transferComplaint(complaint),
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                foregroundColor: const Color(0xFF006FFF),
+                              ),
+                              child: _isTransferring
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(
+                                          Color(0xFF006FFF),
+                                        ),
+                                      ),
+                                    )
+                                  : const Text(
+                                      '이관',
+                                      style: TextStyle(
+                                        fontFamily: 'Pretendard',
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 14,
+                                        color: Color(0xFF006FFF),
+                                      ),
+                                    ),
+                            ),
+                          )
+                        else
+                          const SizedBox(width: 48),
                       ],
                     ),
                   ),
