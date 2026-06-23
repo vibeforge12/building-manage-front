@@ -35,6 +35,13 @@ class GeneralManagerRemoteDataSource {
       if (e.response?.statusCode == 403) {
         throw Exception('총관리자만 일반관리자를 추가할 수 있습니다.');
       }
+      // 409: 전화번호 중복 등 → 서버 메시지 노출
+      if (e.response?.statusCode == 409) {
+        final serverMessage = (e.response?.data is Map)
+            ? (e.response?.data as Map)['message'] as String?
+            : null;
+        throw Exception(serverMessage ?? '이미 등록된 전화번호의 관리자가 있습니다.');
+      }
       throw Exception('일반관리자 추가 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {
       throw Exception('일반관리자 추가 중 오류가 발생했습니다: $e');

@@ -68,8 +68,12 @@ class ResidentAuthRemoteDataSource {
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
 
+      // 409: 아이디 또는 전화번호 중복 → 서버 안내 메시지를 그대로 노출
       if (e.response?.statusCode == 409) {
-        throw Exception('이미 존재하는 아이디입니다.');
+        final serverMessage = (e.response?.data is Map)
+            ? (e.response?.data as Map)['message'] as String?
+            : null;
+        throw Exception(serverMessage ?? '이미 가입된 정보입니다.');
       }
 
       throw Exception('회원가입 중 오류가 발생했습니다: ${e.message}');
