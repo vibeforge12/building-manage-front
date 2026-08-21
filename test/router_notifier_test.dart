@@ -1,6 +1,5 @@
-import 'package:building_manage_front/core/constants/auth_states.dart';
 import 'package:building_manage_front/core/constants/user_types.dart';
-import 'package:building_manage_front/core/routing/router_notifier.dart';
+import 'package:building_manage_front/core/providers/router_provider.dart';
 import 'package:building_manage_front/domain/entities/user.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 import 'package:flutter/material.dart';
@@ -19,66 +18,6 @@ class _TestApp extends ConsumerWidget {
   }
 }
 
-// Test Ref wrapper for ProviderContainer
-class _TestRef implements Ref {
-  final ProviderContainer _container;
-
-  _TestRef(this._container);
-
-  @override
-  T read<T>(ProviderListenable<T> provider) {
-    return _container.read(provider);
-  }
-
-  @override
-  void listen<T>(
-    ProviderListenable<T> provider,
-    void Function(T? previous, T next) listener, {
-    void Function(Object error, StackTrace stackTrace)? onError,
-  }) {
-    _container.listen<T>(provider, listener, onError: onError);
-  }
-
-  @override
-  T watch<T>(ProviderListenable<T> provider) {
-    return _container.read(provider);
-  }
-
-  @override
-  void invalidate(ProviderOrFamily provider) {
-    _container.invalidate(provider);
-  }
-
-  @override
-  void onDispose(void Function() cb) {}
-
-  @override
-  bool exists(ProviderBase<Object?> provider) {
-    return _container.exists(provider);
-  }
-
-  @override
-  void Function() listenManual<T>(
-    ProviderListenable<T> provider,
-    void Function(T? previous, T next) listener, {
-    void Function(Object error, StackTrace stackTrace)? onError,
-    bool fireImmediately = false,
-  }) {
-    final sub = _container.listen<T>(
-      provider,
-      listener,
-      onError: onError,
-      fireImmediately: fireImmediately,
-    );
-    return sub.close;
-  }
-
-  @override
-  T refresh<T>(Refreshable<T> provider) {
-    return _container.refresh(provider);
-  }
-}
-
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -90,15 +29,14 @@ void main() {
       // Ensure unauthenticated state
       container.read(authStateProvider.notifier).setUnauthenticated();
 
-      final ref = _TestRef(container);
-      final router = RouterNotifier(ref).router;
+      final router = container.read(routerProvider);
 
       // Try navigating to each protected path and verify redirected location
       Future<void> expectRedirect(String target, String expectedPrefix) async {
         await tester.pumpWidget(UncontrolledProviderScope(container: container, child: _TestApp(router: router)));
         router.go(target);
         await tester.pumpAndSettle();
-        expect(router.routerDelegate.currentConfiguration.fullPath?.startsWith(expectedPrefix), isTrue,
+        expect(router.routerDelegate.currentConfiguration.fullPath.startsWith(expectedPrefix), isTrue,
             reason: 'Expected redirect to $expectedPrefix for $target, but was ${router.routerDelegate.currentConfiguration.fullPath}');
       }
 
@@ -106,6 +44,18 @@ void main() {
       await expectRedirect('/admin/dashboard', '/admin-login');
       await expectRedirect('/manager/dashboard', '/manager-login');
       await expectRedirect('/headquarters/dashboard', '/headquarters-login');
+
+      // 접두어 기반 보호: 목록에 없던 경로들도 보호돼야 한다
+      await expectRedirect('/admin/staff-management', '/admin-login');
+      await expectRedirect('/admin/resident-management', '/admin-login');
+      await expectRedirect('/admin/notice-management', '/admin-login');
+      await expectRedirect('/admin/staff-account-issuance', '/admin-login');
+      await expectRedirect('/manager/complaints', '/manager-login');
+      await expectRedirect('/manager/notices', '/manager-login');
+      await expectRedirect('/headquarters/manager-list', '/headquarters-login');
+
+      // 경로는 /manager/ 이지만 실제 소유자는 관리자(admin)인 예외 경로
+      await expectRedirect('/manager/add-general-manager', '/admin-login');
     });
 
     testWidgets('Authenticated but mismatched role redirected to own dashboard', (tester) async {
@@ -126,8 +76,7 @@ void main() {
       );
       auth.setAuthenticated(adminUser, 'dummy');
 
-      final ref = _TestRef(container);
-      final router = RouterNotifier(ref).router;
+      final router = container.read(routerProvider);
 
       await tester.pumpWidget(UncontrolledProviderScope(container: container, child: _TestApp(router: router)));
 
@@ -138,6 +87,33 @@ void main() {
       // Should be redirected to admin dashboard
       expect(router.routerDelegate.currentConfiguration.fullPath, '/admin/dashboard');
     });
+
+    testWidgets('Admin can reach the admin-owned route under the /manager/ prefix', (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final adminUser = User(
+        id: '1',
+        email: 'admin@test.com',
+        name: 'Admin',
+        userType: UserType.admin,
+        buildingId: 'B1',
+        dong: null,
+        ho: null,
+        permissions: const {},
+      );
+      container.read(authStateProvider.notifier).setAuthenticated(adminUser, 'dummy');
+
+      final router = container.read(routerProvider);
+
+      await tester.pumpWidget(UncontrolledProviderScope(container: container, child: _TestApp(router: router)));
+      // 스플래시의 지연 네비게이션이 끝난 뒤에 이동해야 결과가 덮어써지지 않는다.
+      await tester.pumpAndSettle();
+
+      router.go('/manager/add-general-manager');
+      await tester.pump();
+
+      expect(router.routerDelegate.currentConfiguration.fullPath, '/manager/add-general-manager');
+    });
   });
 }
-

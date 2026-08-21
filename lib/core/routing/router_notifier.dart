@@ -87,7 +87,6 @@ class RouterNotifier extends ChangeNotifier {
       initialLocation: '/splash',
       redirect: _redirect,
       routes: _routes,
-      observers: [_RouteLogger()],
     );
   }
 
@@ -105,75 +104,20 @@ class RouterNotifier extends ChangeNotifier {
       return '/resident-approval-rejected';
     }
 
-    // 인증이 필요한 경로들
-    final protectedRoutes = [
-      '/user/dashboard',
-      '/user/profile',
-      '/user/change-password',
-      '/user/notice',
-      '/user/event',
-      '/user/complaint-create',
-      '/user/complaint-complete',
-      '/user/my-complaints',
-      '/user/complaint/:complaintId',
-      '/admin/dashboard',
-      '/admin/complaint-management',
-      '/admin/staff-attendance-list',
-      '/admin/staff-attendance-calendar',
-      '/admin/staff-attendance-current',
-      '/admin/complaint-detail',
-      '/admin/notice-detail',
-      '/manager/dashboard',
-      '/manager/attendance-history',
-      '/manager/complaint-detail/:complaintId',
-      '/manager/complaint-resolve/:complaintId',
-      '/manager/complaint-resolve-complete',
-      '/headquarters/dashboard',
-      '/headquarters/management-selection',
-      '/headquarters/building-management',
-      '/headquarters/building-registration',
-      '/headquarters/building-list',
-      '/headquarters/department-creation',
-      '/headquarters/department-management',
-      '/headquarters/admin-account-issuance',
-      '/headquarters/profile',
-      '/headquarters/change-password',
-    ];
+    // 접근 권한이 필요한 경로인지 판정 (접두어 기반)
+    final requiredUserType = _requiredUserTypeFor(path);
 
-    final isProtectedRoute = protectedRoutes.any((route) => path?.startsWith(route) == true);
-
-    // 보호된 경로에 접근하려는데 인증되지 않은 경우
-    if (isProtectedRoute && authState != AuthState.authenticated) {
-      // 경로에 따라 적절한 로그인 화면으로 리다이렉트
-      if (path?.startsWith('/user/') == true) {
-        return '/user-login';
-      } else if (path?.startsWith('/admin/') == true) {
-        return '/admin-login';
-      } else if (path?.startsWith('/manager/') == true) {
-        return '/manager-login';
-      } else if (path?.startsWith('/headquarters/') == true) {
-        return '/headquarters-login';
-      }
-      return '/'; // 기본적으로 홈으로
+    // 보호된 경로에 접근하려는데 인증되지 않은 경우 → 역할별 로그인 화면
+    if (requiredUserType != null && authState != AuthState.authenticated) {
+      return _getLoginPath(requiredUserType);
     }
 
-    // 인증된 사용자가 잘못된 권한의 경로에 접근하는 경우
-    if (authState == AuthState.authenticated && currentUser != null && isProtectedRoute) {
-      final userType = currentUser.userType;
-
-      if (path?.startsWith('/user/') == true && userType != UserType.user) {
-        final redirectPath = _getDefaultDashboard(userType);
-        return redirectPath;
-      } else if (path?.startsWith('/admin/') == true && userType != UserType.admin) {
-        final redirectPath = _getDefaultDashboard(userType);
-        return redirectPath;
-      } else if (path?.startsWith('/manager/') == true && userType != UserType.manager) {
-        final redirectPath = _getDefaultDashboard(userType);
-        return redirectPath;
-      } else if (path?.startsWith('/headquarters/') == true && userType != UserType.headquarters) {
-        final redirectPath = _getDefaultDashboard(userType);
-        return redirectPath;
-      }
+    // 인증된 사용자가 잘못된 권한의 경로에 접근하는 경우 → 자기 역할 대시보드
+    if (requiredUserType != null &&
+        authState == AuthState.authenticated &&
+        currentUser != null &&
+        currentUser.userType != requiredUserType) {
+      return _getDefaultDashboard(currentUser.userType);
     }
 
     return null; // 리다이렉트 없음
@@ -661,7 +605,55 @@ class RouterNotifier extends ChangeNotifier {
     ),
   ];
 
-  // 유저 타입별 기본 대시보드 경로 반환
+  /// 역할별 보호 경로 접두어.
+  ///
+  /// 접두어로 판정하므로 새 라우트를 추가해도 자동으로 보호된다.
+  /// (경로를 배열에 일일이 나열하던 이전 방식은 13개 라우트가 누락돼 있었다.)
+  static const Map<String, UserType> _protectedPrefixes = {
+    '/user/': UserType.user,
+    '/admin/': UserType.admin,
+    '/manager/': UserType.manager,
+    '/headquarters/': UserType.headquarters,
+  };
+
+  /// 접두어 규칙의 예외.
+  ///
+  /// `/manager/add-general-manager`는 경로만 담당자(manager) 접두어일 뿐,
+  /// 실제로는 총관리자(관리자, admin)가 일반관리자를 추가하는 관리자 전용 기능이다.
+  /// (`admin_dashboard_screen`에서 진입한다.)
+  /// 근본 해결은 화면/데이터소스를 admin 모듈로 옮기고 경로를 `/admin/...`으로
+  /// 바꾸는 것이지만, 경로 변경은 별도 결정 사항이라 여기서 예외로 처리한다.
+  static const Map<String, UserType> _routeOwnerOverrides = {
+    '/manager/add-general-manager': UserType.admin,
+  };
+
+  /// 해당 경로에 필요한 사용자 유형. 공개 경로면 null.
+  UserType? _requiredUserTypeFor(String? path) {
+    if (path == null) return null;
+
+    final override = _routeOwnerOverrides[path];
+    if (override != null) return override;
+
+    for (final entry in _protectedPrefixes.entries) {
+      if (path.startsWith(entry.key)) return entry.value;
+    }
+    return null;
+  }
+
+  String _getLoginPath(UserType userType) {
+    switch (userType) {
+      case UserType.user:
+        return '/user-login';
+      case UserType.admin:
+        return '/admin-login';
+      case UserType.manager:
+        return '/manager-login';
+      case UserType.headquarters:
+        return '/headquarters-login';
+    }
+  }
+
+  /// 유저 타입별 기본 대시보드 경로 반환
   String _getDefaultDashboard(UserType userType) {
     switch (userType) {
       case UserType.user:
@@ -673,28 +665,5 @@ class RouterNotifier extends ChangeNotifier {
       case UserType.headquarters:
         return '/headquarters/dashboard';
     }
-  }
-}
-
-/// 라우트 변경 로깅을 위한 NavigatorObserver
-class _RouteLogger extends NavigatorObserver {
-  @override
-  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    super.didPush(route, previousRoute);
-  }
-
-  @override
-  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    super.didPop(route, previousRoute);
-  }
-
-  @override
-  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
-    super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
-  }
-
-  @override
-  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    super.didRemove(route, previousRoute);
   }
 }
