@@ -7,6 +7,7 @@ import 'package:building_manage_front/modules/admin/presentation/providers/admin
 import 'package:building_manage_front/modules/admin/data/datasources/complaint_remote_datasource.dart';
 import 'package:building_manage_front/modules/admin/domain/entities/complaint.dart';
 import 'package:building_manage_front/shared/widgets/full_screen_image_viewer.dart';
+import '../../../../core/utils/error_message.dart';
 
 class ComplaintDetailScreen extends ConsumerStatefulWidget {
   final String complaintId;
@@ -42,8 +43,8 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
     List<Map<String, dynamic>> departments;
     try {
       departments = await dataSource.getTransferableDepartments();
-    } catch (_) {
-      _toast('부서 목록을 불러오지 못했습니다.');
+    } catch (e) {
+      _toast(userMessageOf(e, fallback: '부서 목록을 불러오지 못했습니다.'));
       return;
     }
     // 현재 담당 부서는 제외
@@ -113,8 +114,10 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
         _toast('민원이 이관되었습니다.');
         setState(() {}); // FutureBuilder 재조회
       }
-    } catch (_) {
-      _toast('이관에 실패했습니다.');
+    } catch (e) {
+      // 백엔드가 이관 거부 사유를 6가지로 구분해 던진다
+      // (처리완료 민원 / 동일 부서 / 정지된 부서 / 타 본사 부서 / 담당자 없음 / 부서 없음)
+      _toast(userMessageOf(e, fallback: '이관에 실패했습니다.'));
     } finally {
       if (mounted) setState(() => _isTransferring = false);
     }

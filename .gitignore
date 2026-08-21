@@ -84,3 +84,6 @@ android/key.properties
 # fastlane root (크로스플랫폼 레인) 실행 생성물
 fastlane/report.xml
 fastlane/Preview.html
+
+# 환경 변수 (pubspec 의 asset 으로 번들되지만 저장소에는 두지 않는다)
+.env

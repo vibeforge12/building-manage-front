@@ -220,12 +220,14 @@ class AuthRemoteDataSource {
 
       return response.data as Map<String, dynamic>;
     } on ApiException catch (e) {
-      // 401: 비밀번호 불일치, 404: 사용자 없음
-      if (e.statusCode == 401) {
+      // 400/401: 비밀번호 불일치, 404: 사용자 없음
+      // 백엔드는 400 을 반환한다(비밀번호 확인 실패는 인증 실패가 아니라 입력 검증 실패).
+      // 401 은 구버전 백엔드 호환용으로 함께 받는다. change-password 쪽도 같은 규칙이다.
+      if (e.statusCode == 400 || e.statusCode == 401) {
         throw const ApiException(
           message: '비밀번호가 일치하지 않습니다.',
           errorCode: 'PASSWORD_MISMATCH',
-          statusCode: 401,
+          statusCode: 400,
         );
       } else if (e.statusCode == 404) {
         throw const ApiException(
