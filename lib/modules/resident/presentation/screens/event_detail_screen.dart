@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/resident/data/datasources/notice_remote_datasource.dart';
 import 'package:intl/intl.dart';
 
-class EventDetailScreen extends StatefulWidget {
+class EventDetailScreen extends ConsumerStatefulWidget {
   final String eventId;
 
   const EventDetailScreen({
@@ -14,10 +14,10 @@ class EventDetailScreen extends StatefulWidget {
   });
 
   @override
-  State<EventDetailScreen> createState() => _EventDetailScreenState();
+  ConsumerState<EventDetailScreen> createState() => _EventDetailScreenState();
 }
 
-class _EventDetailScreenState extends State<EventDetailScreen> {
+class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
   bool _isLoading = true;
   Map<String, dynamic>? _event;
   String? _error;
@@ -31,9 +31,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   Future<void> _loadEventDetail() async {
     try {
 
-      // Riverpod에 접근하기 위해 직접 provider 인스턴스 사용
-      final container = ProviderContainer();
-      final noticeDataSource = container.read(noticeRemoteDataSourceProvider);
+      final noticeDataSource = ref.read(noticeRemoteDataSourceProvider);
       final response = await noticeDataSource.getEventDetail(eventId: widget.eventId);
 
       // API 응답 구조: response = { success: true, data: { id, title, content, imageUrl, createdAt, ... } }

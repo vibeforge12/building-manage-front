@@ -5,7 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:building_manage_front/modules/manager/data/datasources/staff_complaints_remote_datasource.dart';
 
-class StaffNoticeDetailScreen extends StatefulWidget {
+class StaffNoticeDetailScreen extends ConsumerStatefulWidget {
   final String noticeId;
 
   const StaffNoticeDetailScreen({
@@ -14,10 +14,10 @@ class StaffNoticeDetailScreen extends StatefulWidget {
   });
 
   @override
-  State<StaffNoticeDetailScreen> createState() => _StaffNoticeDetailScreenState();
+  ConsumerState<StaffNoticeDetailScreen> createState() => _StaffNoticeDetailScreenState();
 }
 
-class _StaffNoticeDetailScreenState extends State<StaffNoticeDetailScreen> {
+class _StaffNoticeDetailScreenState extends ConsumerState<StaffNoticeDetailScreen> {
   bool _isLoading = true;
   Map<String, dynamic>? _noticeData;
   String? _error;
@@ -35,9 +35,7 @@ class _StaffNoticeDetailScreenState extends State<StaffNoticeDetailScreen> {
         _error = null;
       });
 
-      // Use ProviderContainer to access Riverpod provider
-      final container = ProviderContainer();
-      final dataSource = container.read(staffComplaintsRemoteDataSourceProvider);
+      final dataSource = ref.read(staffComplaintsRemoteDataSourceProvider);
       final response = await dataSource.getNoticeDetail(widget.noticeId);
 
       if (response['success'] == true && response['data'] != null) {
@@ -52,6 +50,7 @@ class _StaffNoticeDetailScreenState extends State<StaffNoticeDetailScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = '공지사항 로드 중 오류가 발생했습니다.';
         _isLoading = false;

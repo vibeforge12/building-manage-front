@@ -3,14 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/manager/data/datasources/staff_complaints_remote_datasource.dart';
 
-class StaffComplaintsListScreen extends StatefulWidget {
+class StaffComplaintsListScreen extends ConsumerStatefulWidget {
   const StaffComplaintsListScreen({super.key});
 
   @override
-  State<StaffComplaintsListScreen> createState() => _StaffComplaintsListScreenState();
+  ConsumerState<StaffComplaintsListScreen> createState() => _StaffComplaintsListScreenState();
 }
 
-class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
+class _StaffComplaintsListScreenState extends ConsumerState<StaffComplaintsListScreen> {
   bool _isLoading = false;
   List<Map<String, dynamic>> _allComplaints = [];
   String? _error;
@@ -32,8 +32,7 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
     });
 
     try {
-      final container = ProviderContainer();
-      final dataSource = container.read(staffComplaintsRemoteDataSourceProvider);
+      final dataSource = ref.read(staffComplaintsRemoteDataSourceProvider);
 
       // 탭에 따라 다른 API 호출
       final response = _tabIndex == 0
@@ -58,6 +57,7 @@ class _StaffComplaintsListScreenState extends State<StaffComplaintsListScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       final tabName = _tabIndex == 0 ? '미완료' : '처리된';
       setState(() {
         _error = '민원 로드 중 오류가 발생했습니다.';

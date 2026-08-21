@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/resident/data/datasources/notice_remote_datasource.dart';
 import 'package:intl/intl.dart';
 
-class NoticeDetailScreen extends StatefulWidget {
+class NoticeDetailScreen extends ConsumerStatefulWidget {
   final String noticeId;
 
   const NoticeDetailScreen({
@@ -14,10 +14,10 @@ class NoticeDetailScreen extends StatefulWidget {
   });
 
   @override
-  State<NoticeDetailScreen> createState() => _NoticeDetailScreenState();
+  ConsumerState<NoticeDetailScreen> createState() => _NoticeDetailScreenState();
 }
 
-class _NoticeDetailScreenState extends State<NoticeDetailScreen> {
+class _NoticeDetailScreenState extends ConsumerState<NoticeDetailScreen> {
   bool _isLoading = true;
   Map<String, dynamic>? _notice;
   String? _error;
@@ -31,9 +31,7 @@ class _NoticeDetailScreenState extends State<NoticeDetailScreen> {
   Future<void> _loadNoticeDetail() async {
     try {
 
-      // Riverpod에 접근하기 위해 직접 provider 인스턴스 사용
-      final container = ProviderContainer();
-      final noticeDataSource = container.read(noticeRemoteDataSourceProvider);
+      final noticeDataSource = ref.read(noticeRemoteDataSourceProvider);
       final response = await noticeDataSource.getNoticeDetail(noticeId: widget.noticeId);
 
       // API 응답 구조: response = { success: true, data: { id, title, content, imageUrl, createdAt, ... } }

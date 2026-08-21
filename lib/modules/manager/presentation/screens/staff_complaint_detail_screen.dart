@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:building_manage_front/modules/manager/data/datasources/staff_complaints_remote_datasource.dart';
 import 'package:building_manage_front/shared/widgets/full_screen_image_viewer.dart';
 
-class StaffComplaintDetailScreen extends StatefulWidget {
+class StaffComplaintDetailScreen extends ConsumerStatefulWidget {
   final String complaintId;
 
   const StaffComplaintDetailScreen({
@@ -15,10 +15,10 @@ class StaffComplaintDetailScreen extends StatefulWidget {
   });
 
   @override
-  State<StaffComplaintDetailScreen> createState() => _StaffComplaintDetailScreenState();
+  ConsumerState<StaffComplaintDetailScreen> createState() => _StaffComplaintDetailScreenState();
 }
 
-class _StaffComplaintDetailScreenState extends State<StaffComplaintDetailScreen> {
+class _StaffComplaintDetailScreenState extends ConsumerState<StaffComplaintDetailScreen> {
   bool _isLoading = true;
   Map<String, dynamic>? _complaintData;
   String? _error;
@@ -36,9 +36,7 @@ class _StaffComplaintDetailScreenState extends State<StaffComplaintDetailScreen>
         _error = null;
       });
 
-      // Use ProviderContainer to access Riverpod provider
-      final container = ProviderContainer();
-      final dataSource = container.read(staffComplaintsRemoteDataSourceProvider);
+      final dataSource = ref.read(staffComplaintsRemoteDataSourceProvider);
       final response = await dataSource.getComplaintDetail(widget.complaintId);
 
       debugPrint('민원 상세 응답: $response');
@@ -56,6 +54,7 @@ class _StaffComplaintDetailScreenState extends State<StaffComplaintDetailScreen>
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = '민원 로드 중 오류가 발생했습니다.';
         _isLoading = false;
