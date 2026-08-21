@@ -1,5 +1,6 @@
 import 'package:building_manage_front/modules/resident/domain/repositories/resident_auth_repository.dart';
 import 'package:building_manage_front/modules/resident/data/datasources/resident_auth_remote_datasource.dart';
+import 'package:building_manage_front/modules/resident/domain/entities/consent_agreement.dart';
 
 /// ResidentAuthRepository 구현체
 ///
@@ -35,6 +36,7 @@ class ResidentAuthRepositoryImpl implements ResidentAuthRepository {
     required String phoneNumber,
     required String username,
     required String password,
+    required ConsentAgreement agreement,
   }) async {
     try {
       final result = await _dataSource.register(
@@ -45,6 +47,7 @@ class ResidentAuthRepositoryImpl implements ResidentAuthRepository {
         phoneNumber: phoneNumber,
         username: username,
         password: password,
+        agreement: agreement,
       );
       return result;
     } catch (e) {

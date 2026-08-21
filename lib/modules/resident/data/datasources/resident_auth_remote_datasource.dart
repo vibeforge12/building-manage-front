@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:building_manage_front/core/network/api_client.dart';
 import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
+import 'package:building_manage_front/modules/resident/domain/entities/consent_agreement.dart';
 
 class ResidentAuthRemoteDataSource {
   final ApiClient _apiClient;
@@ -49,6 +50,7 @@ class ResidentAuthRemoteDataSource {
     required String dong,
     required String hosu,
     required String buildingId,
+    required ConsentAgreement agreement,
   }) async {
     try {
 
@@ -60,6 +62,7 @@ class ResidentAuthRemoteDataSource {
         'dong': dong,
         'hosu': hosu,
         'buildingId': buildingId,
+        'agreements': agreement.toJson(),
       };
 
       final response = await _apiClient.post(

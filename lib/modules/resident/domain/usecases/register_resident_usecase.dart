@@ -1,17 +1,22 @@
 import 'package:building_manage_front/modules/resident/domain/repositories/resident_auth_repository.dart';
+import 'package:building_manage_front/modules/resident/domain/entities/consent_agreement.dart';
 
 /// 입주민 회원가입 UseCase
 ///
 /// 비즈니스 로직:
-/// 1. 입력 데이터 유효성 검증
-/// 2. Repository를 통한 회원가입 수행
-/// 3. 결과 반환
+/// 1. 필수 약관 동의 여부 검증
+/// 2. 입력 데이터 유효성 검증
+/// 3. Repository를 통한 회원가입 수행
+/// 4. 결과 반환
 class RegisterResidentUseCase {
   final ResidentAuthRepository _repository;
 
   RegisterResidentUseCase(this._repository);
 
   /// 회원가입 실행
+  ///
+  /// [agreement]는 약관 동의 화면에서 수집한 동의 정보이며,
+  /// 필수 약관 3종이 모두 동의된 상태여야 한다.
   ///
   /// Returns: User 데이터와 Access Token
   /// Throws: Exception if validation or registration fails
@@ -23,8 +28,17 @@ class RegisterResidentUseCase {
     required String phoneNumber,
     required String username,
     required String password,
+    required ConsentAgreement? agreement,
   }) async {
     // 비즈니스 규칙: 유효성 검증
+    if (agreement == null) {
+      throw Exception('약관 동의 정보가 없습니다. 처음부터 다시 진행해 주세요.');
+    }
+
+    if (!agreement.isRequiredComplete) {
+      throw Exception('필수 약관에 모두 동의해 주세요.');
+    }
+
     if (buildingId.trim().isEmpty) {
       throw Exception('건물을 선택해 주세요.');
     }
@@ -78,6 +92,7 @@ class RegisterResidentUseCase {
         phoneNumber: cleanedPhone,
         username: username.trim(),
         password: password,
+        agreement: agreement,
       );
 
       return result;

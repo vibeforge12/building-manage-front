@@ -1,6 +1,17 @@
 /// 앱 내에서 사용되는 법적 문서 텍스트 상수
+///
+/// 각 문서 전문 바로 위에 해당 문서의 버전 상수를 둔다.
+/// 문서는 서로 독립적으로 개정되므로 버전도 문서별로 관리하며,
+/// 전문을 수정할 때는 반드시 짝이 되는 버전 상수를 함께 올려야 한다.
+/// 이 값은 회원가입 시 동의 이력과 함께 서버에 문서별로 저장되고,
+/// 서버에 저장된 버전과 문자열이 일치해야 재동의 대상 판별이 가능하다.
 class LegalDocuments {
   LegalDocuments._();
+
+  /// 개인정보 처리방침 버전.
+  ///
+  /// [privacyPolicy] 전문을 수정하면 반드시 이 값을 함께 올릴 것.
+  static const String privacyPolicyVersion = '1.0';
 
   /// 개인정보 처리방침
   static const String privacyPolicy = '''
@@ -172,6 +183,11 @@ class LegalDocuments {
 공고일: 2025년 1월 1일
 시행일: 2025년 1월 1일
 ''';
+
+  /// 서비스 이용약관 버전.
+  ///
+  /// [termsOfService] 전문을 수정하면 반드시 이 값을 함께 올릴 것.
+  static const String termsOfServiceVersion = '1.0';
 
   /// 서비스 이용약관
   static const String termsOfService = '''
@@ -352,6 +368,11 @@ class LegalDocuments {
 공고일: 2025년 1월 1일
 시행일: 2025년 1월 1일
 ''';
+
+  /// 마케팅 정보 수신 동의 버전.
+  ///
+  /// [marketingConsent] 전문을 수정하면 반드시 이 값을 함께 올릴 것.
+  static const String marketingConsentVersion = '1.0';
 
   /// 마케팅 정보 수신 동의
   static const String marketingConsent = '''

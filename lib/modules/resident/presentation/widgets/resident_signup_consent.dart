@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:building_manage_front/modules/resident/data/models/consent_agreement.dart';
+import 'package:building_manage_front/modules/resident/domain/entities/consent_agreement.dart';
 import 'package:building_manage_front/modules/resident/presentation/providers/signup_form_provider.dart';
 import 'package:building_manage_front/modules/resident/presentation/widgets/consent_checkbox_item.dart';
 import 'package:building_manage_front/modules/resident/presentation/widgets/consent_detail_sheet.dart';

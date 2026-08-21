@@ -144,6 +144,8 @@ class ResidentSignupScreen extends ConsumerWidget {
         dong: formData.dong!,
         ho: formData.hosu!,
         buildingId: formData.buildingId!,
+        // Step 1(약관 동의)에서 수집한 동의 정보. 유효성은 UseCase에서 검증한다.
+        agreement: formData.consentAgreement,
       );
 
       // 로딩 다이얼로그 닫기

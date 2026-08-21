@@ -1,8 +1,6 @@
 // providers/signup_form_provider.dart
-import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
-import 'package:building_manage_front/modules/resident/data/models/consent_agreement.dart';
+import 'package:building_manage_front/modules/resident/domain/entities/consent_agreement.dart';
 
 class SignupFormState {
   final String? dong;
@@ -81,20 +79,6 @@ class SignupFormState {
 
   bool get canProceedToStep2 => isStep1Valid;
   bool get canSubmit => isStep1Valid && isStep2Valid;
-
-  Map<String, dynamic> toApiRequest() {
-    return {
-      'username': username,
-      'password': password,
-      'name': name,
-      'phoneNumber': phoneNumber,
-      'dong': dong,
-      'hosu': hosu,
-      'buildingId': buildingId,
-      // 약관 동의 정보 추가
-      if (consentAgreement != null) 'agreements': consentAgreement!.toJson(),
-    };
-  }
 }
 
 class SignupFormNotifier extends StateNotifier<SignupFormState> {
@@ -159,29 +143,6 @@ class SignupFormNotifier extends StateNotifier<SignupFormState> {
 
   void reset() {
     state = const SignupFormState();
-  }
-
-  /// ✅ 최종 회원가입 API 호출 (예시)
-  Future<({bool ok, String? message})> submitSignup({
-    required String baseUrl, // 예: https://api.example.com
-  }) async {
-    final body = state.toApiRequest();
-    try {
-      setLoading(true);
-      final resp = await http.post(
-        Uri.parse('$baseUrl/auth/signup'), // 엔드포인트는 실제에 맞게
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(body),
-      );
-      if (resp.statusCode >= 200 && resp.statusCode < 300) {
-        return (ok: true, message: null);
-      }
-      return (ok: false, message: resp.body);
-    } catch (e) {
-      return (ok: false, message: e.toString());
-    } finally {
-      setLoading(false);
-    }
   }
 }
 

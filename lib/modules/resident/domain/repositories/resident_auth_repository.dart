@@ -1,3 +1,5 @@
+import 'package:building_manage_front/modules/resident/domain/entities/consent_agreement.dart';
+
 /// 입주민 인증 Repository 인터페이스
 ///
 /// Clean Architecture의 Dependency Inversion Principle을 따릅니다.
@@ -24,6 +26,7 @@ abstract class ResidentAuthRepository {
   /// [phoneNumber] 전화번호
   /// [username] 사용자 ID
   /// [password] 비밀번호
+  /// [agreement] 약관 동의 정보 (필수 약관 동의 완료 상태)
   ///
   /// Returns: User 엔티티와 Access Token
   /// Throws: Exception if registration fails
@@ -35,5 +38,6 @@ abstract class ResidentAuthRepository {
     required String phoneNumber,
     required String username,
     required String password,
+    required ConsentAgreement agreement,
   });
 }
