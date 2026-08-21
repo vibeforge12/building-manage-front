@@ -95,7 +95,7 @@ class _UserLoginScreenState extends ConsumerState<UserLoginScreen> {
         }
       }
     } catch (e) {
-      setState(() => _loginFailed = true);
+      if (mounted) setState(() => _loginFailed = true);
     } finally {
       if (mounted) setState(() => _loading = false);
     }

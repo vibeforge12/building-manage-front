@@ -54,26 +54,34 @@ class _HeadquartersLoginScreenState extends ConsumerState<HeadquartersLoginScree
 
       // 사용자 정보 설정
       final userData = response['data'];
-      if (userData != null) {
-        await authNotifier.loginSuccess(
-          userData['user'],
-          userData['accessToken'],
-          userData['refreshToken'],
+      final rawUser = userData is Map ? userData['user'] : null;
+      final accessToken = userData is Map ? userData['accessToken'] : null;
+
+      // 응답 스키마가 예상과 다르면 무반응으로 끝내지 않고 원인을 안내한다.
+      if (rawUser is! Map || accessToken is! String || accessToken.isEmpty) {
+        throw const ApiException(
+          message: '로그인 응답을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+          errorCode: 'INVALID_LOGIN_RESPONSE',
         );
-
-        if (mounted) {
-          // 본사 대시보드로 이동
-          context.goNamed('headquartersDashboard');
-        }
-      }
-    } catch (e) {
-      String errorMessage = '로그인 중 오류가 발생했습니다.';
-
-      if (e is ApiException) {
-        errorMessage = e.userFriendlyMessage;
       }
 
-      setState(() => _errorMessage = errorMessage);
+      final refreshToken = userData['refreshToken'];
+      await authNotifier.loginSuccess(
+        Map<String, dynamic>.from(rawUser),
+        accessToken,
+        refreshToken is String ? refreshToken : null,
+      );
+
+      if (mounted) {
+        // 본사 대시보드로 이동
+        context.goNamed('headquartersDashboard');
+      }
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _errorMessage = e.userFriendlyMessage);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _errorMessage = '로그인 중 오류가 발생했습니다.');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

@@ -49,28 +49,37 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
         managerCode: _codeController.text.trim(),
       );
 
-      // 응답 payload 추출 및 관리자 역할 정규화(기존 동작 복원)
       final payload = response['data'] ?? response;
       final accessToken = payload['accessToken'];
       final refreshToken = payload['refreshToken'];
-      final userJson = Map<String, dynamic>.from(payload['user'] ?? {});
-      userJson['role'] = 'admin';
+      final rawUser = payload['user'];
 
-      if (accessToken is String && accessToken.isNotEmpty && userJson.isNotEmpty) {
-        await authNotifier.loginSuccess(userJson, accessToken, refreshToken);
-
-        if (mounted) {
-          context.goNamed('adminDashboard');
-        }
-      }
-    } catch (e) {
-      String errorMessage = '로그인 중 오류가 발생했습니다.';
-
-      if (e is ApiException) {
-        errorMessage = e.userFriendlyMessage;
+      // 응답 스키마가 예상과 다르면 무반응으로 끝내지 않고 원인을 안내한다.
+      if (accessToken is! String || accessToken.isEmpty || rawUser is! Map) {
+        throw const ApiException(
+          message: '로그인 응답을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+          errorCode: 'INVALID_LOGIN_RESPONSE',
+        );
       }
 
-      setState(() => _errorMessage = errorMessage);
+      // 관리자 역할 정규화(기존 동작 유지)
+      final userJson = Map<String, dynamic>.from(rawUser)..['role'] = 'admin';
+
+      await authNotifier.loginSuccess(
+        userJson,
+        accessToken,
+        refreshToken is String ? refreshToken : null,
+      );
+
+      if (mounted) {
+        context.goNamed('adminDashboard');
+      }
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _errorMessage = e.userFriendlyMessage);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _errorMessage = '로그인 중 오류가 발생했습니다.');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

@@ -61,7 +61,7 @@ class _ManagerStaffLoginScreenState extends ConsumerState<ManagerStaffLoginScree
         context.goNamed('managerDashboard');
       }
     } catch (e) {
-      setState(() => _loginFailed = true);
+      if (mounted) setState(() => _loginFailed = true);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
