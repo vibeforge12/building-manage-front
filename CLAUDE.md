@@ -15,9 +15,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 > 영어 폴더명을 한국어로 직역하지 말 것. `manager` 는 "담당자(직원)" 을 의미.
 
 ### 프로젝트 핵심 특징
-- **Clean Architecture**: 모든 6개 모듈에 완전한 data/domain/presentation 레이어 적용
-- **모듈별 완전 분리**: 각 사용자 역할이 독립적인 모듈로 구성 (151개 Dart 파일)
-- **Riverpod 기반 상태 관리**: 7개 전역 + 6개 모듈별 Provider로 DI 및 상태 관리
+- **Clean Architecture (부분 적용)**: 6개 모듈 중 4개(`resident`/`admin`/`manager`/`headquarters`)만 data/domain/presentation 3계층을 갖습니다. `auth` 는 `presentation/` 만, `common` 은 `data/`+`services/` 만 있고 **domain 레이어가 없습니다.** (2026-08-21 실측)
+- **모듈별 완전 분리**: 각 사용자 역할이 독립적인 모듈로 구성 (`lib/` 하위 **176개** Dart 파일, 2026-08-21 실측)
+- **Riverpod 기반 상태 관리**: Provider 정의 파일 **12개**, 최상위 Provider 선언 **78개** (35개 파일에 분산)
 - **타입-안전 라우팅**: GoRouter + RouterNotifier로 권한 기반 자동 리다이렉트
 - **다중 플랫폼 지원**: Android, iOS, Web, macOS, Windows, Linux
 - **보안 강화**: JWT + flutter_secure_storage + AuthInterceptor 자동 토큰 갱신
@@ -164,7 +164,9 @@ lib/
 │   ├── widgets/                # 재사용 가능한 UI 컴포넌트
 │   │                           # FullScreenImageBackground, PageHeaderText
 │   │                           # PrimaryActionButton, SectionDivider, SeparatorWidget
-│   │                           # CommonNavigationBar, AuthStatusWidget, ApiTestWidget
+│   │                           # CommonNavigationBar, CustomConfirmationDialog
+│   │                           # ErrorAlert(showErrorAlert), FieldLabel, FullScreenImageViewer
+│   │                           # (총 11개. AuthStatusWidget/ApiTestWidget 은 삭제됨)
 │   ├── constants/              # 공통 상수
 │   ├── themes/                 # 공통 테마
 │   └── utils/                  # 공통 유틸리티
@@ -186,7 +188,8 @@ lib/
 ```
 
 ### 각 모듈 내부 구조 (Clean Architecture)
-각 `modules/` 하위 모듈은 **완전한 Clean Architecture 레이어**를 가집니다:
+아래는 **목표 구조**이며, 실제로 3계층을 모두 갖춘 모듈은 `resident`/`admin`/`manager`/`headquarters` 4개입니다.
+(`auth` = `presentation/` 만, `common` = `data/`+`services/` 만. 자세한 실측은 아래 "Clean Architecture 적용 현황" 참조)
 
 - **data/** - 데이터 레이어
   - `datasources/` - API 통신, 로컬 DB 등 외부 데이터 소스
@@ -236,16 +239,28 @@ lib/
     - `/headquarters-login` - 본사 로그인
     - `/resident-signup` - 입주민 회원가입
 
-  - **보호된 경로 (인증 필요)**:
-    - `/user/dashboard` - 입주민 대시보드
-    - `/admin/dashboard` - 관리자 대시보드 (AdminDashboardScreen)
-    - `/admin/staff-account-issuance` - 담당자 계정 발급
-    - `/manager/dashboard` - 담당자 대시보드
-    - `/headquarters/dashboard` - 본사 대시보드 (HeadquartersDashboardScreen)
-    - `/headquarters/building-management` - 건물 관리
-    - `/headquarters/building-registration` - 건물 등록
-    - `/headquarters/department-creation` - 부서 생성
-    - `/headquarters/admin-account-issuance` - 관리자 계정 발급
+  - **보호된 경로 — 개별 나열이 아니라 접두어(prefix) 로 판정합니다**
+    (`_protectedPrefixes`, `router_notifier.dart:608-613`)
+
+    | 접두어 | 필요한 `UserType` |
+    |---|---|
+    | `/user/` | `UserType.user` (입주민) |
+    | `/admin/` | `UserType.admin` (관리자) |
+    | `/manager/` | `UserType.manager` (담당자) |
+    | `/headquarters/` | `UserType.headquarters` (본사) |
+
+    > 접두어 방식이므로 **새 라우트를 추가하면 자동으로 보호됩니다.** 경로를 배열에 일일이
+    > 나열하던 이전 방식은 13개 라우트를 누락시켰기 때문에 폐기되었습니다.
+    > 보호 목록에 라우트를 "추가"하는 코드는 더 이상 없습니다.
+
+  - **접두어 규칙의 예외 (1건)** — `_routeOwnerOverrides` (`router_notifier.dart:623-625`)
+
+    | 경로 | 실제 소유 역할 | 이유 |
+    |---|---|---|
+    | `/manager/add-general-manager` | **`UserType.admin` (관리자)** | 경로만 `manager` 접두어일 뿐, 총관리자가 일반관리자를 추가하는 관리자 전용 기능 (`admin_dashboard_screen` 에서 진입) |
+
+    판정 함수는 `_requiredUserTypeFor(path)` (`router_notifier.dart:629-640`) 이며
+    **override → 접두어 → null(공개 경로)** 순으로 검사합니다.
 
 - **리다이렉트 로직**:
   - 미인증 사용자가 보호된 경로 접근 시 → 해당 역할의 로그인 화면으로 리다이렉트
@@ -264,16 +279,29 @@ lib/
   - 설정 가능 항목: API_BASE_URL, API_VERSION, ENVIRONMENT, 타임아웃, 디버그 모드
 
 - **Interceptor 체계** (`lib/core/network/interceptors/`):
-  - **AuthInterceptor**:
+  - **AuthInterceptor** (`auth_interceptor.dart`):
     - 모든 요청에 자동으로 JWT Access Token 첨부 (Authorization: Bearer)
-    - 401 에러 시 Refresh Token으로 자동 갱신 후 재요청
-    - SharedPreferences에 토큰 저장/로드 (`access_token`, `refresh_token`)
+    - 401 에러 시 Refresh Token 으로 자동 갱신 후 **원 요청 재시도**
+      - 동시에 여러 요청이 401 을 받아도 갱신은 1회만 수행하고 결과를 공유 (`_refreshFuture` 큐)
+      - 요청당 갱신 1회 제한 (`_retriedKey` extra 플래그) → 무한 루프 방지
+      - `/auth/refresh` 자체의 401, 또는 **갱신에 실패한 경우에만** 토큰 삭제
+      - 로그인/회원가입 엔드포인트의 401 은 "로그인 실패" 이므로 토큰을 건드리지 않음
+      - 갱신·재시도는 인터셉터가 없는 별도 Dio(`_createPlainDio`)로 수행
+    - **토큰은 `flutter_secure_storage` 에 저장/로드** (`access_token`, `refresh_token`)
+      — SharedPreferences 가 **아닙니다**
   - **LoggingInterceptor**:
     - `AppConfig.isDebug`가 true일 때만 활성화
     - 요청/응답 전체 로깅 (URL, headers, body, status code)
-  - **ErrorInterceptor**:
-    - API 에러 통합 처리 및 사용자 친화적 에러 메시지 변환
-    - `ApiException` 클래스로 에러 타입 분류
+  - **ErrorInterceptor** — 예외 계약(contract):
+    - Dio 인터셉터 경계에서는 `DioException` 만 전달 가능하므로,
+      `ErrorInterceptor` 는 `ApiException` 을 만들어 **`DioException.error` 필드에 실어** 보냅니다
+      (`error_interceptor.dart:13-21`)
+    - 최종 언랩은 `ApiClient._guard()` 가 담당합니다 (`api_client.dart:42-48`).
+      `on DioException catch (e) { throw ApiException.from(e); }`
+    - **결과적으로 `ApiClient` 경계를 넘어 상위 계층(datasource/provider/screen)에 도달하는
+      네트워크 예외는 `ApiException` 하나뿐입니다.**
+      datasource·화면은 `on ApiException catch` 한 가지 계약만 다루면 됩니다.
+    - `DioException` 을 직접 잡는 코드를 새로 쓰지 마세요. (자세한 규칙은 "에러 처리 규칙" 절 참조)
 
 - **API 엔드포인트** (`lib/core/constants/api_endpoints.dart`):
   - 모든 API 경로를 상수로 관리
@@ -281,16 +309,20 @@ lib/
   - 예시: `ApiEndpoints.residentLogin`, `ApiEndpoints.departments`
 
 - **토큰 관리**:
-  - SharedPreferences 2.3.3 사용
-  - 저장: `access_token`, `refresh_token`
+  - **`flutter_secure_storage` 9.2.2 사용** (Android: `encryptedSharedPreferences: true`, `resetOnError: true`)
+  - 저장 키: `access_token`, `refresh_token` (`auth_interceptor.dart:6-7`)
   - `AuthInterceptor`에서 자동 토큰 첨부 및 갱신
   - `AuthStateNotifier.checkAutoLogin()`에서 앱 시작 시 토큰 유효성 검사
+  - ⚠️ **`SharedPreferences` 는 토큰 저장에 쓰이지 않습니다.** 앱에서 SharedPreferences 는 아래 2가지 용도 전용입니다:
+    1. 앱 버전 플래그 — 재설치/버전 변경 감지 후 토큰 강제 삭제 (`main.dart:86-101`)
+    2. 승인완료 화면 1회 노출 플래그 `approval_shown_<userId>`
+       (`user_login_screen.dart:79-85`, `splash_screen.dart:64-66`, `resident_approval_completed_screen.dart:10-17`)
 
 ### 인증 시스템
 - **JWT 기반 인증**:
   - Access Token + Refresh Token 구조
-  - `AuthInterceptor`가 401 에러 시 자동으로 Refresh Token으로 갱신
-  - 토큰은 SharedPreferences에 영구 저장
+  - `AuthInterceptor`가 401 에러 시 자동으로 Refresh Token 으로 갱신하고 원 요청을 재시도
+  - 토큰은 **`flutter_secure_storage`(암호화 저장소)** 에 저장
 
 - **AuthStateNotifier** (`lib/modules/auth/presentation/providers/auth_state_provider.dart`):
   - `StateNotifier<AuthState>`를 상속받아 인증 상태 관리
@@ -336,8 +368,10 @@ lib/
   - `SectionDivider`: 섹션 구분선
   - `SeparatorWidget`: Figma 디자인 시스템의 Separator 컴포넌트 (배경색 #F2F8FC)
   - `CommonNavigationBar`: 공통 네비게이션 바
-  - `AuthStatusWidget`: 인증 상태 표시 위젯 (디버깅용)
-  - `ApiTestWidget`: API 연결 테스트 위젯 (디버깅용)
+  - `CustomConfirmationDialog` (`showCustomConfirmationDialog`): 앱 표준 확인/취소 다이얼로그
+  - `showErrorAlert` (`error_alert.dart`): 앱 표준 "실패 안내" 다이얼로그 — 실패를 조용히 삼키지 않기 위한 진입점
+  - `FieldLabel`, `FullScreenImageViewer`, `SignUp`
+  - (총 11개 파일. `AuthStatusWidget`·`ApiTestWidget` 은 **삭제되었습니다.**)
 
 - **UI 라이브러리**:
   - `flutter_svg 2.0.16`: SVG 이미지 렌더링
@@ -390,6 +424,13 @@ lib/
 - **mockito** ^5.4.4 - 테스트용 Mock 객체 생성
 
 ## 코드 생성 및 직렬화
+
+> ⚠️ **현재 미사용 파이프라인 (2026-08-21 실측)**
+> `lib/` 에 `.g.dart` 파일이 **0개**이고 `@JsonSerializable`/`@HiveType` 어노테이션도 **0건**입니다.
+> `hive`/`hive_flutter`/`json_annotation`/`json_serializable`/`hive_generator` 는 선언만 되어 있고 실사용되지 않습니다.
+> `build_runner`·`mockito` 는 `test/modules/manager/attendance_notifier_test.mocks.dart` 생성에 실제로 쓰입니다.
+> 아래는 **향후 도입 시의 사용법**이며, 지금 이 절을 근거로 "이미 쓰고 있다" 고 판단하지 마세요.
+
 - **build_runner 2.4.13**: JSON 직렬화, Hive 타입 어댑터 자동 생성
 - **json_serializable 6.8.0**: `@JsonSerializable()` 어노테이션으로 JSON 변환 코드 생성
 - **hive_generator 2.0.1**: `@HiveType()` 어노테이션으로 Hive 타입 어댑터 생성
@@ -420,7 +461,14 @@ flutter pub run build_runner watch                        # 자동 감지 모드
 ```
 
 ## 환경 변수 (.env)
-프로젝트 루트에 `.env` 파일 필수 (`.gitignore`에 포함):
+프로젝트 루트에 `.env` 파일 필수.
+
+> ⚠️ **`.env` 추적 상태 (2026-08-21)**: `.gitignore` 에 `.env` 항목을 추가했지만,
+> **파일은 여전히 git 에 추적 중입니다** (`git ls-files` 에 `.env` 가 나옵니다).
+> `.gitignore` 는 이미 추적 중인 파일에는 적용되지 않으므로
+> **`git rm --cached .env` 로 추적 해제 예정**입니다. 그 전까지는 `.env` 변경 사항이 커밋에 섞일 수 있으니 주의하세요.
+> (`.env` 는 `pubspec.yaml:124` 에서 asset 으로 번들되므로 파일 자체는 로컬에 반드시 있어야 합니다.)
+
 
 ```env
 # API Configuration
@@ -701,16 +749,20 @@ final timeString = timeFormatter.format(DateTime.now());
 
 ### 인증 및 보안
 - 토큰 갱신은 `AuthInterceptor`가 자동 처리하므로 직접 구현하지 말 것
+  (401 감지 → 갱신 1회 공유 → 원 요청 재시도 → 실패 시에만 토큰 삭제)
 - **민감한 정보 저장**:
-  - 일반 설정: SharedPreferences 사용
-  - 보안 정보: flutter_secure_storage 사용 (암호화된 저장소)
-- `.env` 파일은 절대 Git에 커밋하지 말 것 (`.gitignore`에 포함됨)
+  - 인증 토큰(`access_token`/`refresh_token`): **`flutter_secure_storage`** — `AuthInterceptor` 가 단독 소유
+  - 비민감 플래그(앱 버전, 승인완료 1회 노출): SharedPreferences
+  - 새 저장 코드를 쓰기 전에 "이 값이 유출되면 계정이 털리는가?" 를 기준으로 고를 것
+- `.env` 파일은 절대 Git에 커밋하지 말 것
+  (`.gitignore` 에는 추가되었으나 **아직 추적 중 → `git rm --cached .env` 예정**. 위 "환경 변수" 절 참조)
 - S3 업로드 시 Presigned URL 방식 사용으로 AWS 자격증명 노출 방지
 
 ### 에러 처리
 - 모든 API 호출은 try-catch로 감싸기
 - 사용자에게 친화적인 에러 메시지 표시
 - 개발 모드에서는 자세한 에러 로그 출력, 프로덕션에서는 최소화
+- 상세 규칙은 아래 **"에러 처리 규칙"** 절을 따를 것 (빈 catch 금지, `ApiException` 단일 계약)
 
 ### 테스트
 - 중요한 비즈니스 로직은 반드시 유닛 테스트 작성
@@ -723,18 +775,133 @@ final timeString = timeFormatter.format(DateTime.now());
 - 불필요한 `setState()` 호출 최소화
 - 무거운 연산은 별도 Isolate에서 실행 고려
 
+## 에러 처리 규칙 (2026-08-21 확정)
+
+앱 전역에서 **네트워크 예외 계약은 `ApiException` 하나**입니다. 아래 4가지 규칙을 지키세요.
+
+### 1. `ApiClient` 는 `ApiException` 만 던진다
+
+`ErrorInterceptor` → `DioException.error` 에 `ApiException` 을 실어 전달
+→ `ApiClient._guard()` 가 `ApiException.from(e)` 로 언랩
+→ **상위 계층에는 `ApiException` 만 도달**합니다.
+
+```dart
+// lib/core/network/api_client.dart:42-48
+Future<Response<T>> _guard<T>(Future<Response<T>> Function() send) async {
+  try {
+    return await send();
+  } on DioException catch (e) {
+    throw ApiException.from(e);   // DioException 은 여기서 끝난다
+  }
+}
+```
+
+→ **새 코드에서 `on DioException catch` 를 쓰지 마세요.** 도달하지 않는 죽은 분기가 됩니다.
+
+### 2. datasource 는 `on ApiException catch { rethrow }`
+
+도메인 고유 문구가 필요할 때만 새 `ApiException` 으로 바꿔 던지고, 그 외에는 그대로 흘려보냅니다.
+
+```dart
+try {
+  final response = await _apiClient.get(ApiEndpoints.departments);
+  return response.data as Map<String, dynamic>;
+} on ApiException {
+  rethrow;                       // 서버가 준 메시지/상태코드를 보존
+} catch (_) {
+  throw const ApiException(      // 파싱 실패 등 예상 밖 오류만 여기서 정규화
+    message: '부서 목록을 불러오는 중 오류가 발생했습니다.',
+    errorCode: 'DEPARTMENTS_FETCH_FAILED',
+  );
+}
+```
+
+### 3. 화면은 `showErrorAlert` + `userMessageOf` 로만 노출한다
+
+```dart
+} catch (e) {
+  if (!mounted) return;
+  await showErrorAlert(
+    context,
+    title: '삭제 실패',
+    error: e,
+    fallback: '담당자를 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+  );
+}
+```
+
+- `showErrorAlert` (`lib/shared/widgets/error_alert.dart`) 는 내부에서 `userMessageOf(error, fallback: ...)` 를 호출합니다.
+- `userMessageOf` (`lib/core/utils/error_message.dart`) 는
+  `ApiException` → `userFriendlyMessage`,
+  `Exception('...')` → 접두어 제거,
+  `DioException`/`TypeError` 등 **개발자용 문자열은 `fallback` 으로 대체**합니다.
+- ❌ **금지**: `Text(e.toString())`, `e.toString().replaceAll('Exception: ', '')` 를 다이얼로그 본문에 직접 넣기.
+  `ApiException.toString()` 은 `ApiException(message: ..., statusCode: 401, errorCode: HTTP_401)` 이라
+  사용자에게 그대로 보입니다.
+
+### 4. 빈 catch 금지 / `await` 뒤에는 `if (!mounted) return;`
+
+```dart
+// ❌ 금지 — 실패를 조용히 삼킨다 (사용자는 성공한 줄 안다)
+} catch (e) {
+  // 실패
+}
+
+// ✅ 최소한 사용자에게 알린다
+} catch (e) {
+  if (!mounted) return;          // await 이후 context/setState 사용 전 필수
+  await showErrorAlert(context, title: '...', error: e, fallback: '...');
+}
+```
+
+- `await` 뒤에 `setState`/`context` 를 쓰는 모든 지점에 `if (!mounted) return;` 가드가 필요합니다.
+  (`finally { setState(...) }` 도 예외 없음 → `if (mounted) { setState(...) }`)
+- `ConsumerWidget` 처럼 `State` 가 없는 곳에서는 `if (!context.mounted) return;` 를 씁니다.
+
+---
+
+## 백엔드 계약 메모
+
+코드만 봐서는 알 수 없고, 백엔드와 합의된 사항이라 잊기 쉬운 항목들입니다.
+
+### 역할 ↔ 경로 뒤집힘 (반복 주의)
+
+| Dart `UserType` | `.code` (서버 값) | 한글 | 모듈 폴더 | 서버 API prefix |
+|---|---|---|---|---|
+| `UserType.user` | `USER` | 입주민 | `modules/resident/` | `/users`, `/auth/resident` |
+| `UserType.admin` | **`MANAGER`** | 관리자 | `modules/admin/` | **`/managers`** |
+| `UserType.manager` | **`STAFF`** | 담당자 | `modules/manager/` | **`/staffs`** |
+| `UserType.headquarters` | `HEADQUARTERS` | 본사 | `modules/headquarters/` | `/headquarters` |
+
+### `/common/departments` — 공용 경로처럼 보이지만 공용이 아님
+
+- `ApiEndpoints.departments = '/common/departments'` (`api_endpoints.dart:63`)
+- 경로에 `common` 이 들어 있지만 **인증이 필수입니다.**
+  `AuthInterceptor` 의 public 엔드포인트 화이트리스트(`auth_interceptor.dart:30-38`)는
+  `/auth/...` 계열뿐이므로, 이 경로에는 항상 `Authorization` 헤더가 붙습니다.
+  토큰 없이 호출하면 401 입니다.
+- **호출자의 역할에 따라 응답 결과가 달라집니다.**
+  본사가 부르면 본사 소속 부서, 관리자가 부르면 해당 건물의 부서가 내려옵니다.
+  따라서 "부서 목록" 을 캐시하거나 역할 간에 공유하면 안 됩니다.
+  (`headquarters/data/datasources/department_remote_datasource.dart` — `headquartersId` 는 선택 파라미터이며,
+  생략 시 서버가 토큰의 역할로 스코프를 결정합니다.)
+- 로그인 전 화면(회원가입 등)에서 부서 목록을 쓰려는 설계는 성립하지 않습니다.
+
+---
+
 ## 디버깅 및 문제 해결
 
 ### API 통신 디버깅
 - **LoggingInterceptor**: `.env` 파일에서 `API_DEBUG=true` 설정 시 모든 HTTP 요청/응답 로깅
-- **ApiTestWidget**: 개발 중 API 연결 테스트용 위젯 (`lib/shared/widgets/`)
-- **AuthStatusWidget**: 인증 상태 실시간 확인 위젯 (디버깅용)
+  (`AppConfig.isDebug` 가 true 일 때만 인터셉터가 등록됨 — `api_client.dart:30-32`)
+- 디버깅 전용이던 `ApiTestWidget` / `AuthStatusWidget` 은 **삭제되었습니다.** 대신 LoggingInterceptor 로그를 사용하세요.
 
 ### 일반적인 문제 및 해결
 1. **"401 Unauthorized" 에러**:
-   - AuthInterceptor가 자동으로 토큰 갱신 시도
-   - 갱신 실패 시 로그아웃 처리됨
-   - SharedPreferences에서 토큰 확인: `access_token`, `refresh_token`
+   - AuthInterceptor가 자동으로 토큰 갱신 후 원 요청 재시도
+   - **갱신에 실패한 경우에만** 토큰이 삭제됨
+   - 토큰은 `flutter_secure_storage` 에 있습니다 (SharedPreferences 아님): `access_token`, `refresh_token`
+   - 로그인/회원가입 요청의 401 은 "자격 오류" 이므로 토큰을 지우지 않음
 
 2. **코드 생성 관련 에러**:
    - `*.g.dart` 파일 충돌 시: `flutter pub run build_runner build --delete-conflicting-outputs`
@@ -755,11 +922,27 @@ final timeString = timeFormatter.format(DateTime.now());
    - S3 CORS 설정 확인
    - Content-Type이 올바른지 확인
 
-## Clean Architecture 적용 현황 (2025-11-13 업데이트)
+## Clean Architecture 적용 현황 (2025-11-13 작성 / **2026-08-21 실측 정정**)
 
-### 모듈별 Clean Architecture 적용 상태
+### 모듈별 Clean Architecture 적용 상태 (2026-08-21 실측으로 정정)
 
-모든 주요 모듈에 Clean Architecture가 완전히 적용되었습니다:
+> ⚠️ **"모든 6개 모듈에 완전 적용" 은 사실이 아닙니다.** 실제로는 **부분 적용**입니다.
+
+| 모듈 | `data/` | `domain/` | `presentation/` | Dart 파일 수 | 판정 |
+|---|:---:|:---:|:---:|---:|---|
+| `resident` | ✅ | ✅ | ✅ | 45 | 3계층 |
+| `admin` | ✅ | ✅ | ✅ | 43 | 3계층 |
+| `manager` | ✅ | ✅ | ✅ | 25 | 3계층 |
+| `headquarters` | ✅ | ✅ | ✅ | 22 | 3계층 |
+| `auth` | ❌ | ❌ | ✅ | 4 | **presentation 만** |
+| `common` | ✅ | ❌ | ❌ | 6 | **data + services 만** |
+
+- `auth` 모듈의 데이터 레이어는 모듈 밖 `lib/data/datasources/auth_remote_datasource.dart` 에 있습니다.
+- `common` 모듈은 `data/datasources/` 4개 + `services/` 2개(`image_upload_service`, `notification_service`) 구성이며 화면이 없습니다.
+- 3계층 모듈도 DataSource 대비 Repository/UseCase 커버리지는 절반 이하입니다.
+  (상세 실측: `docs/프론트엔드_구조_및_문제점_분석.md` §1.2)
+
+아래는 **3계층을 갖춘 4개 모듈**의 적용 내역입니다:
 
 #### ✅ Admin 모듈 (완료)
 - **Domain Layer**: Staff, ResidentInfo 엔티티, Repository 인터페이스, UseCase 구현 완료
@@ -927,28 +1110,40 @@ Data Layer (DataSources, Repositories Implementation)
 ## 파일 구조 및 통계
 
 ### 프로젝트 파일 분포
+> 아래 수치는 **2026-08-21 실측값**입니다. (`find lib -name '*.dart' | wc -l` 등)
+
 | 카테고리 | 파일 수 | 설명 |
 |---------|--------|------|
-| **Dart 파일** | 151 | 모듈, core, shared, data 포함 |
-| **모듈** | 6개 | auth, resident, admin, manager, headquarters, common |
-| **Provider 파일** | 13개 | 전역 7개 + 모듈별 6개 |
-| **화면 파일** | 20+ | 역할별 UI 페이지 |
-| **공유 위젯** | 16개 | 재사용 가능한 UI 컴포넌트 |
-| **테스트 파일** | 2개 | Widget + Router 테스트 |
+| **Dart 파일 (`lib/`)** | **176** | 모듈 145 + core 15 + shared 12 + domain 1 + data 1 + app 1 + main.dart |
+| **모듈** | 6개 | resident 45, admin 43, manager 25, headquarters 22, common 6, auth 4 |
+| **Provider 정의 파일** | **12개** | `core/providers/` 2 + auth 1 + resident 2 + admin 3 + manager 3 + headquarters 1 |
+| **최상위 Provider 선언** | **78개** | 35개 파일에 분산 (`Provider` 57, `StateProvider` 4, `FutureProvider(.family/.autoDispose)` 4, `StateNotifierProvider` 1, 나머지는 다중행 선언) |
+| **화면 파일** | **58개 / 20,952줄** | `lib/modules/**/screens/*.dart`, 평균 약 361줄 |
+| **공유 위젯** | **11개** | `lib/shared/widgets/*.dart` |
+| **테스트 파일** | **5개** | `widget_test`, `router_notifier_test`, `attendance_notifier_test`(+`.mocks`), `attendance_timezone_test` |
+| **코드 생성 파일(`.g.dart`)** | **0개** | `lib/` 전체에 없음 — 아래 "코드 생성" 절은 현재 미사용 파이프라인 |
+| **`print()` 호출** | **0건** | 전량 제거 완료. 로깅이 필요하면 `debugPrint` 사용 |
 | **설정 파일** | 4개 | pubspec.yaml, analysis_options.yaml, .env, .mcp.json |
 
 ### 핵심 파일 참조 (수정 시 먼저 읽기)
 
+> 라인 수는 **2026-08-21 실측값** (`wc -l`).
+
 | 파일 | 목적 | 라인 수 |
 |------|------|--------|
-| `lib/main.dart` | 앱 진입점 + 환경 초기화 | ~50 |
-| `lib/core/routing/router_notifier.dart` | 권한 기반 라우팅 로직 | 250+ |
-| `lib/core/network/api_client.dart` | HTTP 클라이언트 싱글톤 | 100+ |
-| `lib/modules/auth/presentation/providers/auth_state_provider.dart` | 인증 상태 관리 | 150+ |
-| `lib/domain/entities/user.dart` | User 엔티티 모델 | 150 |
-| `lib/core/constants/api_endpoints.dart` | 모든 API 경로 상수 | 70 |
-| `lib/modules/admin/presentation/providers/admin_providers.dart` | Admin 의존성 주입 | 150+ |
-| `pubspec.yaml` | 의존성 관리 | 60+ |
+| `lib/main.dart` | 앱 진입점 + 환경 초기화 | **101** |
+| `lib/core/routing/router_notifier.dart` | 권한 기반 라우팅 로직 (`GoRoute` 59개) | **669** |
+| `lib/core/network/api_client.dart` | HTTP 클라이언트 싱글톤 + `_guard()` 예외 정규화 | **136** |
+| `lib/core/network/interceptors/auth_interceptor.dart` | 토큰 첨부 · refresh 큐 · 원요청 재시도 | **280** |
+| `lib/core/network/interceptors/error_interceptor.dart` | `DioException` → `ApiException` 변환 | **137** |
+| `lib/core/network/exceptions/api_exception.dart` | 앱 전역 단일 네트워크 예외 타입 | **105** |
+| `lib/core/utils/error_message.dart` | `userMessageOf()` — 사용자 노출 문구 추출 | **42** |
+| `lib/shared/widgets/error_alert.dart` | `showErrorAlert()` — 표준 실패 다이얼로그 | **29** |
+| `lib/modules/auth/presentation/providers/auth_state_provider.dart` | 인증 상태 관리 | **176** |
+| `lib/domain/entities/user.dart` | User 엔티티 모델 | **179** |
+| `lib/core/constants/api_endpoints.dart` | 모든 API 경로 상수 | **95** |
+| `lib/modules/admin/presentation/providers/admin_providers.dart` | Admin 의존성 주입 | **188** |
+| `pubspec.yaml` | 의존성 관리 | **190** |
 
 ## 배포 및 빌드 설정
 
@@ -1065,9 +1260,10 @@ class MyScreen extends ConsumerWidget {
 #### 2. "401 Unauthorized" 에러
 - **원인**: 토큰 만료 또는 거부됨
 - **해결**:
-  - AuthInterceptor가 자동으로 refresh token으로 갱신 시도
-  - 갱신 실패 시 자동으로 로그아웃 처리
-  - `SharedPreferences`에서 `access_token`, `refresh_token` 확인
+  - AuthInterceptor 가 자동으로 refresh token 으로 갱신하고 원 요청을 재시도함
+  - 갱신에 실패한 경우에만 토큰 삭제 → 로그아웃 처리
+  - 토큰 확인 위치는 **`flutter_secure_storage`** 입니다 (SharedPreferences 아님): `access_token`, `refresh_token`
+  - 같은 요청이 갱신 후에도 401 이면 재갱신하지 않습니다 (`_retriedKey`, 요청당 1회)
 
 #### 3. "Unhandled Exception: The value of type 'Future<dynamic>' can't be assigned"
 ```dart
@@ -1468,13 +1664,13 @@ class NotificationService {
   Future<void> initialize() async {
     // 포그라운드 메시지 핸들러
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('📢 포그라운드 메시지: ${message.notification?.title}');
+      debugPrint('📢 포그라운드 메시지: ${message.notification?.title}');
       _handleMessage(message);
     });
 
     // 앱이 백그라운드에서 포그라운드로 전환될 때
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('📱 알림 클릭: ${message.notification?.title}');
+      debugPrint('📱 알림 클릭: ${message.notification?.title}');
       _handleMessageClick(message);
     });
   }
@@ -1521,7 +1717,7 @@ class NotificationService {
 
   void _handleMessageClick(RemoteMessage message) {
     // 알림 클릭 시 처리 (네비게이션 등)
-    print('Data: ${message.data}');
+    debugPrint('Data: ${message.data}');
     // 예: GoRouter 네비게이션
   }
 }
@@ -1574,9 +1770,9 @@ class SmsNotificationService {
           'message': message,
         },
       );
-      print('✅ SMS 발송 성공: $phoneNumber');
+      debugPrint('✅ SMS 발송 성공: $phoneNumber');
     } catch (e) {
-      print('❌ SMS 발송 실패: $e');
+      debugPrint('❌ SMS 발송 실패: $e');
     }
   }
 }
@@ -1826,11 +2022,11 @@ FCM 테스트 메시지를 보내기 위해 기기의 FCM 토큰이 필요합니
 #### 방법 1: 콘솔 로그에서 확인
 ```dart
 // app.dart의 _registerFcmToken 메서드에서 토큰 출력
-print('✅ FCM 토큰 등록 완료: $userType');
+debugPrint('✅ FCM 토큰 등록 완료: $userType');
 
 // 또는 NotificationService에서 직접 출력
 final token = await _messaging.getToken();
-print('🔑 FCM Token: $token');
+debugPrint('🔑 FCM Token: $token');
 ```
 
 앱을 실행하면 Logcat (Android) 또는 Xcode Console (iOS)에서 토큰을 확인할 수 있습니다.
@@ -1929,13 +2125,16 @@ openAppSettings();  // permission_handler 패키지 필요
 ## 보안 체크리스트
 
 배포 전 반드시 확인:
-- [ ] `.env` 파일이 `.gitignore`에 포함되었는가
+- [ ] `.env` 파일이 `.gitignore`에 포함되었는가 (✅ 포함됨)
+- [ ] **`.env` 가 git 추적에서 해제되었는가 (`git ls-files | grep .env` 가 비어야 함)**
+      — 2026-08-21 현재 **아직 추적 중**. `git rm --cached .env` 실행 예정
 - [ ] API_DEBUG가 false로 설정되어 있는가 (프로덕션)
 - [ ] 하드코딩된 API 키/토큰이 없는가
 - [ ] flutter_secure_storage를 사용하여 토큰 저장하는가
 - [ ] 모든 네트워크 요청이 HTTPS를 사용하는가
 - [ ] 사용자 입력 유효성 검사를 수행하는가
-- [ ] 에러 메시지가 민감한 정보를 노출하지 않는가
+- [ ] 에러 메시지가 민감한 정보를 노출하지 않는가 (`showErrorAlert`/`userMessageOf` 경유 여부 확인)
+- [ ] `print()` 가 0건인가 (`grep -rn 'print(' lib` — `debugPrint` 만 허용)
 - [ ] Firebase 서비스 계정 키가 `.gitignore`에 포함되었는가
 - [ ] APNs 인증서가 보안되어 있는가
 - [ ] FCM 토큰이 서버에만 저장되고 클라이언트에 노출되지 않는가

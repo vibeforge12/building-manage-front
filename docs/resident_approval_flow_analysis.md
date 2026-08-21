@@ -1,3 +1,7 @@
+> ⚠️ **폐기 예정 문서 (2026-08-21)**
+> 이 문서는 현재 코드와 일치하지 않습니다. 참고하지 마세요.
+> 유효한 문서: `docs/프론트엔드_구조_및_문제점_분석.md`, `CLAUDE.md`
+
 # Resident Approval Status Check Flow - Comprehensive Analysis
 
 ## Overview
@@ -7,7 +11,7 @@ The resident approval status is checked immediately after login and determines w
 
 ## 1. User Entity - Approval Status Storage
 
-**File:** `/Users/gimseon-u/Desktop/vibeforge/building_manage_front/lib/domain/entities/user.dart`
+**File:** `lib/domain/entities/user.dart`
 
 ### Key Field:
 ```dart
@@ -39,7 +43,7 @@ class User extends Equatable {
 
 ## 2. Login Flow - Approval Status Handling
 
-**File:** `/Users/gimseon-u/Desktop/vibeforge/building_manage_front/lib/modules/resident/presentation/screens/user_login_screen.dart`
+**File:** `lib/modules/resident/presentation/screens/user_login_screen.dart`
 
 ### Entry Point:
 **Lines 32-93:** `_attemptLogin()` method
@@ -112,7 +116,7 @@ if (mounted) {
 ## 3. Approval Status Screens
 
 ### 3.1 Pending/Processing Screen
-**File:** `/Users/gimseon-u/Desktop/vibeforge/building_manage_front/lib/modules/resident/presentation/screens/resident_approval_pending_screen.dart`
+**File:** `lib/modules/resident/presentation/screens/resident_approval_pending_screen.dart`
 
 **Purpose:** Shown for users with PENDING or APPROVED status
 
@@ -128,7 +132,7 @@ if (mounted) {
 - Timer message: "3초 후 자동으로 이동합니다..."
 
 ### 3.2 Approval Completed Screen
-**File:** `/Users/gimseon-u/Desktop/vibeforge/building_manage_front/lib/modules/resident/presentation/screens/resident_approval_completed_screen.dart`
+**File:** `lib/modules/resident/presentation/screens/resident_approval_completed_screen.dart`
 
 **Purpose:** Currently NOT used in the login flow (reserved for future use)
 
@@ -139,7 +143,7 @@ if (mounted) {
 - **Line 102:** "홈으로 이동" button routes to `userDashboard`
 
 ### 3.3 Rejection Screen
-**File:** `/Users/gimseon-u/Desktop/vibeforge/building_manage_front/lib/modules/resident/presentation/screens/resident_approval_rejected_screen.dart`
+**File:** `lib/modules/resident/presentation/screens/resident_approval_rejected_screen.dart`
 
 **Purpose:** NOT currently shown after login (currently redirects to home with error snackbar instead)
 
@@ -154,7 +158,7 @@ if (mounted) {
 
 ## 4. Routing Configuration
 
-**File:** `/Users/gimseon-u/Desktop/vibeforge/building_manage_front/lib/core/routing/router_notifier.dart`
+**File:** `lib/core/routing/router_notifier.dart`
 
 ### Route Definitions (Lines 216-238):
 
@@ -314,7 +318,7 @@ loginResidentUseCaseProvider
               └── AuthInterceptor (Token management)
 ```
 
-**Provider Location:** `/Users/gimseon-u/Desktop/vibeforge/building_manage_front/lib/modules/resident/presentation/providers/resident_providers.dart`
+**Provider Location:** `lib/modules/resident/presentation/providers/resident_providers.dart`
 
 ---
 

@@ -1,3 +1,7 @@
+> ⚠️ **폐기 예정 문서 (2026-08-21)**
+> 이 문서는 현재 코드와 일치하지 않습니다. 참고하지 마세요.
+> 유효한 문서: `docs/프론트엔드_구조_및_문제점_분석.md`, `CLAUDE.md`
+
 # Resident Approval Status - Visual Guide
 
 ## Complete User Journey Map

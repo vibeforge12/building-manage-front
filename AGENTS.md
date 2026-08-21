@@ -1,141 +1,184 @@
-# CLAUDE.md
+# AGENTS.md
 
-이 파일은 Claude Code (claude.ai/code)가 이 저장소의 코드로 작업할 때 지침을 제공합니다.
+이 저장소(`building-manage-front/`)에서 작업하는 AI 에이전트 및 신규 기여자를 위한 **작업 규칙 요약본**입니다.
+아키텍처 상세와 예제 코드는 `CLAUDE.md`, 미해결 이슈 목록은 `docs/프론트엔드_구조_및_문제점_분석.md` 를 보세요.
 
-## 프로젝트 개요
-
-이것은 "building_manage_front"라는 이름의 Flutter 애플리케이션으로, 건물 관리 프론트엔드 애플리케이션입니다. Android, iOS, Web, Linux, macOS, Windows를 지원하는 크로스 플랫폼 앱입니다. 단일 앱 안에서 *유저*, *건물별 관리자*, *담당자*, *본사* 등 네 가지 로그인 역할을 지원하며, 로그인 유형에 따라 화면과 기능이 분기되는 구조를 목표로 합니다.
-
-## 개발 명령어
-
-### 설정
-```bash
-flutter pub get                    # 의존성 설치
-```
-
-### 개발
-```bash
-flutter run                       # 연결된 기기/에뮬레이터에서 실행
-flutter run -d chrome             # Chrome(웹)에서 실행
-flutter run -d macos              # macOS에서 실행
-flutter run --hot                 # 핫 리로드 활성화하여 실행
-flutter hot-reload                # 개발 중 핫 리로드 실행
-flutter hot-restart               # 개발 중 핫 리스타트 실행
-```
-
-### 빌드
-```bash
-flutter build apk                 # Android APK 빌드
-flutter build appbundle           # Android App Bundle 빌드
-flutter build ios                 # iOS 앱 빌드
-flutter build web                 # 웹 앱 빌드
-flutter build macos               # macOS 앱 빌드
-flutter build windows             # Windows 앱 빌드
-flutter build linux               # Linux 앱 빌드
-```
-
-### 테스트 및 품질 관리
-```bash
-flutter test                      # 모든 테스트 실행
-flutter test test/widget_test.dart # 특정 테스트 파일 실행
-flutter analyze                   # 정적 분석 실행
-flutter pub deps                  # 의존성 트리 표시
-flutter pub outdated              # 오래된 의존성 확인
-flutter pub upgrade               # 의존성 업그레이드
-```
-
-### 플랫폼별 명령어
-```bash
-flutter devices                   # 사용 가능한 기기/에뮬레이터 목록
-flutter emulators                 # 사용 가능한 에뮬레이터 목록
-flutter emulators --launch <id>   # 특정 에뮬레이터 실행
-flutter clean                     # 빌드 캐시 정리
-```
-
-## 아키텍처
-
-### 프로젝트 구조
-- `lib/main.dart` - MyApp과 MyHomePage 위젯이 있는 메인 애플리케이션 진입점
-- `test/` - 위젯 테스트와 기타 테스트 파일들 포함
-- `android/`, `ios/`, `web/`, `linux/`, `macos/`, `windows/` - 플랫폼별 설정
-- `pubspec.yaml` - Flutter 의존성 및 프로젝트 설정
-- `analysis_options.yaml` - flutter_lints를 사용한 Dart 분석기 설정
-
-### 현재 구현 상태
-현재 앱은 기본적인 Flutter 카운터 데모 애플리케이션을 포함하고 있습니다:
-- 진보라색 컬러 스킴을 사용하는 Material Design 테마
-- 증가 기능이 있는 상태 저장 카운터 위젯
-- 표준 Flutter 프로젝트 구조 및 규칙
-
-앞으로는 공용 로그인 화면을 통해 네 가지 역할 중 하나를 선택하거나 자동으로 인식하여 적절한 홈 화면 및 권한 세트로 이동시키는 분기 로직을 구현할 예정입니다. 이 때 역할별 대시보드와 기능 모듈(예: 시설 점검, 공지 관리, 본사 리포트 등)은 동일한 코드베이스에서 조건부로 로드되도록 설계합니다.
-
-### 의존성
-- **flutter_lints ^5.0.0** - Flutter 권장 린팅 규칙 제공
-- **cupertino_icons ^1.0.8** - iOS 스타일 아이콘
-- **flutter_test** - 테스팅 프레임워크
-
-## 코드 표준
-- `package:flutter_lints/flutter.yaml`을 통한 Flutter 권장 린트 사용
-- Dart SDK 버전: ^3.8.1
-- Flutter/Dart 명명 규칙 및 코드 스타일 준수
-- 적절한 곳에서 const 생성자 사용
-- 앱이 성장함에 따라 적절한 상태 관리 패턴 구현
-
-## 플랫폼 지원
-다음을 지원하는 멀티 플랫폼 Flutter 애플리케이션입니다:
-- **Android** (android/ 디렉터리를 통해)
-- **iOS** (ios/ 디렉터리를 통해)
-- **Web** (manifest.json과 index.html이 있는 web/ 디렉터리를 통해)
-- **Desktop**: Linux, macOS, Windows (각각의 디렉터리를 통해)
-
-각 플랫폼은 플랫폼별 설정과 빌드 구성이 있는 자체 설정 디렉터리를 가지고 있습니다.
+> 최종 갱신: **2026-08-21** (전면 재작성. 이전 버전은 제목이 `# CLAUDE.md` 였고 내용이
+> "기본적인 Flutter 카운터 데모" 로 되어 있어 사실과 전혀 달랐습니다.)
 
 ---
 
-## Agent Planning Notes (Foundation Review)
+## 0. 작업 범위
 
-### Current Snapshot
-- Riverpod + go_router 기반의 앱 골격과 기본 로그인 플로우(UI/Stub 로직)가 구축되어 있으며, `AuthStateNotifier`와 라우터 가드가 토대만 제공하고 있습니다.
-- Domain/Data 레이어, repository 인터페이스, dio 기반 API 연동, 로컬 스토리지(Hive, shared_preferences)는 구조만 존재하고 실제 구현이 비어 있습니다.
-- `UserRole`(core/auth)와 `UserType`(core/constants) 두 enum이 혼재하여 역할 정보 정합성 관리가 필요합니다.
-- 문서(`docs/`) 전반은 초기 설계/계획과 현 코드 구조가 뒤섞여 있어 최신 정보와 불일치하는 항목이 다수 존재합니다.
-- 테스트는 메인 홈 위젯 테스트 1건에 그쳐 있고, 상태/라우팅/역할 분기 관련 검증이 부재합니다.
+- 이 폴더(`building-manage-front/`) **밖은 읽지도 수정하지도 마세요.**
+  특히 백엔드 저장소(`Building-Manager-BackEnd/`)는 범위 밖입니다.
+- 사용자 미커밋 변경이 있을 수 있는 파일은 지시 없이 건드리지 마세요:
+  `pubspec.yaml`, `android/app/src/main/AndroidManifest.xml`, `.env`
 
-### Immediate Gaps & Risks
-- 인증 상태가 메모리 내 스텁으로만 유지되어 실제 로그인/토큰 흐름, 자동 로그인, 에러 처리 시나리오가 전혀 다뤄지지 않습니다.
-- 라우팅 플레이스홀더 대시보드는 역할별 요구사항을 전혀 반영하지 못하고 있으며, 접근권한 매트릭스에 대한 테스트/가드가 없습니다.
-- 테마/디자인 토큰이 Figma 기준으로 정리되지 않아 다크 모드, 반응형, 컴포넌트 일관성 확보가 어렵습니다.
-- 빌드/배포 파이프라인과 환경 분리(dev/staging/prod)가 정의되지 않아 실 서비스 준비 수준이 아닙니다.
+---
 
-### Figma MCP Alignment Tasks
-1. `npx -y figma-developer-mcp --figma-api-key=… --stdio`로 Framelink Figma MCP 서버를 구동하고, 최신 디자인 토큰(컬러, 타입 스케일, spacing)과 컴포넌트 명세를 동기화합니다.
-2. Figma에서 정의된 공통 컴포넌트(CTA 버튼, 입력 필드, 배경, 카드 등)의 속성을 추출하여 Flutter Theme extensions 및 재사용 위젯에 반영할 매핑 테이블을 작성합니다.
-3. 각 역할별 핵심 플로우(유저/관리자/담당자/본사 대시보드)의 화면 구조, 네비게이션 패턴을 Figma 기준으로 캡처하여 `docs/ui_navigation_plan.md`와 라우팅 구성표를 업데이트합니다.
+## 1. 프로젝트가 실제로 무엇인가
 
-### Implementation Roadmap (Not Yet Executed)
-1. **Foundation Hardening**
-   - 의존성 버전 재점검 및 정리(`pubspec.yaml`), 중복 enum 통합 전략 수립, 공통 상수/테마 정의.
-   - 정적 분석 규칙 강화(analysis_options)와 pre-commit 스크립트 초안 마련.
-2. **Design System Integration**
-   - Figma 토큰 기반 `ThemeData` 확장, 공통 컴포넌트 리팩토링, 반응형/접근성 가이드 수립.
-   - 자주 쓰이는 레이아웃/모듈을 `presentation/common`으로 통합하고 스토리북(Widgetbook 등) 도입 검토.
-3. **Authentication & Authorization Layer**
-   - `data/datasources`에 dio 기반 Auth API, 토큰 로컬 보관(Hive/secure storage) 구현.
-   - `AuthRepository` 및 usecase 정의, `AuthStateNotifier` 확장, 라우터 가드 및 에러 핸들링 정교화.
-   - 역할별 초기 라우팅 및 세션 복구 흐름 유닛/위젯 테스트 추가.
-4. **Role-Specific Dashboards**
-   - 각 역할 요구사항(Figma + `docs/user_types.md`)을 기준으로 MVP 화면 목록 및 상태 프로바이더 설계.
-   - 공통 모듈(공지, 신고, 예약 등)을 도메인 단위로 분리하고 Feature flag/조건 로딩 구조 마련.
-5. **Data & Offline Capabilities**
-   - API 에러/재시도/타임아웃 정책 수립, 응답 모델(JsonSerializable) 생성, 레포지토리 구현.
-   - Hive 박스 스키마 정의와 캐싱 전략, 오프라인 모드/동기화 전략 초안 작성.
-6. **Observability & Quality**
-   - 로그/에러 수집(예: Sentry) 연동 계획, 퍼포먼스 모니터링 시나리오 작성.
-   - 테스트 스위트 확장(Unit/Widget/Integration) 및 CI 파이프라인(Job: format → analyze → test) 설계.
+프로덕션 운영 중인 **다중 역할 건물 관리 Flutter 앱** (`v1.0.12+33`, Dart `^3.8.1`).
+카운터 데모가 아닙니다. Riverpod + GoRouter + Dio 기반이며 백엔드 API 와 실제로 연동됩니다.
 
-### Documentation & Workflow Updates
-- `docs/` 내 계획 문서들을 현 구조에 맞춰 리비전하고, 진행 상태를 체크박스/타임라인 형태로 관리합니다.
-- `README.md` 구조 설명을 최신 Clean Architecture 반영 버전으로 정리하고, 실행/테스트/디자인 토큰 가이드 링크를 추가합니다.
-- 에이전트 작업 시퀀스(요청 → Figma 참조 → 구현 → 테스트 → 문서화)를 `AGENTS.md`에 유지하며, 완료 여부는 PR 템플릿/체크리스트에서 관리할 예정입니다.
+- `lib/` Dart 파일 **176개**, 화면 **58개**, 테스트 **5개** (2026-08-21 실측)
+- 라우트 `GoRoute` **59개**, 역할 기반 리다이렉트 적용
 
-> 위 항목들은 **계획 초안**이며, 아직 구현에 착수하지 않았습니다. 추후 작업 요청 시 이 문서를 기준으로 우선순위와 범위를 확정합니다.
+### ⚠️ 역할 폴더명 (매번 확인할 것)
+
+| 폴더 | 한국어 | `UserType` | 서버 role | 서버 API prefix |
+|---|---|---|---|---|
+| `modules/resident/` | **입주민** | `user` | `USER` | `/users`, `/auth/resident` |
+| `modules/admin/` | **관리자** | `admin` | **`MANAGER`** | **`/managers`** |
+| `modules/manager/` | **담당자** (유지보수 직원) | `manager` | **`STAFF`** | **`/staffs`** |
+| `modules/headquarters/` | **본사** | `headquarters` | `HEADQUARTERS` | `/headquarters` |
+
+`manager` 를 "매니저" 로 번역하지 마세요. **담당자**입니다.
+프론트 폴더명과 백엔드 경로가 뒤집혀 있으니 API 를 추측하지 말고 `lib/core/constants/api_endpoints.dart` 를 확인하세요.
+
+---
+
+## 2. 개발 명령어
+
+```bash
+flutter pub get                       # 의존성 설치
+flutter run                           # 실행 (기기/에뮬레이터)
+flutter run -d chrome                 # Web
+flutter analyze                       # 정적 분석 (커밋 전 필수)
+flutter test                          # 테스트
+flutter test test/router_notifier_test.dart
+```
+
+- `.env` 가 루트에 없으면 앱이 API 를 못 붙습니다 (`AppConfig` 가 dotenv 로 읽음).
+- 코드 생성(`build_runner`)은 **현재 실사용되지 않습니다** — `lib/` 에 `.g.dart` 0개.
+
+---
+
+## 3. 반드시 지켜야 할 코드 규칙
+
+### 3.1 레이어 (UI 에 비즈니스 로직 금지)
+
+```
+화면(Widget) → Provider/Notifier → UseCase → Repository → RemoteDataSource → ApiClient
+```
+
+- 화면에서 `ApiClient` 를 직접 호출하지 마세요. (기존 위반 1건: `headquarters_change_password_screen.dart:39`)
+- 새 기능은 `modules/<역할>/domain/usecases/` 를 거치게 만드세요.
+- 상태 관리는 **Riverpod 단일 체계**입니다. `ProviderContainer()` 를 화면에서 새로 만들지 마세요.
+  (전부 제거되었습니다. 다시 넣지 마세요.)
+
+### 3.2 에러 처리 (단일 계약)
+
+`ApiClient` 는 **`ApiException` 만** 던집니다.
+(`ErrorInterceptor` → `DioException.error` 에 실음 → `ApiClient._guard()` 가 언랩)
+
+```dart
+// datasource
+try {
+  final res = await _apiClient.get(ApiEndpoints.xxx);
+  return res.data as Map<String, dynamic>;
+} on ApiException {
+  rethrow;                       // 서버 메시지/상태코드 보존
+} catch (_) {
+  throw const ApiException(message: '...', errorCode: 'XXX_FAILED');
+}
+
+// 화면
+} catch (e) {
+  if (!mounted) return;          // await 뒤 context/setState 사용 전 필수
+  await showErrorAlert(context, title: '삭제 실패', error: e,
+      fallback: '삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+}
+```
+
+금지 사항:
+- `on DioException catch` 신규 작성 (도달하지 않는 죽은 분기가 됩니다)
+- 빈 `catch (e) { }` — 실패를 조용히 삼키면 사용자는 성공한 줄 압니다
+- `Text(e.toString())`, `e.toString().replaceAll('Exception: ', '')` 를 다이얼로그에 직접 넣기
+  → `ApiException(message: ..., statusCode: 401, ...)` 이 그대로 노출됩니다.
+  `showErrorAlert` / `userMessageOf` 를 쓰세요.
+
+### 3.3 비동기 · 생명주기
+
+- `await` 뒤에 `setState`/`context` 를 쓰면 앞에 `if (!mounted) return;`
+  (`State` 가 없는 곳은 `if (!context.mounted) return;`)
+- `finally { setState(...) }` 도 예외 없이 `if (mounted) { setState(...) }`
+- `Future.wait` 은 하나만 실패해도 전체가 실패합니다. 부분 실패를 허용해야 하면 개별 `catch` 로 감싸세요.
+
+### 3.4 렌더링 성능
+
+- 가능한 모든 위젯에 `const` 생성자 사용
+- 거대 화면 파일(현재 최대 1,091줄)은 하위 위젯으로 쪼개서 리빌드 범위를 좁힐 것
+- 리스트는 `ListView.builder`, 네트워크 이미지는 `cached_network_image`
+- `FutureProvider.family` 는 `.autoDispose` 를 붙여 캐시 누적을 막을 것
+
+### 3.5 로깅 · 보안
+
+- **`print()` 금지.** 현재 `lib/` 에 0건입니다. 필요하면 `debugPrint`.
+- 개인정보(이름/전화번호/응답 전문)를 로그에 남기지 마세요.
+- 토큰은 `flutter_secure_storage` (`AuthInterceptor` 단독 소유).
+  `SharedPreferences` 는 앱 버전 플래그와 승인완료 1회 노출 플래그 전용입니다.
+- 토큰 갱신 로직을 직접 구현하지 마세요. `AuthInterceptor` 가 401 → refresh → 원 요청 재시도까지 처리합니다.
+
+### 3.6 라우팅
+
+- 보호 경로는 **접두어**로 판정됩니다 (`/user/`, `/admin/`, `/manager/`, `/headquarters/`).
+  새 라우트를 추가하면 자동으로 보호되므로 **목록에 등록하는 작업은 필요 없습니다.**
+- 접두어와 실제 소유 역할이 다른 경우에만 `_routeOwnerOverrides` 에 추가하세요.
+  현재 예외는 `/manager/add-general-manager` → `UserType.admin` 1건뿐입니다.
+
+### 3.7 Dart 스타일
+
+- `flutter_lints ^5.0.0` (`analysis_options.yaml`) 준수, 커밋 전 `flutter analyze`
+- 파일/디렉터리 `snake_case`, 클래스 `UpperCamelCase`, 변수/함수 `lowerCamelCase`
+- Provider 이름은 `xxxProvider` 접미사
+- API 경로는 `lib/core/constants/api_endpoints.dart` 에 정의 (하드코딩 금지)
+
+---
+
+## 4. 백엔드 계약 메모
+
+- `/common/departments` 는 이름과 달리 **인증 필수**이며, **호출자 역할에 따라 결과가 다릅니다.**
+  본사가 부르면 본사 부서, 관리자가 부르면 해당 건물 부서가 내려옵니다.
+  → 역할 간에 캐시를 공유하지 마세요. 로그인 전 화면에서는 사용할 수 없습니다.
+- `AuthInterceptor` 의 public 엔드포인트 화이트리스트는 `/auth/...` 계열뿐입니다.
+  그 외 모든 경로에는 `Authorization` 헤더가 붙습니다.
+
+---
+
+## 5. 커밋
+
+```
+<type>: <한글 설명>
+
+feat / fix / refactor / style / test / docs / chore
+```
+
+예: `fix: 401 토큰 갱신 후 원요청 재시도 처리`
+
+---
+
+## 6. 현재 알려진 미해결 이슈 (2026-08-21)
+
+작업 전 `docs/프론트엔드_구조_및_문제점_분석.md` §3 을 확인하세요. 우선순위 상위 항목:
+
+| ID | 내용 |
+|---|---|
+| **P1-6** | 약관 동의(`agreements`)가 서버로 전송되지 않음. `signup_form_provider.submitSignup()` 은 dead code 이고 실제 가입 경로는 `resident_signup_screen._submitSignup()` → `RegisterResidentUseCase` |
+| **P1-8** | FCM 알림 탭 시 네비게이션 없음 (`notification_service.dart:198-202` TODO) |
+| **P1-3** | 원시 에러 문자열 노출 6곳 잔존 |
+| **P1-4** | 로그인 화면 2곳이 모든 예외를 "아이디/비밀번호 오류" 로 표시 |
+| **P2-1** | 화면 33개가 DataSource 직행 (UseCase 미경유) |
+
+---
+
+## 7. 문서 상태
+
+- **유효**: `CLAUDE.md`, `README.md`, `AGENTS.md`, `docs/프론트엔드_구조_및_문제점_분석.md`, `docs/배포_가이드.md`
+- **부분 개정 필요**: `docs/FCM_INTEGRATION_GUIDE.md`, `PRIVACY_CONSENT_PLAN.md`, `docs/user_types.md`
+- **폐기 예정 (13개)**: 파일 상단에 `⚠️ 폐기 예정 문서` 배너가 있는 문서는 **참고하지 마세요.**
+  아직 삭제되지 않았을 뿐입니다.
+
+문서를 갱신할 때는 **해결된 항목을 지우지 말고 "해결됨" 표시로 남겨** 이력을 추적할 수 있게 하세요.
+숫자는 추측하지 말고 `find` / `wc -l` / `grep` 으로 실측하세요.
