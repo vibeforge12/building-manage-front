@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 import 'package:building_manage_front/modules/admin/data/datasources/notice_remote_datasource.dart';
 import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart'; // 삭제 확인 다이얼로그용
+import 'package:building_manage_front/shared/widgets/error_alert.dart';
+import 'package:building_manage_front/core/utils/error_message.dart';
 
 class NoticeManagementScreen extends ConsumerStatefulWidget {
   const NoticeManagementScreen({super.key});
@@ -18,6 +20,7 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
   String _selectedFilter = '최신순';
   String _selectedChip = '전체';
   bool _isLoading = false;
+  String? _loadError;
 
   // API에서 받은 데이터
   List<Map<String, dynamic>> _notices = [];
@@ -60,7 +63,10 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
   }
 
   Future<void> _loadNotices() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
     try {
       final noticeDataSource = ref.read(noticeRemoteDataSourceProvider);
       final response = await noticeDataSource.getNotices(
@@ -74,14 +80,22 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
         });
       }
     } catch (e) {
-      // 공지사항 로드 실패
+      if (mounted) {
+        setState(() => _loadError = userMessageOf(
+              e,
+              fallback: '공지사항을 불러오지 못했습니다.',
+            ));
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _loadEvents() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
     try {
       final noticeDataSource = ref.read(noticeRemoteDataSourceProvider);
       final response = await noticeDataSource.getEvents(
@@ -96,7 +110,12 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
         });
       }
     } catch (e) {
-      // 이벤트 로드 실패
+      if (mounted) {
+        setState(() => _loadError = userMessageOf(
+              e,
+              fallback: '이벤트를 불러오지 못했습니다.',
+            ));
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -351,6 +370,10 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
       );
     }
 
+    if (_loadError != null) {
+      return _ListLoadError(message: _loadError!, onRetry: _loadNotices);
+    }
+
     if (_notices.isEmpty) {
       return Center(
         child: Text(
@@ -406,6 +429,10 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
       return const Center(
         child: CircularProgressIndicator(),
       );
+    }
+
+    if (_loadError != null) {
+      return _ListLoadError(message: _loadError!, onRetry: _loadEvents);
     }
 
     if (_events.isEmpty) {
@@ -492,7 +519,13 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
         }
       }
     } catch (e) {
-      // 삭제 실패
+      if (!mounted) return;
+      await showErrorAlert(
+        context,
+        title: '삭제 실패',
+        error: e,
+        fallback: '삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      );
     }
   }
 
@@ -661,4 +694,33 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
     );
   }
 
+}
+
+/// 목록 조회 실패 안내 + 재시도.
+class _ListLoadError extends StatelessWidget {
+  const _ListLoadError({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: onRetry,
+            child: const Text('다시 시도'),
+          ),
+        ],
+      ),
+    );
+  }
 }

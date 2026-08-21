@@ -45,6 +45,7 @@ class _BuildingListScreenState extends ConsumerState<BuildingListScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         if (e is ApiException) {
           _errorMessage = e.userFriendlyMessage;
@@ -53,9 +54,11 @@ class _BuildingListScreenState extends ConsumerState<BuildingListScreen> {
         }
       });
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 

@@ -115,6 +115,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
         }
       }
     } catch (e) {
+      if (!mounted) return;
       final errorMessage = e.toString();
       if (errorMessage.contains('CURRENT_PASSWORD_WRONG')) {
         setState(() {

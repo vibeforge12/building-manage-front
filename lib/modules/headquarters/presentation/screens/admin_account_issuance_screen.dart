@@ -61,13 +61,16 @@ class _AdminAccountIssuanceScreenState extends ConsumerState<AdminAccountIssuanc
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = '건물 목록을 불러오는 중 오류가 발생했습니다.';
       });
     } finally {
-      setState(() {
-        _isLoadingBuildings = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoadingBuildings = false;
+        });
+      }
     }
   }
 

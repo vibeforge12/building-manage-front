@@ -7,10 +7,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:building_manage_front/modules/resident/data/datasources/notice_remote_datasource.dart';
 import 'package:building_manage_front/modules/resident/data/datasources/department_remote_datasource.dart';
 import 'package:building_manage_front/modules/headquarters/data/datasources/department_remote_datasource.dart';
-import 'package:building_manage_front/shared/widgets/confirmation_dialog.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 
 import '../../../../shared/widgets/custom_confirmation_dialog.dart';
+import '../../../../shared/widgets/error_alert.dart';
+import '../../../../core/utils/error_message.dart';
 
 class UserDashboardScreen extends ConsumerStatefulWidget {
   const UserDashboardScreen({super.key});
@@ -27,6 +28,7 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
   List<Map<String, dynamic>> _events = [];
   bool _isLoadingDepartments = true;
   bool _isLoadingContent = true;
+  String? _departmentsError;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   // 부서별 아이콘 매핑
@@ -67,6 +69,7 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
   Future<void> _loadDepartments() async {
     setState(() {
       _isLoadingDepartments = true;
+      _departmentsError = null;
     });
 
     try {
@@ -76,18 +79,37 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
         limit: 100,
         status: 'ACTIVE',
       );
+      if (!mounted) return;
 
       if (response['success'] == true) {
         final data = response['data'];
+        final items = List<Map<String, dynamic>>.from(data['items'] ?? []);
+
         setState(() {
-          _departments = List<Map<String, dynamic>>.from(data['items'] ?? []);
+          // id/name이 없는 항목은 카드가 그려질 수 없으므로 미리 걸러낸다.
+          _departments = items
+              .where((d) => d['id'] is String && d['name'] is String)
+              .toList();
+        });
+      } else {
+        setState(() {
+          _departmentsError = '민원 부서를 불러오지 못했습니다.';
         });
       }
     } catch (e) {
-    } finally {
+      if (!mounted) return;
       setState(() {
-        _isLoadingDepartments = false;
+        _departmentsError = userMessageOf(
+          e,
+          fallback: '민원 부서를 불러오지 못했습니다.',
+        );
       });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingDepartments = false;
+        });
+      }
     }
   }
 
@@ -99,6 +121,7 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
     try {
       final noticeDataSource = ref.read(noticeRemoteDataSourceProvider);
       final response = await noticeDataSource.getNoticeHighlights();
+      if (!mounted) return;
 
       if (response['success'] == true) {
         setState(() {
@@ -106,13 +129,17 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
         });
       }
     } catch (e) {
-      setState(() {
-        _notices = [];
-      });
+      if (mounted) {
+        setState(() {
+          _notices = [];
+        });
+      }
     } finally {
-      setState(() {
-        _isLoadingContent = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoadingContent = false;
+        });
+      }
     }
   }
 
@@ -124,6 +151,7 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
     try {
       final noticeDataSource = ref.read(noticeRemoteDataSourceProvider);
       final response = await noticeDataSource.getEventHighlights();
+      if (!mounted) return;
 
       if (response['success'] == true) {
         setState(() {
@@ -131,13 +159,17 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
         });
       }
     } catch (e) {
-      setState(() {
-        _events = [];
-      });
+      if (mounted) {
+        setState(() {
+          _events = [];
+        });
+      }
     } finally {
-      setState(() {
-        _isLoadingContent = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoadingContent = false;
+        });
+      }
     }
   }
 
@@ -629,9 +661,15 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
             ),
           ),
           const SizedBox(height: 16),
-          _isLoadingDepartments
-              ? const Center(child: CircularProgressIndicator())
-              : _buildDepartmentGrid(),
+          if (_isLoadingDepartments)
+            const Center(child: CircularProgressIndicator())
+          else if (_departmentsError != null)
+            _DepartmentLoadError(
+              message: _departmentsError!,
+              onRetry: _loadDepartments,
+            )
+          else
+            _buildDepartmentGrid(),
         ],
       ),
     );
@@ -679,8 +717,8 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
   }
 
   Widget _buildDepartmentCard(Map<String, dynamic> department) {
-    final deptName = department['name'] as String;
-    final deptId = department['id'] as String;
+    final deptName = department['name'] as String? ?? '';
+    final deptId = department['id'] as String? ?? '';
     final iconPath = _departmentIcons[deptName];
     final currentUser = ref.read(currentUserProvider);
 
@@ -715,10 +753,14 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
         // REJECTED 상태: 승인 거부
         if (approvalStatus == 'REJECTED') {
           if (mounted) {
-            await InfoDialog.show(
-              context,
+            await showCustomConfirmationDialog(
+              context: context,
               title: '승인 거부',
-              content: '아직 승인되지 않았습니다.',
+              content: const Text('아직 승인되지 않았습니다.'),
+              confirmText: '확인',
+              cancelText: '', // 빈 문자열로 취소 버튼 숨김
+              isDestructive: true,
+              barrierDismissible: false,
             );
           }
           return;
@@ -726,6 +768,17 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
 
         // APPROVED 상태만 진행: 부서의 담당자 배정 여부 확인
         if (approvalStatus == 'APPROVED') {
+          if (deptId.isEmpty) {
+            if (mounted) {
+              await showErrorAlert(
+                context,
+                title: '민원 등록 실패',
+                message: '부서 정보를 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.',
+              );
+            }
+            return;
+          }
+
           try {
             final residentDeptDataSource = ref.read(residentDepartmentRemoteDataSourceProvider);
             final response = await residentDeptDataSource.getDepartments();
@@ -774,8 +827,22 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
                   },
                 );
               }
+            } else if (mounted) {
+              await showErrorAlert(
+                context,
+                title: '민원 등록 실패',
+                message: '부서 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
+              );
             }
           } catch (e) {
+            if (mounted) {
+              await showErrorAlert(
+                context,
+                title: '민원 등록 실패',
+                error: e,
+                fallback: '부서 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
+              );
+            }
           }
         }
       },
@@ -988,4 +1055,37 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
     );
   }
 
+}
+
+/// 민원 부서 목록 로드 실패 안내 + 재시도.
+class _DepartmentLoadError extends StatelessWidget {
+  const _DepartmentLoadError({
+    required this.message,
+    required this.onRetry,
+  });
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          message,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontFamily: 'Pretendard',
+            fontSize: 14,
+            color: Color(0xFF6B7280),
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextButton(
+          onPressed: onRetry,
+          child: const Text('다시 시도'),
+        ),
+      ],
+    );
+  }
 }

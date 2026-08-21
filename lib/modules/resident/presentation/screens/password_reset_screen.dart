@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/resident/data/datasources/resident_auth_remote_datasource.dart';
-import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
 
 class PasswordResetScreen extends ConsumerStatefulWidget {
   const PasswordResetScreen({super.key});
@@ -78,6 +77,7 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
         // 인증번호 발송 성공
       }
     } catch (e) {
+      if (!mounted) return;
       final errorMessage = e.toString();
       if (errorMessage.contains('USER_NOT_FOUND')) {
         setState(() {
@@ -151,6 +151,7 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       final errorMessage = e.toString();
       if (errorMessage.contains('INVALID_CODE')) {
         setState(() {

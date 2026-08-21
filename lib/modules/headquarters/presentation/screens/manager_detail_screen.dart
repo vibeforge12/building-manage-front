@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/common/data/datasources/manager_list_remote_datasource.dart';
 import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
+import 'package:building_manage_front/shared/widgets/error_alert.dart';
 
 class ManagerDetailScreen extends ConsumerStatefulWidget {
   final String managerId;
@@ -76,6 +77,7 @@ class _ManagerDetailScreenState extends ConsumerState<ManagerDetailScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         if (e is ApiException) {
           _errorMessage = e.userFriendlyMessage;
@@ -84,9 +86,11 @@ class _ManagerDetailScreenState extends ConsumerState<ManagerDetailScreen> {
         }
       });
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -122,6 +126,7 @@ class _ManagerDetailScreenState extends ConsumerState<ManagerDetailScreen> {
         name: _nameController.text,
         phoneNumber: _phoneController.text,
       );
+      if (!mounted) return;
 
       if (response['success'] == true) {
         // 저장 성공
@@ -135,17 +140,28 @@ class _ManagerDetailScreenState extends ConsumerState<ManagerDetailScreen> {
             _managerData!['phoneNumber'] = _phoneController.text;
           }
         });
-
-        if (mounted) {
-          // 관리자 정보 저장 성공
-        }
+      } else {
+        await showErrorAlert(
+          context,
+          title: '저장 실패',
+          message: '관리자 정보를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+        );
       }
     } catch (e) {
-      // 저장 실패
+      if (mounted) {
+        await showErrorAlert(
+          context,
+          title: '저장 실패',
+          error: e,
+          fallback: '관리자 정보를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+        );
+      }
     } finally {
-      setState(() {
-        _isSaving = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
     }
   }
 

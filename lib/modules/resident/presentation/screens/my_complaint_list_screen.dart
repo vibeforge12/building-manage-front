@@ -49,6 +49,7 @@ class _MyComplaintListScreenState extends ConsumerState<MyComplaintListScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = '민원 로드 중 오류가 발생했습니다.';
         _isLoading = false;

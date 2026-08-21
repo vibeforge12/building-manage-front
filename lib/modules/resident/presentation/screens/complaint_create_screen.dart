@@ -6,6 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:building_manage_front/modules/resident/presentation/providers/resident_providers.dart';
 import 'package:building_manage_front/modules/common/services/image_upload_service.dart';
 import 'dart:io';
+import 'package:building_manage_front/shared/widgets/error_alert.dart';
 
 class ComplaintCreateScreen extends ConsumerStatefulWidget {
   final String departmentId;
@@ -74,7 +75,13 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
         _updateFormState();
       }
     } catch (e) {
-      // 이미지 선택 실패
+      if (!mounted) return;
+      await showErrorAlert(
+        context,
+        title: '이미지 선택 실패',
+        error: e,
+        fallback: '이미지를 불러오지 못했습니다. 다시 시도해 주세요.',
+      );
     }
   }
 
@@ -106,10 +113,17 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
             _isUploadingImage = false;
           });
         } catch (e) {
+          if (!mounted) return;
           setState(() {
             _isUploadingImage = false;
           });
 
+          await showErrorAlert(
+            context,
+            title: '이미지 업로드 실패',
+            error: e,
+            fallback: '이미지를 업로드하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+          );
           return;
         }
       }
@@ -129,7 +143,13 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
         context.pushReplacementNamed('complaintComplete');
       }
     } catch (e) {
-      // 민원 등록 실패
+      if (!mounted) return;
+      await showErrorAlert(
+        context,
+        title: '민원 등록 실패',
+        error: e,
+        fallback: '민원을 등록하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      );
     }
   }
 

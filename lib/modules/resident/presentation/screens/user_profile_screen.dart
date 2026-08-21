@@ -5,8 +5,8 @@ import 'package:building_manage_front/modules/auth/presentation/providers/auth_s
 import 'package:building_manage_front/modules/resident/presentation/widgets/consent_detail_sheet.dart';
 import 'package:building_manage_front/shared/constants/legal_documents.dart';
 import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
+import 'package:building_manage_front/shared/widgets/error_alert.dart';
 import 'package:building_manage_front/data/datasources/auth_remote_datasource.dart';
-import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 
 class UserProfileScreen extends ConsumerStatefulWidget {
   const UserProfileScreen({super.key});
@@ -219,6 +219,9 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
       _isWithdrawing = true;
     });
 
+    // 로딩 오버레이를 먼저 내린 뒤 실패 안내를 띄우기 위해 예외를 보관한다.
+    Object? failure;
+
     try {
       final authDataSource = ref.read(authRemoteDataSourceProvider);
       await authDataSource.withdrawUser(password: password);
@@ -233,16 +236,23 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
           context.go('/');
         }
       }
-    } on ApiException catch (e) {
-      // 회원 탈퇴 실패
     } catch (e) {
-      // 회원 탈퇴 중 오류 발생
+      failure = e;
     } finally {
       if (mounted) {
         setState(() {
           _isWithdrawing = false;
         });
       }
+    }
+
+    if (failure != null && mounted) {
+      await showErrorAlert(
+        context,
+        title: '회원 탈퇴 실패',
+        error: failure,
+        fallback: '회원 탈퇴 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+      );
     }
   }
 

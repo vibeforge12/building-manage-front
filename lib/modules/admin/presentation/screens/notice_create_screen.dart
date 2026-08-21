@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/headquarters/data/datasources/department_remote_datasource.dart';
 import 'package:building_manage_front/modules/admin/data/datasources/notice_remote_datasource.dart';
+import 'package:building_manage_front/shared/widgets/error_alert.dart';
 
 class NoticeCreateScreen extends ConsumerStatefulWidget {
   final bool isEvent;
@@ -76,8 +77,6 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
           ? await noticeDataSource.getEventDetail(widget.noticeId!)
           : await noticeDataSource.getNoticeDetail(widget.noticeId!);
 
-      print('공지사항 데이터 응답: $response');
-
       final responseData = response['data'];
       final data = responseData is Map && responseData.containsKey('data')
           ? responseData['data']
@@ -110,7 +109,13 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
         });
       }
     } catch (e) {
-      print('공지사항 로드 실패: $e');
+      if (!mounted) return;
+      await showErrorAlert(
+        context,
+        title: '불러오기 실패',
+        error: e,
+        fallback: '내용을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      );
       if (mounted) {
         context.pop();
       }
@@ -151,11 +156,21 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
         });
       }
     } catch (e) {
-      print('부서 목록 조회 실패: $e');
+      // 부서 목록이 비면 담당자 대상 공지를 만들 수 없으므로 사용자에게 알린다.
+      if (mounted) {
+        await showErrorAlert(
+          context,
+          title: '부서 목록 조회 실패',
+          error: e,
+          fallback: '부서 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
+        );
+      }
     } finally {
-      setState(() {
-        _isDepartmentsLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isDepartmentsLoading = false;
+        });
+      }
     }
   }
 
@@ -221,7 +236,13 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
         context.pop(true);  // true를 반환하여 목록 새로고침 신호
       }
     } catch (e) {
-      print('공지사항 ${_isEditing ? '수정' : '등록'} 실패: $e');
+      if (!mounted) return;
+      await showErrorAlert(
+        context,
+        title: _isEditing ? '수정 실패' : '등록 실패',
+        error: e,
+        fallback: '요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      );
     }
   }
 

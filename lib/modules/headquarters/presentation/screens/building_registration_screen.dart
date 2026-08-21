@@ -5,9 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:building_manage_front/shared/widgets/field_label.dart';
 import 'package:building_manage_front/shared/widgets/primary_action_button.dart';
+import 'package:building_manage_front/shared/widgets/error_alert.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/providers/headquarters_providers.dart';
 import 'package:building_manage_front/modules/common/services/image_upload_service.dart';
-import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 
 class BuildingRegistrationScreen extends ConsumerStatefulWidget {
   const BuildingRegistrationScreen({super.key});
@@ -44,7 +44,13 @@ class _BuildingRegistrationScreenState extends ConsumerState<BuildingRegistratio
         });
       }
     } catch (e) {
-      // 이미지 선택 실패
+      if (!mounted) return;
+      await showErrorAlert(
+        context,
+        title: '이미지 선택 실패',
+        error: e,
+        fallback: '이미지를 불러오지 못했습니다. 다시 시도해 주세요.',
+      );
     }
   }
 
@@ -73,6 +79,14 @@ class _BuildingRegistrationScreenState extends ConsumerState<BuildingRegistratio
             folder: 'buildings',
           );
         } catch (e) {
+          if (mounted) {
+            await showErrorAlert(
+              context,
+              title: '이미지 업로드 실패',
+              error: e,
+              fallback: '이미지를 업로드하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+            );
+          }
           return;
         }
       }
@@ -92,10 +106,23 @@ class _BuildingRegistrationScreenState extends ConsumerState<BuildingRegistratio
           // 건물 목록 새로고침 트리거
           ref.read(buildingRefreshTriggerProvider.notifier).state++;
           context.pop(true);  // true를 반환하여 목록 새로고침 신호
+        } else {
+          await showErrorAlert(
+            context,
+            title: '건물 등록 실패',
+            message: '건물을 등록하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+          );
         }
       }
     } catch (e) {
-      // 건물 등록 실패
+      if (mounted) {
+        await showErrorAlert(
+          context,
+          title: '건물 등록 실패',
+          error: e,
+          fallback: '건물을 등록하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {

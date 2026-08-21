@@ -44,10 +44,6 @@ class _StaffAccountIssuanceScreenState
     final hasPhone = _phoneController.text.trim().isNotEmpty;
     final hasDept = _selectedDepartment != null;
 
-    print('📋 폼 유효성 검사: name=$hasName, phone=$hasPhone, dept=$hasDept');
-    print('📋 _selectedDepartment: $_selectedDepartment');
-    print('📋 _selectedDepartmentId: $_selectedDepartmentId');
-
     return hasName && hasPhone && hasDept;
   }
 
@@ -384,24 +380,13 @@ class _StaffAccountIssuanceScreenState
   }
 
   Future<void> _handleSubmit() async {
-    print('🚀 _handleSubmit 호출됨');
-
     if (!(_formKey.currentState?.validate() ?? false)) {
-      print('❌ 폼 유효성 검사 실패');
       return;
     }
-    print('✅ 폼 유효성 검사 통과');
 
     if (_selectedDepartmentId == null) {
-      print('❌ departmentId가 null');
       return;
     }
-    print('✅ departmentId: $_selectedDepartmentId');
-
-    print('📤 API 호출 시작...');
-    print('   name: ${_nameController.text.trim()}');
-    print('   phone: ${_phoneController.text.trim()}');
-    print('   departmentId: $_selectedDepartmentId');
 
     // Provider를 통해 계정 발급 요청
     await ref.read(staffAccountIssuanceProvider.notifier).createStaffAccount(
@@ -410,18 +395,13 @@ class _StaffAccountIssuanceScreenState
       departmentId: _selectedDepartmentId!,
     );
 
-    print('📥 API 호출 완료');
-
     if (!mounted) {
-      print('❌ mounted가 false');
       return;
     }
 
     final staffState = ref.read(staffAccountIssuanceProvider);
-    print('📊 staffState: isSuccess=${staffState.isSuccess}, error=${staffState.error}');
 
     if (staffState.isSuccess) {
-      print('✅ 계정 발급 성공!');
       // Provider 상태 초기화
       ref.read(staffAccountIssuanceProvider.notifier).reset();
 
@@ -449,8 +429,6 @@ class _StaffAccountIssuanceScreenState
         }
       }
     } else if (staffState.error != null) {
-      print('❌ 계정 발급 실패: ${staffState.error}');
-
       // 에러 메시지에서 "Exception: " 접두사 제거
       String errorMessage = staffState.error!;
       if (errorMessage.startsWith('Exception: ')) {

@@ -6,9 +6,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:building_manage_front/shared/widgets/field_label.dart';
 import 'package:building_manage_front/shared/widgets/primary_action_button.dart';
 import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
+import 'package:building_manage_front/shared/widgets/error_alert.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/providers/headquarters_providers.dart';
 import 'package:building_manage_front/modules/common/services/image_upload_service.dart';
-import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class BuildingEditScreen extends ConsumerStatefulWidget {
@@ -58,7 +58,13 @@ class _BuildingEditScreenState extends ConsumerState<BuildingEditScreen> {
         });
       }
     } catch (e) {
-      // 이미지 선택 실패
+      if (!mounted) return;
+      await showErrorAlert(
+        context,
+        title: '이미지 선택 실패',
+        error: e,
+        fallback: '이미지를 불러오지 못했습니다. 다시 시도해 주세요.',
+      );
     }
   }
 
@@ -128,10 +134,23 @@ class _BuildingEditScreenState extends ConsumerState<BuildingEditScreen> {
           if (mounted) {
             context.pop();
           }
+        } else {
+          await showErrorAlert(
+            context,
+            title: '건물 수정 실패',
+            message: '건물 정보를 수정하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+          );
         }
       }
     } catch (e) {
-      // 건물 수정 실패
+      if (mounted) {
+        await showErrorAlert(
+          context,
+          title: '건물 수정 실패',
+          error: e,
+          fallback: '건물 정보를 수정하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {

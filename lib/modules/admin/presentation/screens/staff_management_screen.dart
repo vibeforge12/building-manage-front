@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/admin/presentation/providers/admin_providers.dart';
-import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
+import 'package:building_manage_front/shared/widgets/error_alert.dart';
+import 'package:building_manage_front/core/utils/error_message.dart';
 
 class StaffManagementScreen extends ConsumerStatefulWidget {
   const StaffManagementScreen({super.key});
@@ -51,17 +52,19 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
         _staffs = staffs.map((staff) => staff.toJson()).toList();
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
-        if (e is ApiException) {
-          _errorMessage = e.userFriendlyMessage;
-        } else {
-          _errorMessage = e.toString();
-        }
+        _errorMessage = userMessageOf(
+          e,
+          fallback: '담당자 목록을 불러오는 중 오류가 발생했습니다.',
+        );
       });
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -97,7 +100,13 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
         await _loadStaffs();
       }
     } catch (e) {
-      // 담당자 삭제 실패
+      if (!mounted) return;
+      await showErrorAlert(
+        context,
+        title: '삭제 실패',
+        error: e,
+        fallback: '담당자를 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      );
     }
   }
 

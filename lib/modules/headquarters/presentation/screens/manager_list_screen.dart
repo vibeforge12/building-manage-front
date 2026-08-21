@@ -44,6 +44,7 @@ class _ManagerListScreenState extends ConsumerState<ManagerListScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         if (e is ApiException) {
           _errorMessage = e.userFriendlyMessage;
@@ -52,9 +53,11 @@ class _ManagerListScreenState extends ConsumerState<ManagerListScreen> {
         }
       });
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 

@@ -6,6 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:building_manage_front/modules/manager/presentation/providers/manager_providers.dart';
 import 'package:building_manage_front/modules/common/services/image_upload_service.dart';
 import 'dart:io';
+import 'package:building_manage_front/shared/widgets/error_alert.dart';
 
 class ComplaintResolveScreen extends ConsumerStatefulWidget {
   final String complaintId;
@@ -73,7 +74,13 @@ class _ComplaintResolveScreenState extends ConsumerState<ComplaintResolveScreen>
         _updateFormState();
       }
     } catch (e) {
-      // 이미지 선택 실패
+      if (!mounted) return;
+      await showErrorAlert(
+        context,
+        title: '이미지 선택 실패',
+        error: e,
+        fallback: '이미지를 불러오지 못했습니다. 다시 시도해 주세요.',
+      );
     }
   }
 
@@ -82,16 +89,17 @@ class _ComplaintResolveScreenState extends ConsumerState<ComplaintResolveScreen>
 
     // 이미지가 선택되었지만 아직 업로드되지 않았으면 먼저 업로드
     if (_selectedImage != null && _uploadedImageUrl == null) {
-      await _uploadImageBeforeSubmit();
-      // 업로드 실패하면 여기서 반환됨
-      if (!mounted) return;
+      final uploaded = await _uploadImageBeforeSubmit();
+      // 업로드에 실패하면 이미지 없이 등록되지 않도록 여기서 중단한다.
+      if (!uploaded || !mounted) return;
     }
 
     // 이미지 업로드가 완료되었으면 민원 처리 등록
     await _submitComplaintResolve();
   }
 
-  Future<void> _uploadImageBeforeSubmit() async {
+  /// 업로드 성공 여부를 반환한다. 실패 시 민원 처리 등록을 진행하면 안 된다.
+  Future<bool> _uploadImageBeforeSubmit() async {
     try {
       setState(() {
         _isUploadingImage = true;
@@ -113,13 +121,20 @@ class _ComplaintResolveScreenState extends ConsumerState<ComplaintResolveScreen>
           _isUploadingImage = false;
         });
       }
+      return true;
     } catch (e) {
       if (mounted) {
         setState(() {
           _isUploadingImage = false;
         });
+        await showErrorAlert(
+          context,
+          title: '이미지 업로드 실패',
+          error: e,
+          fallback: '이미지를 업로드하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+        );
       }
-      return; // 업로드 실패 시 민원 등록 진행 안함
+      return false; // 업로드 실패 시 민원 등록 진행 안함
     }
   }
 
@@ -147,6 +162,12 @@ class _ComplaintResolveScreenState extends ConsumerState<ComplaintResolveScreen>
         setState(() {
           _isSubmitting = false;
         });
+        await showErrorAlert(
+          context,
+          title: '민원 처리 실패',
+          error: e,
+          fallback: '민원 처리를 등록하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+        );
       }
     }
   }

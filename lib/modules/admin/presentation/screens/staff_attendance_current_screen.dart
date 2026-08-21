@@ -48,15 +48,18 @@ class _StaffAttendanceCurrentScreenState
         _refreshedAt = DateTime.now();
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e is ApiException
             ? e.userFriendlyMessage
             : '실시간 현황을 불러올 수 없습니다.';
       });
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 

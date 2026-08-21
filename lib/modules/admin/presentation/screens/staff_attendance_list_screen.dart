@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:building_manage_front/modules/admin/data/datasources/staff_attendance_remote_datasource.dart';
 import 'package:building_manage_front/modules/admin/domain/entities/staff_attendance.dart';
-import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
+import 'package:building_manage_front/core/utils/error_message.dart';
 
 class StaffAttendanceListScreen extends ConsumerStatefulWidget {
   const StaffAttendanceListScreen({super.key});
@@ -44,18 +44,20 @@ class _StaffAttendanceListScreenState extends ConsumerState<StaffAttendanceListS
         _dailyData = result;
       });
     } catch (e) {
+      if (!mounted) return;
       debugPrint('출퇴근 조회 에러: $e');
       setState(() {
-        if (e is ApiException) {
-          _errorMessage = e.userFriendlyMessage;
-        } else {
-          _errorMessage = '출퇴근 현황을 불러오는 중 오류가 발생했습니다.\n$e';
-        }
+        _errorMessage = userMessageOf(
+          e,
+          fallback: '출퇴근 현황을 불러오는 중 오류가 발생했습니다.',
+        );
       });
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 

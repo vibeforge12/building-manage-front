@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/admin/presentation/providers/admin_providers.dart';
-import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
+import 'package:building_manage_front/shared/widgets/error_alert.dart';
+import 'package:building_manage_front/core/utils/error_message.dart';
 
 class ResidentManagementScreen extends ConsumerStatefulWidget {
   const ResidentManagementScreen({super.key});
@@ -112,11 +113,14 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
         _verifiedHasMore = items.length == _pageSize;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
-        _errorMessageVerified = e is ApiException ? e.userFriendlyMessage : e.toString();
+        _errorMessageVerified = userMessageOf(e, fallback: '입주민 목록을 불러오지 못했습니다.');
       });
     } finally {
-      setState(() => _isLoadingVerified = false);
+      if (mounted) {
+        setState(() => _isLoadingVerified = false);
+      }
     }
   }
 
@@ -154,11 +158,14 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
         _pendingHasMore = items.length == _pageSize;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
-        _errorMessagePending = e is ApiException ? e.userFriendlyMessage : e.toString();
+        _errorMessagePending = userMessageOf(e, fallback: '입주민 목록을 불러오지 못했습니다.');
       });
     } finally {
-      setState(() => _isLoadingPending = false);
+      if (mounted) {
+        setState(() => _isLoadingPending = false);
+      }
     }
   }
 
@@ -214,15 +221,17 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
         await _loadVerifiedResidents();
       }
     } catch (e) {
-      // 입주민 승인 실패
+      if (!mounted) return;
+      await showErrorAlert(
+        context,
+        title: '승인 실패',
+        error: e,
+        fallback: '입주민을 승인하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      );
     }
   }
 
   Future<void> _rejectResident(String residentId, String residentName) async {
-    print('🚀 _rejectResident 호출됨');
-    print('📋 residentId: $residentId');
-    print('📋 residentName: $residentName');
-
     final confirmed = await showCustomConfirmationDialog(
       context: context,
       title: '',
@@ -241,29 +250,19 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
       isDestructive: true,
     );
 
-    print('📋 confirmed 결과: $confirmed');
-
     if (confirmed != true) {
-      print('❌ 사용자가 취소함');
       return;
     }
-
-    print('✅ 사용자가 확인함, API 호출 시작...');
 
     try {
       // UseCase를 통한 입주민 거절 (비즈니스 로직 포함)
       final rejectResidentUseCase = ref.read(rejectResidentUseCaseProvider);
-      print('📤 rejectResidentUseCase.execute 호출...');
       await rejectResidentUseCase.execute(residentId: residentId);
-      print('✅ 입주민 거절 API 성공!');
 
       if (mounted) {
-        print('🔄 목록 새로고침 중...');
         await _loadPendingResidents();
-        print('✅ 목록 새로고침 완료');
       }
     } catch (e) {
-      print('❌ 입주민 거절 실패: $e');
       // 에러 모달 표시
       if (mounted) {
         String errorMessage = e.toString();
@@ -324,7 +323,13 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
         await _loadVerifiedResidents();
       }
     } catch (e) {
-      // 입주민 삭제 실패
+      if (!mounted) return;
+      await showErrorAlert(
+        context,
+        title: '삭제 실패',
+        error: e,
+        fallback: '입주민을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      );
     }
   }
 

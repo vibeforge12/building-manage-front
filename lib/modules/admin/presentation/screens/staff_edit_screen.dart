@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/admin/presentation/providers/admin_providers.dart';
 import 'package:building_manage_front/modules/headquarters/data/datasources/department_remote_datasource.dart';
-import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
+import 'package:building_manage_front/shared/widgets/error_alert.dart';
+import 'package:building_manage_front/core/utils/error_message.dart';
 
 class StaffEditScreen extends ConsumerStatefulWidget {
   final String staffId;
@@ -73,17 +74,19 @@ class _StaffEditScreenState extends ConsumerState<StaffEditScreen> {
         _departmentName = staff.departmentName;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
-        if (e is ApiException) {
-          _errorMessage = e.userFriendlyMessage;
-        } else {
-          _errorMessage = e.toString();
-        }
+        _errorMessage = userMessageOf(
+          e,
+          fallback: '담당자 정보를 불러오는 중 오류가 발생했습니다.',
+        );
       });
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -106,11 +109,21 @@ class _StaffEditScreenState extends ConsumerState<StaffEditScreen> {
         });
       }
     } catch (e) {
-      // 부서 목록 조회 실패는 에러로 표시하지 않고 로그만 출력
+      // 부서 목록이 비면 저장 자체가 불가하므로 사용자에게 알린다.
+      if (mounted) {
+        await showErrorAlert(
+          context,
+          title: '부서 목록 조회 실패',
+          error: e,
+          fallback: '부서 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
+        );
+      }
     } finally {
-      setState(() {
-        _isDepartmentsLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isDepartmentsLoading = false;
+        });
+      }
     }
   }
 
@@ -143,7 +156,14 @@ class _StaffEditScreenState extends ConsumerState<StaffEditScreen> {
         context.pop(true); // 수정 성공 시 true 반환
       }
     } catch (e) {
-      // 담당자 정보 수정 실패
+      if (mounted) {
+        await showErrorAlert(
+          context,
+          title: '수정 실패',
+          error: e,
+          fallback: '담당자 정보를 수정하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {

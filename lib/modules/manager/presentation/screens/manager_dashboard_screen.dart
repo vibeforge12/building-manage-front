@@ -74,6 +74,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
     try {
       final dataSource = ref.read(staffComplaintsRemoteDataSourceProvider);
       final response = await dataSource.getPendingComplaintsHighlight();
+      if (!mounted) return;
 
       if (response['success'] == true && response['data'] != null) {
         setState(() {
@@ -87,6 +88,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _complaintsError = '민원 로드 중 오류가 발생했습니다.';
         _isLoadingComplaints = false;
@@ -103,6 +105,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
     try {
       final dataSource = ref.read(staffComplaintsRemoteDataSourceProvider);
       final response = await dataSource.getStaffNotices(limit: 3);
+      if (!mounted) return;
 
       if (response['success'] == true && response['data'] != null) {
         final data = response['data'] as Map<String, dynamic>;
@@ -118,6 +121,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _noticesError = '공지사항 로드 중 오류가 발생했습니다.';
         _isLoadingNotices = false;
