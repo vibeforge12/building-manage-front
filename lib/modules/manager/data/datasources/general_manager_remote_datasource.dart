@@ -1,6 +1,6 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:building_manage_front/core/network/api_client.dart';
+import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 
 /// 총관리자(HEAD)가 자신의 건물에 일반관리자(GENERAL)를 추가하는 데이터소스.
 class GeneralManagerRemoteDataSource {
@@ -27,18 +27,18 @@ class GeneralManagerRemoteDataSource {
         data: requestData,
       );
       return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 400) {
+    } on ApiException catch (e) {
+      if (e.statusCode == 400) {
         throw Exception('잘못된 요청입니다. 입력값을 확인해주세요.');
       }
       // 403: 총관리자만 일반관리자를 추가할 수 있음
-      if (e.response?.statusCode == 403) {
+      if (e.statusCode == 403) {
         throw Exception('총관리자만 일반관리자를 추가할 수 있습니다.');
       }
       // 409: 전화번호 중복 등 → 서버 메시지 노출
-      if (e.response?.statusCode == 409) {
-        final serverMessage = (e.response?.data is Map)
-            ? (e.response?.data as Map)['message'] as String?
+      if (e.statusCode == 409) {
+        final serverMessage = (e.responseData is Map)
+            ? (e.responseData as Map)['message'] as String?
             : null;
         throw Exception(serverMessage ?? '이미 등록된 전화번호의 관리자가 있습니다.');
       }

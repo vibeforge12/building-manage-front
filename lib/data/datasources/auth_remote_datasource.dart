@@ -34,11 +34,10 @@ class AuthRemoteDataSource {
       );
 
       return response.data as Map<String, dynamic>;
-    } catch (e) {
-      if (e is ApiException) {
-        rethrow;
-      }
-      throw ApiException(
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      throw const ApiException(
         message: '입주민 회원가입 중 오류가 발생했습니다.',
         errorCode: 'RESIDENT_REGISTER_FAILED',
       );
@@ -65,11 +64,10 @@ class AuthRemoteDataSource {
       );
 
       return response.data as Map<String, dynamic>;
-    } catch (e) {
-      if (e is ApiException) {
-        rethrow;
-      }
-      throw ApiException(
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      throw const ApiException(
         message: '관리자 회원가입 중 오류가 발생했습니다.',
         errorCode: 'MANAGER_REGISTER_FAILED',
       );
@@ -92,11 +90,10 @@ class AuthRemoteDataSource {
       );
 
       return response.data as Map<String, dynamic>;
-    } catch (e) {
-      if (e is ApiException) {
-        rethrow;
-      }
-      throw ApiException(
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      throw const ApiException(
         message: '입주민 로그인 중 오류가 발생했습니다.',
         errorCode: 'RESIDENT_LOGIN_FAILED',
       );
@@ -117,11 +114,10 @@ class AuthRemoteDataSource {
       );
 
       return response.data as Map<String, dynamic>;
-    } catch (e) {
-      if (e is ApiException) {
-        rethrow;
-      }
-      throw ApiException(
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      throw const ApiException(
         message: '관리자 코드가 일치하지 않습니다.',
         errorCode: 'MANAGER_LOGIN_FAILED',
       );
@@ -142,11 +138,10 @@ class AuthRemoteDataSource {
       );
 
       return response.data as Map<String, dynamic>;
-    } catch (e) {
-      if (e is ApiException) {
-        rethrow;
-      }
-      throw ApiException(
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      throw const ApiException(
         message: '담당자 로그인 중 오류가 발생했습니다.',
         errorCode: 'STAFF_LOGIN_FAILED',
       );
@@ -169,11 +164,10 @@ class AuthRemoteDataSource {
       );
 
       return response.data as Map<String, dynamic>;
-    } catch (e) {
-      if (e is ApiException) {
-        rethrow;
-      }
-      throw ApiException(
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      throw const ApiException(
         message: '아이디 또는 비밀번호가 일치하지 않습니다.',
         errorCode: 'HEADQUARTERS_LOGIN_FAILED',
       );
@@ -191,11 +185,10 @@ class AuthRemoteDataSource {
       );
 
       return response.data as Map<String, dynamic>;
-    } catch (e) {
-      if (e is ApiException) {
-        rethrow;
-      }
-      throw ApiException(
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      throw const ApiException(
         message: '토큰 갱신 중 오류가 발생했습니다.',
         errorCode: 'TOKEN_REFRESH_FAILED',
       );
@@ -229,24 +222,21 @@ class AuthRemoteDataSource {
     } on ApiException catch (e) {
       // 401: 비밀번호 불일치, 404: 사용자 없음
       if (e.statusCode == 401) {
-        throw ApiException(
+        throw const ApiException(
           message: '비밀번호가 일치하지 않습니다.',
           errorCode: 'PASSWORD_MISMATCH',
           statusCode: 401,
         );
       } else if (e.statusCode == 404) {
-        throw ApiException(
+        throw const ApiException(
           message: '사용자 정보를 찾을 수 없습니다.',
           errorCode: 'USER_NOT_FOUND',
           statusCode: 404,
         );
       }
       rethrow;
-    } catch (e) {
-      if (e is ApiException) {
-        rethrow;
-      }
-      throw ApiException(
+    } catch (_) {
+      throw const ApiException(
         message: '회원 탈퇴 중 오류가 발생했습니다.',
         errorCode: 'WITHDRAW_FAILED',
       );

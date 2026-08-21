@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:building_manage_front/core/network/api_client.dart';
 import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
@@ -19,21 +18,21 @@ class AttendanceRemoteDataSource {
       );
 
       return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
+    } on ApiException catch (e) {
 
-      if (e.response?.data != null && e.response!.data is Map) {
-        final errorData = e.response!.data as Map<String, dynamic>;
+      if (e.responseData != null && e.responseData is Map) {
+        final errorData = e.responseData as Map<String, dynamic>;
         throw ApiException(
           message: errorData['message'] ?? '출근 처리에 실패했습니다.',
           errorCode: errorData['errorCode'] ?? 'CHECK_IN_FAILED',
-          statusCode: e.response?.statusCode,
+          statusCode: e.statusCode,
         );
       }
 
       throw ApiException(
         message: '출근 처리 중 오류가 발생했습니다.',
         errorCode: 'CHECK_IN_FAILED',
-        statusCode: e.response?.statusCode,
+        statusCode: e.statusCode,
       );
     } catch (e) {
       throw ApiException(
@@ -53,21 +52,21 @@ class AttendanceRemoteDataSource {
       );
 
       return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
+    } on ApiException catch (e) {
 
-      if (e.response?.data != null && e.response!.data is Map) {
-        final errorData = e.response!.data as Map<String, dynamic>;
+      if (e.responseData != null && e.responseData is Map) {
+        final errorData = e.responseData as Map<String, dynamic>;
         throw ApiException(
           message: errorData['message'] ?? '퇴근 처리에 실패했습니다.',
           errorCode: errorData['errorCode'] ?? 'CHECK_OUT_FAILED',
-          statusCode: e.response?.statusCode,
+          statusCode: e.statusCode,
         );
       }
 
       throw ApiException(
         message: '퇴근 처리 중 오류가 발생했습니다.',
         errorCode: 'CHECK_OUT_FAILED',
-        statusCode: e.response?.statusCode,
+        statusCode: e.statusCode,
       );
     } catch (e) {
       throw ApiException(
@@ -113,21 +112,21 @@ class AttendanceRemoteDataSource {
       );
 
       return MonthlyAttendanceResponse.fromJson(response.data as Map<String, dynamic>);
-    } on DioException catch (e) {
+    } on ApiException catch (e) {
 
-      if (e.response?.data != null && e.response!.data is Map) {
-        final errorData = e.response!.data as Map<String, dynamic>;
+      if (e.responseData != null && e.responseData is Map) {
+        final errorData = e.responseData as Map<String, dynamic>;
         throw ApiException(
           message: errorData['message'] ?? '출퇴근 기록 조회에 실패했습니다.',
           errorCode: errorData['errorCode'] ?? 'FETCH_ATTENDANCE_FAILED',
-          statusCode: e.response?.statusCode,
+          statusCode: e.statusCode,
         );
       }
 
       throw ApiException(
         message: '출퇴근 기록 조회 중 오류가 발생했습니다.',
         errorCode: 'FETCH_ATTENDANCE_FAILED',
-        statusCode: e.response?.statusCode,
+        statusCode: e.statusCode,
       );
     } catch (e) {
       throw ApiException(

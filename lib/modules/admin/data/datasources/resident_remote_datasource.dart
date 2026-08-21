@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:building_manage_front/core/network/api_client.dart';
 import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
@@ -41,7 +40,7 @@ class ResidentRemoteDataSource {
         queryParameters: queryParams,
       );
       return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
+    } on ApiException catch (e) {
       throw Exception('입주민 목록을 불러오는 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {
       throw Exception('입주민 목록을 불러오는 중 오류가 발생했습니다: $e');
@@ -58,21 +57,21 @@ class ResidentRemoteDataSource {
       final response = await _apiClient.post('/managers/residents/$residentId/approve');
 
       return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
+    } on ApiException catch (e) {
 
-      if (e.response?.data != null && e.response!.data is Map) {
-        final errorData = e.response!.data as Map<String, dynamic>;
+      if (e.responseData != null && e.responseData is Map) {
+        final errorData = e.responseData as Map<String, dynamic>;
         throw ApiException(
           message: errorData['message'] ?? '입주민 승인에 실패했습니다.',
           errorCode: errorData['errorCode'] ?? 'RESIDENT_VERIFY_FAILED',
-          statusCode: e.response?.statusCode,
+          statusCode: e.statusCode,
         );
       }
 
       throw ApiException(
         message: '입주민 승인 중 오류가 발생했습니다.',
         errorCode: 'RESIDENT_VERIFY_FAILED',
-        statusCode: e.response?.statusCode,
+        statusCode: e.statusCode,
       );
     } catch (e) {
       throw ApiException(
@@ -88,29 +87,23 @@ class ResidentRemoteDataSource {
     required String residentId,
   }) async {
     try {
-      print('🔴 ResidentRemoteDataSource.rejectResident 호출됨');
-      print('📋 residentId: $residentId');
-      print('📤 DELETE /managers/residents/$residentId 호출...');
-
       final response = await _apiClient.delete('/managers/residents/$residentId');
-      print('📥 응답 받음: ${response.data}');
-
       return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
+    } on ApiException catch (e) {
 
-      if (e.response?.data != null && e.response!.data is Map) {
-        final errorData = e.response!.data as Map<String, dynamic>;
+      if (e.responseData != null && e.responseData is Map) {
+        final errorData = e.responseData as Map<String, dynamic>;
         throw ApiException(
           message: errorData['message'] ?? '입주민 거절에 실패했습니다.',
           errorCode: errorData['errorCode'] ?? 'RESIDENT_REJECT_FAILED',
-          statusCode: e.response?.statusCode,
+          statusCode: e.statusCode,
         );
       }
 
       throw ApiException(
         message: '입주민 거절 중 오류가 발생했습니다.',
         errorCode: 'RESIDENT_REJECT_FAILED',
-        statusCode: e.response?.statusCode,
+        statusCode: e.statusCode,
       );
     } catch (e) {
       throw ApiException(

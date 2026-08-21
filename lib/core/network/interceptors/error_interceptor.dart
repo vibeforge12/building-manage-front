@@ -6,7 +6,10 @@ class ErrorInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) {
     final apiException = _handleError(err);
 
-    // DioException을 ApiException으로 변환
+    // Dio 인터셉터 경계에서는 DioException만 전달할 수 있으므로
+    // ApiException은 error 필드에 실어 보낸다.
+    // 최종 언랩은 ApiClient._guard()가 담당하며,
+    // 그 결과 상위 계층에는 ApiException만 전파된다.
     final convertedException = DioException(
       requestOptions: err.requestOptions,
       response: err.response,

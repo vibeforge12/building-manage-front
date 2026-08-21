@@ -4,6 +4,7 @@ import 'package:building_manage_front/core/config/app_config.dart';
 import 'package:building_manage_front/core/network/interceptors/auth_interceptor.dart';
 import 'package:building_manage_front/core/network/interceptors/logging_interceptor.dart';
 import 'package:building_manage_front/core/network/interceptors/error_interceptor.dart';
+import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 
 class ApiClient {
   static final ApiClient _instance = ApiClient._internal();
@@ -34,6 +35,18 @@ class ApiClient {
     _dio.interceptors.add(ErrorInterceptor());
   }
 
+  /// Dio가 던지는 [DioException]을 앱 표준 예외인 [ApiException]으로 정규화한다.
+  ///
+  /// 이 래퍼 덕분에 상위 계층(datasource/provider/screen)은
+  /// `on ApiException catch` 한 가지 계약만 다루면 된다.
+  Future<Response<T>> _guard<T>(Future<Response<T>> Function() send) async {
+    try {
+      return await send();
+    } on DioException catch (e) {
+      throw ApiException.from(e);
+    }
+  }
+
   // GET 요청
   Future<Response<T>> get<T>(
     String path, {
@@ -41,12 +54,12 @@ class ApiClient {
     Options? options,
     CancelToken? cancelToken,
   }) async {
-    return await _dio.get<T>(
+    return _guard(() => _dio.get<T>(
       path,
       queryParameters: queryParameters,
       options: options,
       cancelToken: cancelToken,
-    );
+    ));
   }
 
   // POST 요청
@@ -57,13 +70,13 @@ class ApiClient {
     Options? options,
     CancelToken? cancelToken,
   }) async {
-    return await _dio.post<T>(
+    return _guard(() => _dio.post<T>(
       path,
       data: data,
       queryParameters: queryParameters,
       options: options,
       cancelToken: cancelToken,
-    );
+    ));
   }
 
   // PUT 요청
@@ -74,13 +87,13 @@ class ApiClient {
     Options? options,
     CancelToken? cancelToken,
   }) async {
-    return await _dio.put<T>(
+    return _guard(() => _dio.put<T>(
       path,
       data: data,
       queryParameters: queryParameters,
       options: options,
       cancelToken: cancelToken,
-    );
+    ));
   }
 
   // DELETE 요청
@@ -91,13 +104,13 @@ class ApiClient {
     Options? options,
     CancelToken? cancelToken,
   }) async {
-    return await _dio.delete<T>(
+    return _guard(() => _dio.delete<T>(
       path,
       data: data,
       queryParameters: queryParameters,
       options: options,
       cancelToken: cancelToken,
-    );
+    ));
   }
 
   // PATCH 요청
@@ -108,13 +121,13 @@ class ApiClient {
     Options? options,
     CancelToken? cancelToken,
   }) async {
-    return await _dio.patch<T>(
+    return _guard(() => _dio.patch<T>(
       path,
       data: data,
       queryParameters: queryParameters,
       options: options,
       cancelToken: cancelToken,
-    );
+    ));
   }
 }
 

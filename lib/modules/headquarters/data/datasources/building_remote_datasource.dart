@@ -1,6 +1,6 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:building_manage_front/core/network/api_client.dart';
+import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 import 'package:building_manage_front/core/constants/api_endpoints.dart';
 
 class BuildingRemoteDataSource {
@@ -31,7 +31,7 @@ class BuildingRemoteDataSource {
         data: requestData,
       );
       return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
+    } on ApiException catch (e) {
       throw Exception('건물 등록 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {
       throw Exception('건물 등록 중 오류가 발생했습니다: $e');
@@ -52,7 +52,7 @@ class BuildingRemoteDataSource {
       );
 
       return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
+    } on ApiException catch (e) {
       throw Exception('건물 목록을 불러오는 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {
       throw Exception('건물 목록을 불러오는 중 오류가 발생했습니다: $e');
@@ -80,7 +80,7 @@ class BuildingRemoteDataSource {
         data: requestData,
       );
       return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
+    } on ApiException catch (e) {
       throw Exception('건물 수정 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {
       throw Exception('건물 수정 중 오류가 발생했습니다: $e');

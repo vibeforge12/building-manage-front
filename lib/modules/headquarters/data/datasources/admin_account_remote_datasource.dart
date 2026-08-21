@@ -1,6 +1,6 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:building_manage_front/core/network/api_client.dart';
+import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 
 class AdminAccountRemoteDataSource {
   final ApiClient _apiClient;
@@ -31,16 +31,16 @@ class AdminAccountRemoteDataSource {
         data: requestData,
       );
       return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
+    } on ApiException catch (e) {
 
-      if (e.response?.statusCode == 400) {
+      if (e.statusCode == 400) {
         throw Exception('잘못된 요청입니다. 입력값을 확인해주세요.');
       }
 
       // 409: 건물당 총관리자 1명 제약 등 → 서버 메시지를 그대로 노출
-      if (e.response?.statusCode == 409) {
-        final serverMessage = (e.response?.data is Map<String, dynamic>)
-            ? (e.response?.data as Map<String, dynamic>)['message'] as String?
+      if (e.statusCode == 409) {
+        final serverMessage = (e.responseData is Map<String, dynamic>)
+            ? (e.responseData as Map<String, dynamic>)['message'] as String?
             : null;
         throw Exception(serverMessage ?? '이미 존재하는 관리자입니다.');
       }

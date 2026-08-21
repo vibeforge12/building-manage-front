@@ -1,8 +1,8 @@
-import 'package:dio/dio.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/network/exceptions/api_exception.dart';
 import '../../../core/utils/device_info_helper.dart';
 import '../data/datasources/push_token_remote_datasource.dart';
 
@@ -169,8 +169,8 @@ class NotificationService {
         default:
           break;
       }
-    } on DioException catch (e) {
-      final statusCode = e.response?.statusCode;
+    } on ApiException catch (e) {
+      final statusCode = e.statusCode;
 
       // 401 Unauthorized 에러 시 재시도
       if (statusCode == 401 && retryCount < maxRetries) {

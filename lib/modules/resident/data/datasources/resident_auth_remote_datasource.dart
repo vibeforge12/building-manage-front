@@ -1,6 +1,6 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:building_manage_front/core/network/api_client.dart';
+import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 
 class ResidentAuthRemoteDataSource {
   final ApiClient _apiClient;
@@ -25,10 +25,11 @@ class ResidentAuthRemoteDataSource {
         data: requestData,
       );
       return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
+    } on ApiException catch (e) {
 
-      if (e.response?.statusCode == 401) {
-        final message = e.response?.data?['message'] as String?;
+      if (e.statusCode == 401) {
+        final data = e.responseData;
+        final message = (data is Map) ? data['message'] as String? : null;
         throw Exception(message ?? '아이디 또는 비밀번호가 일치하지 않습니다.');
       }
 
@@ -66,12 +67,12 @@ class ResidentAuthRemoteDataSource {
         data: requestData,
       );
       return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
+    } on ApiException catch (e) {
 
       // 409: 아이디 또는 전화번호 중복 → 서버 안내 메시지를 그대로 노출
-      if (e.response?.statusCode == 409) {
-        final serverMessage = (e.response?.data is Map)
-            ? (e.response?.data as Map)['message'] as String?
+      if (e.statusCode == 409) {
+        final serverMessage = (e.responseData is Map)
+            ? (e.responseData as Map)['message'] as String?
             : null;
         throw Exception(serverMessage ?? '이미 가입된 정보입니다.');
       }
@@ -100,9 +101,9 @@ class ResidentAuthRemoteDataSource {
         data: requestData,
       );
       return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
+    } on ApiException catch (e) {
 
-      if (e.response?.statusCode == 401 || e.response?.statusCode == 400) {
+      if (e.statusCode == 401 || e.statusCode == 400) {
         throw Exception('CURRENT_PASSWORD_WRONG');
       }
 
@@ -130,12 +131,12 @@ class ResidentAuthRemoteDataSource {
         data: requestData,
       );
       return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
+    } on ApiException catch (e) {
 
-      if (e.response?.statusCode == 404) {
+      if (e.statusCode == 404) {
         throw Exception('USER_NOT_FOUND');
       }
-      if (e.response?.statusCode == 400) {
+      if (e.statusCode == 400) {
         throw Exception('INVALID_REQUEST');
       }
 
@@ -163,9 +164,9 @@ class ResidentAuthRemoteDataSource {
         data: requestData,
       );
       return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
+    } on ApiException catch (e) {
 
-      if (e.response?.statusCode == 400) {
+      if (e.statusCode == 400) {
         throw Exception('INVALID_CODE');
       }
 
@@ -195,7 +196,7 @@ class ResidentAuthRemoteDataSource {
         data: requestData,
       );
       return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
+    } on ApiException catch (e) {
 
       throw Exception('비밀번호 재설정 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {

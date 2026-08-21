@@ -1,6 +1,6 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:building_manage_front/core/network/api_client.dart';
+import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 import 'package:building_manage_front/core/constants/api_endpoints.dart';
 
 class AttendanceAlertRemoteDataSource {
@@ -18,7 +18,7 @@ class AttendanceAlertRemoteDataSource {
         ApiEndpoints.managerDashboardAlerts,
       );
       return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
+    } on ApiException catch (e) {
       throw Exception('출퇴근 알림을 불러오는 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {
       throw Exception('출퇴근 알림을 불러오는 중 오류가 발생했습니다: $e');

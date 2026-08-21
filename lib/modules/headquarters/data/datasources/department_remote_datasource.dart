@@ -46,11 +46,10 @@ class DepartmentRemoteDataSource {
       );
 
       return response.data as Map<String, dynamic>;
-    } catch (e) {
-      if (e is ApiException) {
-        rethrow;
-      }
-      throw ApiException(
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      throw const ApiException(
         message: '부서 목록을 불러오는 중 오류가 발생했습니다.',
         errorCode: 'DEPARTMENTS_FETCH_FAILED',
       );
@@ -66,11 +65,10 @@ class DepartmentRemoteDataSource {
       );
 
       return response.data as Map<String, dynamic>;
-    } catch (e) {
-      if (e is ApiException) {
-        rethrow;
-      }
-      throw ApiException(
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      throw const ApiException(
         message: '부서 정보를 불러오는 중 오류가 발생했습니다.',
         errorCode: 'DEPARTMENT_FETCH_FAILED',
       );
@@ -104,11 +102,10 @@ class DepartmentRemoteDataSource {
       );
 
       return response.data as Map<String, dynamic>;
-    } catch (e) {
-      if (e is ApiException) {
-        rethrow;
-      }
-      throw ApiException(
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      throw const ApiException(
         message: '부서 생성 중 오류가 발생했습니다.',
         errorCode: 'DEPARTMENT_CREATE_FAILED',
       );
@@ -152,11 +149,10 @@ class DepartmentRemoteDataSource {
       );
 
       return response.data as Map<String, dynamic>;
-    } catch (e) {
-      if (e is ApiException) {
-        rethrow;
-      }
-      throw ApiException(
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      throw const ApiException(
         message: '부서 생성 중 오류가 발생했습니다.',
         errorCode: 'DEPARTMENT_CREATE_FAILED',
       );
@@ -206,11 +202,10 @@ class DepartmentRemoteDataSource {
       );
 
       return response.data as Map<String, dynamic>;
-    } catch (e) {
-      if (e is ApiException) {
-        rethrow;
-      }
-      throw ApiException(
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      throw const ApiException(
         message: '부서 수정 중 오류가 발생했습니다.',
         errorCode: 'DEPARTMENT_UPDATE_FAILED',
       );
@@ -226,11 +221,10 @@ class DepartmentRemoteDataSource {
       );
 
       return response.data as Map<String, dynamic>;
-    } catch (e) {
-      if (e is ApiException) {
-        rethrow;
-      }
-      throw ApiException(
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      throw const ApiException(
         message: '부서 삭제 중 오류가 발생했습니다.',
         errorCode: 'DEPARTMENT_DELETE_FAILED',
       );

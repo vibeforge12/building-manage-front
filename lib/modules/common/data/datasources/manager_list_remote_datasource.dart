@@ -1,6 +1,6 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:building_manage_front/core/network/api_client.dart';
+import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 
 class ManagerListRemoteDataSource {
   final ApiClient _apiClient;
@@ -42,7 +42,7 @@ class ManagerListRemoteDataSource {
       );
 
       return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
+    } on ApiException catch (e) {
       throw Exception('관리자 목록을 불러오는 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {
       throw Exception('관리자 목록을 불러오는 중 오류가 발생했습니다: $e');
@@ -58,7 +58,7 @@ class ManagerListRemoteDataSource {
       );
 
       return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
+    } on ApiException catch (e) {
       throw Exception('관리자 상세 정보를 불러오는 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {
       throw Exception('관리자 상세 정보를 불러오는 중 오류가 발생했습니다: $e');
@@ -87,7 +87,7 @@ class ManagerListRemoteDataSource {
       );
 
       return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
+    } on ApiException catch (e) {
       throw Exception('관리자 정보 수정 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {
       throw Exception('관리자 정보 수정 중 오류가 발생했습니다: $e');
@@ -104,7 +104,7 @@ class ManagerListRemoteDataSource {
       );
 
       return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
+    } on ApiException catch (e) {
       throw Exception('관리자 삭제 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {
       throw Exception('관리자 삭제 중 오류가 발생했습니다: $e');

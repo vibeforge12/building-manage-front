@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:building_manage_front/core/network/api_client.dart';
+import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 import 'package:building_manage_front/core/constants/api_endpoints.dart';
 
 class UploadRemoteDataSource {
@@ -26,7 +27,7 @@ class UploadRemoteDataSource {
         },
       );
       return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
+    } on ApiException catch (e) {
       throw Exception('Presigned URL을 받아오는 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {
       throw Exception('Presigned URL을 받아오는 중 오류가 발생했습니다: $e');
@@ -52,7 +53,7 @@ class UploadRemoteDataSource {
         },
       );
       return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
+    } on ApiException catch (e) {
       throw Exception('Presigned URL을 받아오는 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {
       throw Exception('Presigned URL을 받아오는 중 오류가 발생했습니다: $e');
@@ -76,7 +77,7 @@ class UploadRemoteDataSource {
         'Content-Type': contentType,
       };
 
-      final response = await dio.put(
+      await dio.put(
         uploadUrl,
         data: fileBytes,
         options: Options(
@@ -86,6 +87,7 @@ class UploadRemoteDataSource {
         ),
       );
     } on DioException catch (e) {
+      // S3 직접 업로드는 ApiClient(인터셉터)를 거치지 않으므로 DioException을 그대로 받는다.
       throw Exception('S3 업로드 중 오류가 발생했습니다: ${e.message}');
     } catch (e) {
       throw Exception('S3 업로드 중 오류가 발생했습니다: $e');

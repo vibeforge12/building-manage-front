@@ -1,3 +1,9 @@
+import 'package:dio/dio.dart';
+
+/// 앱 전역에서 사용하는 단일 네트워크 예외 타입.
+///
+/// `ApiClient`의 모든 요청 메서드는 실패 시 이 예외만 던진다.
+/// (`DioException`은 `ApiClient` 경계를 넘어오지 않는다.)
 class ApiException implements Exception {
   final String message;
   final int? statusCode;
@@ -10,6 +16,32 @@ class ApiException implements Exception {
     required this.errorCode,
     this.responseData,
   });
+
+  /// 임의의 오류 객체를 [ApiException]으로 정규화한다.
+  ///
+  /// `ErrorInterceptor`가 만들어 [DioException.error]에 실어 보낸 인스턴스가 있으면
+  /// 그대로 꺼내 쓰고, 없으면 가능한 정보만으로 새로 만든다.
+  factory ApiException.from(Object? error) {
+    if (error is ApiException) return error;
+
+    if (error is DioException) {
+      final inner = error.error;
+      if (inner is ApiException) return inner;
+
+      final statusCode = error.response?.statusCode;
+      return ApiException(
+        message: error.message ?? '알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+        statusCode: statusCode,
+        errorCode: statusCode != null ? 'HTTP_$statusCode' : 'UNKNOWN_ERROR',
+        responseData: error.response?.data,
+      );
+    }
+
+    return const ApiException(
+      message: '알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+      errorCode: 'UNKNOWN_ERROR',
+    );
+  }
 
   @override
   String toString() {
