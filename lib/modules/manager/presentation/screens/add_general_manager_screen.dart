@@ -6,6 +6,7 @@ import 'package:building_manage_front/shared/widgets/primary_action_button.dart'
 import 'package:building_manage_front/shared/widgets/section_divider.dart';
 import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
 import 'package:building_manage_front/modules/manager/data/datasources/general_manager_remote_datasource.dart';
+import '../../../../core/utils/error_message.dart';
 
 /// 총관리자(HEAD)가 자신의 건물에 일반관리자(GENERAL)를 추가하는 화면.
 class AddGeneralManagerScreen extends ConsumerStatefulWidget {
@@ -73,7 +74,7 @@ class _AddGeneralManagerScreenState extends ConsumerState<AddGeneralManagerScree
           builder: (context) => AlertDialog(
             icon: const Icon(Icons.error, color: Colors.red, size: 48),
             title: const Text('계정 발급 실패'),
-            content: Text(e.toString().replaceAll('Exception: ', '')),
+            content: Text(userMessageOf(e, fallback: '계정 발급에 실패했습니다.')),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),

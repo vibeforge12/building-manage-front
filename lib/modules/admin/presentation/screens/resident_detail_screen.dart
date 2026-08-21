@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/admin/presentation/providers/admin_providers.dart';
 import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
+import '../../../../core/utils/error_message.dart';
 
 class ResidentDetailScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> resident;
@@ -59,7 +60,7 @@ class _ResidentDetailScreenState extends ConsumerState<ResidentDetailScreen> {
           context: context,
           title: '삭제 실패',
           content: Text(
-            '입주민 삭제 중 오류가 발생했습니다.\n$e',
+            userMessageOf(e, fallback: '입주민 삭제 중 오류가 발생했습니다.'),
             style: const TextStyle(fontSize: 14),
           ),
           confirmText: '확인',

@@ -265,10 +265,10 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
     } catch (e) {
       // 에러 모달 표시
       if (mounted) {
-        String errorMessage = e.toString();
-        if (errorMessage.startsWith('Exception: ')) {
-          errorMessage = errorMessage.replaceFirst('Exception: ', '');
-        }
+        final errorMessage = userMessageOf(
+          e,
+          fallback: '입주민을 거절하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+        );
         await showCustomConfirmationDialog(
           context: context,
           title: '',

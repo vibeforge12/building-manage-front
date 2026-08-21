@@ -7,6 +7,7 @@ import 'package:building_manage_front/shared/widgets/section_divider.dart';
 import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
 import 'package:building_manage_front/modules/common/data/datasources/building_list_remote_datasource.dart';
 import 'package:building_manage_front/modules/headquarters/data/datasources/admin_account_remote_datasource.dart';
+import '../../../../core/utils/error_message.dart';
 
 class AdminAccountIssuanceScreen extends ConsumerStatefulWidget {
   const AdminAccountIssuanceScreen({super.key});
@@ -127,7 +128,7 @@ class _AdminAccountIssuanceScreenState extends ConsumerState<AdminAccountIssuanc
           builder: (context) => AlertDialog(
             icon: const Icon(Icons.error, color: Colors.red, size: 48),
             title: const Text('계정 발급 실패'),
-            content: Text(e.toString().replaceAll('Exception: ', '')),
+            content: Text(userMessageOf(e, fallback: '계정 발급에 실패했습니다.')),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),

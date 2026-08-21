@@ -6,6 +6,7 @@ import 'package:building_manage_front/modules/headquarters/presentation/provider
 import 'package:building_manage_front/modules/headquarters/presentation/screens/building_edit_screen.dart';
 import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
+import '../../../../core/utils/error_message.dart';
 
 class BuildingListScreen extends ConsumerStatefulWidget {
   const BuildingListScreen({super.key});
@@ -189,7 +190,8 @@ class _BuildingListScreenState extends ConsumerState<BuildingListScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(error.toString(), style: const TextStyle(color: Colors.red)),
+                  Text(userMessageOf(error, fallback: '건물 목록을 불러오는 중 오류가 발생했습니다.'),
+                      style: const TextStyle(color: Colors.red)),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {

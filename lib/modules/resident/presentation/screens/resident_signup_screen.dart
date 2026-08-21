@@ -8,6 +8,7 @@ import '../widgets/resident_signup_step1.dart';
 import '../widgets/resident_signup_step2.dart';
 import '../widgets/resident_signup_step3.dart';
 import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
+import '../../../../core/utils/error_message.dart';
 
 class ResidentSignupScreen extends ConsumerWidget {
   const ResidentSignupScreen({super.key});
@@ -154,7 +155,8 @@ class ResidentSignupScreen extends ConsumerWidget {
       // 로딩 다이얼로그 닫기
       if (context.mounted) {
         Navigator.of(context).pop();
-        await _showErrorDialog(context, ref, e.toString());
+        await _showErrorDialog(context, ref,
+            userMessageOf(e, fallback: '회원가입에 실패했습니다. 잠시 후 다시 시도해 주세요.'));
       }
     }
   }

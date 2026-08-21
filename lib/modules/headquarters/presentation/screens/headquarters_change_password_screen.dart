@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/core/network/api_client.dart';
 import 'package:building_manage_front/core/constants/api_endpoints.dart';
 import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
+import '../../../../core/utils/error_message.dart';
 
 class HeadquartersChangePasswordScreen extends ConsumerStatefulWidget {
   const HeadquartersChangePasswordScreen({super.key});
@@ -72,7 +73,7 @@ class _HeadquartersChangePasswordScreenState
           context: context,
           title: '비밀번호 변경 실패',
           content: Text(
-            e.toString().replaceAll('Exception: ', ''),
+            userMessageOf(e, fallback: '비밀번호를 변경하지 못했습니다. 잠시 후 다시 시도해 주세요.'),
             style: const TextStyle(
               color: Colors.black,
               fontSize: 16,

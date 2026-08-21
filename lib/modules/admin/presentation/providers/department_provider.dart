@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:building_manage_front/modules/headquarters/data/datasources/department_remote_datasource.dart';
+import '../../../../core/utils/error_message.dart';
 
 /// 부서 목록 상태
 class DepartmentListState {
@@ -71,7 +72,7 @@ class DepartmentListNotifier extends StateNotifier<DepartmentListState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: e.toString(),
+        error: userMessageOf(e, fallback: '부서 목록을 불러올 수 없습니다.'),
       );
     }
   }
