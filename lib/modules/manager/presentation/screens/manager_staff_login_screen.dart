@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 import 'package:building_manage_front/data/datasources/auth_remote_datasource.dart';
 import 'package:building_manage_front/shared/widgets/page_header_text.dart';
+import '../../../../core/utils/error_message.dart';
 
 class ManagerStaffLoginScreen extends ConsumerStatefulWidget {
   const ManagerStaffLoginScreen({super.key});
@@ -18,6 +19,7 @@ class _ManagerStaffLoginScreenState extends ConsumerState<ManagerStaffLoginScree
   final _codeController = TextEditingController();
 
   bool _loginFailed = false;
+  String? _loginErrorMessage;
   bool _loading = false;
 
   @override
@@ -28,12 +30,15 @@ class _ManagerStaffLoginScreenState extends ConsumerState<ManagerStaffLoginScree
 
   Future<void> _attemptLogin() async {
     if (!_formKey.currentState!.validate()) {
-      setState(() => _loginFailed = false);
+      setState(() {
+        _loginFailed = false;
+        _loginErrorMessage = null;
+      });
       return;
     }
 
     FocusScope.of(context).unfocus();
-    setState(() { _loading = true; _loginFailed = false; });
+    setState(() { _loading = true; _loginFailed = false; _loginErrorMessage = null; });
 
     try {
       final authDataSource = ref.read(authRemoteDataSourceProvider);
@@ -61,7 +66,12 @@ class _ManagerStaffLoginScreenState extends ConsumerState<ManagerStaffLoginScree
         context.goNamed('managerDashboard');
       }
     } catch (e) {
-      if (mounted) setState(() => _loginFailed = true);
+      if (mounted) {
+        setState(() {
+          _loginFailed = true;
+          _loginErrorMessage = userMessageOf(e, fallback: '담당자 코드가 잘못 되었습니다.\n담당자 코드를 정확히 입력해 주세요.');
+        });
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -151,7 +161,8 @@ class _ManagerStaffLoginScreenState extends ConsumerState<ManagerStaffLoginScree
                             key: const ValueKey('staffCodeError'),
                             padding: const EdgeInsets.only(top: 12),
                             child: Text(
-                              '담당자 코드가 잘못 되었습니다.\n담당자 코드를 정확히 입력해 주세요.',
+                              _loginErrorMessage ??
+                                  '담당자 코드가 잘못 되었습니다.\n담당자 코드를 정확히 입력해 주세요.',
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: theme.colorScheme.error,
                               ),

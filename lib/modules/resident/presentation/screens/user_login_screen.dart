@@ -8,6 +8,7 @@ import 'package:building_manage_front/modules/resident/presentation/providers/re
 
 import 'package:building_manage_front/shared/widgets/page_header_text.dart';
 import 'package:building_manage_front/shared/widgets/field_label.dart';
+import '../../../../core/utils/error_message.dart';
 class UserLoginScreen extends ConsumerStatefulWidget {
   const UserLoginScreen({super.key});
 
@@ -21,6 +22,7 @@ class _UserLoginScreenState extends ConsumerState<UserLoginScreen> {
   final _passwordController = TextEditingController();
 
   bool _loginFailed = false;
+  String? _loginErrorMessage;
   bool _loading = false;
 
   @override
@@ -32,11 +34,14 @@ class _UserLoginScreenState extends ConsumerState<UserLoginScreen> {
 
   Future<void> _attemptLogin() async {
     if (!_formKey.currentState!.validate()) {
-      setState(() => _loginFailed = false);
+      setState(() {
+        _loginFailed = false;
+        _loginErrorMessage = null;
+      });
       return;
     }
     FocusScope.of(context).unfocus();
-    setState(() { _loading = true; _loginFailed = false; });
+    setState(() { _loading = true; _loginFailed = false; _loginErrorMessage = null; });
 
     try {
       // UseCase를 통한 로그인 (비즈니스 로직 포함)
@@ -95,7 +100,12 @@ class _UserLoginScreenState extends ConsumerState<UserLoginScreen> {
         }
       }
     } catch (e) {
-      if (mounted) setState(() => _loginFailed = true);
+      if (mounted) {
+        setState(() {
+          _loginFailed = true;
+          _loginErrorMessage = userMessageOf(e, fallback: '아이디 또는 비밀번호가 잘못 되었습니다. 아이디와 비밀번호를 정확히 입력해 주세요.');
+        });
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -199,7 +209,8 @@ class _UserLoginScreenState extends ConsumerState<UserLoginScreen> {
                           child: Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              '아이디 또는 비밀번호가 잘못 되었습니다. 아이디와 비밀번호를 정확히 입력해 주세요.',
+                              _loginErrorMessage ??
+                                  '아이디 또는 비밀번호가 잘못 되었습니다. 아이디와 비밀번호를 정확히 입력해 주세요.',
                               textAlign: TextAlign.left,
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: theme.colorScheme.error,
