@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:building_manage_front/core/constants/auth_states.dart';
 import 'package:building_manage_front/domain/entities/user.dart';
 import 'package:building_manage_front/core/network/interceptors/auth_interceptor.dart';
+import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 import 'package:building_manage_front/data/datasources/auth_remote_datasource.dart';
 
 class AuthStateNotifier extends StateNotifier<AuthState> {
@@ -31,6 +32,14 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
     _accessToken = null;
     _refreshToken = null;
     state = AuthState.unauthenticated;
+  }
+
+  /// 서버에 닿지 못한 상태로 전환한다.
+  ///
+  /// [setUnauthenticated] 와 달리 **저장된 토큰을 지우지 않는다.** 로그아웃이 아니라
+  /// "확인하지 못했다"는 뜻이므로, 연결이 회복되면 재시도만으로 복구되어야 한다.
+  void setNetworkUnavailable() {
+    state = AuthState.networkUnavailable;
   }
 
   void setError() {
@@ -101,15 +110,23 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         return await authDataSource.refreshToken(validRefreshToken);
       }
 
+      // 실패 사유를 반드시 보존한다.
+      // 예전에는 여기서 예외를 버리고 response=null 로만 넘겨, 아래에서
+      // "만료(401)"와 "서버에 못 닿음"을 구분하지 못한 채 토큰을 지웠다.
+      // 그 결과 지하철·비행기모드·서버 재시작 구간에 앱을 켜면 로그아웃됐다.
       Map<String, dynamic>? response;
+      Object? failure;
       try {
         response = await _attemptRefresh();
       } catch (e) {
-        // 1차 실패: 1회 재시도
+        // 1차 실패: 잠깐 쉬었다가 1회 재시도.
+        // 지연 없이 즉시 재시도하면 연결 거부 시 두 번 다 즉시 실패해
+        // 순간적인 단절을 넘기지 못한다.
+        await Future.delayed(const Duration(milliseconds: 800));
         try {
           response = await _attemptRefresh();
         } catch (e2) {
-          response = null;
+          failure = e2;
         }
       }
 
@@ -143,8 +160,20 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
           setUnauthenticated();
         }
       } else {
-        await AuthInterceptor.clearToken();
-        setUnauthenticated();
+        // 토큰을 지울지 여부는 "실패했으니까"가 아니라 **인증이 거부됐을 때만** 판단한다.
+        // AuthInterceptor.onError 도 statusCode != 401 이면 토큰을 건드리지 않는다.
+        // 두 경로의 규칙이 어긋나면 한쪽에서만 로그아웃되는 현상이 생긴다.
+        final apiFailure = ApiException.from(failure);
+
+        if (apiFailure.isAuthError) {
+          // refresh 토큰이 만료·무효 → 실제 로그아웃. 재로그인 외에 방법이 없다.
+          await AuthInterceptor.clearToken();
+          setUnauthenticated();
+        } else {
+          // 연결 실패·타임아웃·5xx 등 → 아직 모르는 것이지 로그아웃이 아니다.
+          // 토큰을 남겨두고, 연결이 회복되면 재시도로 복구되게 한다.
+          setNetworkUnavailable();
+        }
       }
     } catch (e) {
       setUnauthenticated();
