@@ -7,8 +7,19 @@
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
-    <!-- Android 13+ Media Permissions -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <!--
+      READ_MEDIA_IMAGES 를 선언하지 않는다.
+
+      앱의 사진 선택은 pickImage(source: ImageSource.gallery) 5곳뿐이고
+      (건물등록·건물수정·부서생성·민원등록·민원처리), image_picker_android 는
+      useAndroidPhotoPicker 기본값이 false 라 Intent.ACTION_GET_CONTENT 를 띄운다.
+      ACTION_GET_CONTENT 는 시스템 피커가 선택된 URI 에만 읽기 권한을 주는 방식이라
+      미디어 권한이 필요 없다. 권한을 선언하면 Google Play 사진·동영상 권한 정책상
+      선언 양식 제출 대상이 되므로 선언하지 않는다.
+
+      useAndroidPhotoPicker 를 켜더라도 권한은 여전히 불필요하다.
+      다시 필요해지는 경우는 MediaStore 를 직접 조회할 때뿐이다.
+    -->
 
     <!-- Push Notification Permissions (FCM) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
