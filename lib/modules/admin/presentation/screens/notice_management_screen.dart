@@ -257,7 +257,7 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
           children: [
             // 정렬 필터
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               decoration: const BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
@@ -266,29 +266,62 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
                   ),
                 ),
               ),
+              // 정렬 토글.
+              //
+              // 예전에는 Expanded 로 줄 전체를 차지하는 16px/w700 텍스트 하나였다.
+              // 그 크기는 위쪽 탭 라벨과 같아서 정렬 값이 제목처럼 보였고, 누를 수 있다는
+              // 신호가 전혀 없었다(테두리도 아이콘도 없음). 아래 칩 필터와 같은 형태로 줄여
+              // '누르는 것' 으로 보이게 하고, 폭도 글자만큼만 차지하게 한다.
               child: Row(
                 children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        // 최신순 <-> 오래된순 토글
-                        setState(() {
-                          _selectedFilter = _selectedFilter == '최신순' ? '오래된순' : '최신순';
-                        });
-                        // 정렬 변경 시 데이터 새로고침
-                        if (_tabController.index == 0) {
-                          _loadNotices();
-                        } else {
-                          _loadEvents();
-                        }
-                      },
-                      child: Text(
-                        _selectedFilter,
-                        style: const TextStyle(
-                          fontFamily: 'Pretendard',
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                          color: Color(0xFF757B80),
+                  GestureDetector(
+                    onTap: () {
+                      // 최신순 <-> 오래된순 토글
+                      setState(() {
+                        _selectedFilter =
+                            _selectedFilter == '최신순' ? '오래된순' : '최신순';
+                      });
+                      // 정렬 변경 시 데이터 새로고침
+                      if (_tabController.index == 0) {
+                        _loadNotices();
+                      } else {
+                        _loadEvents();
+                      }
+                    },
+                    // 정렬은 아래 필터 칩보다 한 단계 아래의 보조 조작이므로 더 작게 둔다.
+                    // 다만 보이는 알약만 작게 하고, 바깥 여백으로 실제 터치 영역은 넉넉히 남긴다.
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: const Color(0xFFE8EEF2),
+                            width: 1,
+                          ),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _selectedFilter,
+                              style: const TextStyle(
+                                fontFamily: 'Pretendard',
+                                fontWeight: FontWeight.w500,
+                                fontSize: 12,
+                                color: Color(0xFF757B80),
+                              ),
+                            ),
+                            const SizedBox(width: 2),
+                            // 눌러서 바뀌는 값임을 알리는 표시.
+                            const Icon(
+                              Icons.swap_vert,
+                              size: 13,
+                              color: Color(0xFF757B80),
+                            ),
+                          ],
                         ),
                       ),
                     ),
