@@ -251,54 +251,13 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
           ),
         ),
       ),
-      body: Column(
-        children: [
-          // 정렬 필터
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: const BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: Color(0xFFE8EEF2),
-                  width: 1,
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      // 최신순 <-> 오래된순 토글
-                      setState(() {
-                        _selectedFilter = _selectedFilter == '최신순' ? '오래된순' : '최신순';
-                      });
-                      // 정렬 변경 시 데이터 새로고침
-                      if (_tabController.index == 0) {
-                        _loadNotices();
-                      } else {
-                        _loadEvents();
-                      }
-                    },
-                    child: Text(
-                      _selectedFilter,
-                      style: const TextStyle(
-                        fontFamily: 'Pretendard',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                        color: Color(0xFF757B80),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // 칩스 필터 (공지사항 탭에서만 표시)
-          if (_tabController.index == 0)
+      // 하단 고정 버튼·마지막 목록 항목이 시스템 내비게이션 바에 가리지 않도록 감싼다.
+      body: SafeArea(
+        child: Column(
+          children: [
+            // 정렬 필터
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: const BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
@@ -309,26 +268,70 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
               ),
               child: Row(
                 children: [
-                  _buildChip('전체', isActive: _selectedChip == '전체'),
-                  const SizedBox(width: 8),
-                  _buildChip('유저', isActive: _selectedChip == '유저'),
-                  const SizedBox(width: 8),
-                  _buildChip('담당자', isActive: _selectedChip == '담당자'),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        // 최신순 <-> 오래된순 토글
+                        setState(() {
+                          _selectedFilter = _selectedFilter == '최신순' ? '오래된순' : '최신순';
+                        });
+                        // 정렬 변경 시 데이터 새로고침
+                        if (_tabController.index == 0) {
+                          _loadNotices();
+                        } else {
+                          _loadEvents();
+                        }
+                      },
+                      child: Text(
+                        _selectedFilter,
+                        style: const TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: Color(0xFF757B80),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
 
-          // 공지사항/이벤트 리스트
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildNoticeList(),
-                _buildEventList(),
-              ],
+            // 칩스 필터 (공지사항 탭에서만 표시)
+            if (_tabController.index == 0)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Color(0xFFE8EEF2),
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    _buildChip('전체', isActive: _selectedChip == '전체'),
+                    const SizedBox(width: 8),
+                    _buildChip('유저', isActive: _selectedChip == '유저'),
+                    const SizedBox(width: 8),
+                    _buildChip('담당자', isActive: _selectedChip == '담당자'),
+                  ],
+                ),
+              ),
+
+            // 공지사항/이벤트 리스트
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildNoticeList(),
+                  _buildEventList(),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

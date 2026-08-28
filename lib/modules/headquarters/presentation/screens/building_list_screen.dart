@@ -180,66 +180,69 @@ class _BuildingListScreenState extends ConsumerState<BuildingListScreen> {
           ),
         ),
       ),
-      body: Consumer(
-        builder: (context, ref, child) {
-          final buildingsFuture = ref.watch(buildingsProvider(null));
+      // 하단 고정 버튼·마지막 목록 항목이 시스템 내비게이션 바에 가리지 않도록 감싼다.
+      body: SafeArea(
+        child: Consumer(
+          builder: (context, ref, child) {
+            final buildingsFuture = ref.watch(buildingsProvider(null));
 
-          return buildingsFuture.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, stackTrace) => Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(userMessageOf(error, fallback: '건물 목록을 불러오는 중 오류가 발생했습니다.'),
-                      style: const TextStyle(color: Colors.red)),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      ref.refresh(buildingsProvider(null));
-                    },
-                    child: const Text('다시 시도'),
-                  ),
-                ],
+            return buildingsFuture.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stackTrace) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(userMessageOf(error, fallback: '건물 목록을 불러오는 중 오류가 발생했습니다.'),
+                        style: const TextStyle(color: Colors.red)),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () {
+                        ref.refresh(buildingsProvider(null));
+                      },
+                      child: const Text('다시 시도'),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            data: (buildings) {
-              if (buildings.isEmpty) {
-                return const Center(
-                  child: Text(
-                    '등록된 건물이 없습니다.',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                );
-              }
-
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: buildings.length,
-                itemBuilder: (context, index) {
-                  final building = buildings[index];
-                  final buildingId = building['id']?.toString() ?? '';
-                  final buildingName = building['name'] ?? '건물명 없음';
-
-                  return _BuildingItem(
-                    building: building,
-                    onDelete: () {
-                      if (buildingId.isNotEmpty) {
-                        _deleteBuilding(buildingId, buildingName);
-                      }
-                    },
-                    onEdit: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => BuildingEditScreen(building: building),
-                        ),
-                      );
-                    },
+              data: (buildings) {
+                if (buildings.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      '등록된 건물이 없습니다.',
+                      style: TextStyle(color: Colors.grey),
+                    ),
                   );
-                },
-              );
-            },
-          );
-        },
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: buildings.length,
+                  itemBuilder: (context, index) {
+                    final building = buildings[index];
+                    final buildingId = building['id']?.toString() ?? '';
+                    final buildingName = building['name'] ?? '건물명 없음';
+
+                    return _BuildingItem(
+                      building: building,
+                      onDelete: () {
+                        if (buildingId.isNotEmpty) {
+                          _deleteBuilding(buildingId, buildingName);
+                        }
+                      },
+                      onEdit: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => BuildingEditScreen(building: building),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }

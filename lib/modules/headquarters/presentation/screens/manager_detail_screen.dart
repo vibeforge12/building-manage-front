@@ -313,87 +313,90 @@ class _ManagerDetailScreenState extends ConsumerState<ManagerDetailScreen> {
             ),
           ),
         ),
-        body: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _errorMessage != null
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _loadManagerDetail,
-                          child: const Text('다시 시도'),
-                        ),
-                      ],
-                    ),
-                  )
-                : _managerData == null
-                    ? const Center(child: Text('관리자 정보를 찾을 수 없습니다.'))
-                    : SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // 섹션 헤더
-                            Container(
-                              width: double.infinity,
-                              height: 44,
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              alignment: Alignment.centerLeft,
-                              child: const Text(
-                                '관리자',
-                                style: TextStyle(
-                                  fontFamily: 'Pretendard',
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 20,
-                                  color: Color(0xFF17191A),
+        // 하단 고정 버튼·마지막 목록 항목이 시스템 내비게이션 바에 가리지 않도록 감싼다.
+        body: SafeArea(
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _errorMessage != null
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _loadManagerDetail,
+                            child: const Text('다시 시도'),
+                          ),
+                        ],
+                      ),
+                    )
+                  : _managerData == null
+                      ? const Center(child: Text('관리자 정보를 찾을 수 없습니다.'))
+                      : SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // 섹션 헤더
+                              Container(
+                                width: double.infinity,
+                                height: 44,
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                alignment: Alignment.centerLeft,
+                                child: const Text(
+                                  '관리자',
+                                  style: TextStyle(
+                                    fontFamily: 'Pretendard',
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 20,
+                                    color: Color(0xFF17191A),
+                                  ),
                                 ),
                               ),
-                            ),
-                            // 정보 필드들
-                            Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // 이름 필드 (수정 가능)
-                                  _buildEditableField(
-                                    label: '이름',
-                                    controller: _nameController,
-                                    isEditable: _isEditMode,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  // 전화번호 필드 (수정 가능)
-                                  _buildEditableField(
-                                    label: '전화번호',
-                                    controller: _phoneController,
-                                    isEditable: _isEditMode,
-                                    keyboardType: TextInputType.phone,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  // 관리자 종류 필드 (수정 불가)
-                                  _buildInfoField(
-                                    label: '관리자 종류',
-                                    value: _managerData?['managerType'] == 'HEAD'
-                                        ? '총관리자'
-                                        : '일반관리자',
-                                  ),
-                                  const SizedBox(height: 16),
-                                  // 관리자 코드 필드 (수정 불가)
-                                  _buildInfoField(
-                                    label: '관리자 코드',
-                                    value: _managerData?['managerCode'] ?? '',
-                                  ),
-                                  const SizedBox(height: 32),
-                                  // 삭제 버튼
-                                  _buildDeleteButton(),
-                                ],
+                              // 정보 필드들
+                              Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // 이름 필드 (수정 가능)
+                                    _buildEditableField(
+                                      label: '이름',
+                                      controller: _nameController,
+                                      isEditable: _isEditMode,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    // 전화번호 필드 (수정 가능)
+                                    _buildEditableField(
+                                      label: '전화번호',
+                                      controller: _phoneController,
+                                      isEditable: _isEditMode,
+                                      keyboardType: TextInputType.phone,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    // 관리자 종류 필드 (수정 불가)
+                                    _buildInfoField(
+                                      label: '관리자 종류',
+                                      value: _managerData?['managerType'] == 'HEAD'
+                                          ? '총관리자'
+                                          : '일반관리자',
+                                    ),
+                                    const SizedBox(height: 16),
+                                    // 관리자 코드 필드 (수정 불가)
+                                    _buildInfoField(
+                                      label: '관리자 코드',
+                                      value: _managerData?['managerCode'] ?? '',
+                                    ),
+                                    const SizedBox(height: 32),
+                                    // 삭제 버튼
+                                    _buildDeleteButton(),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
+        ),
       ),
     );
   }

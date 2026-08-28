@@ -123,98 +123,101 @@ class _AddGeneralManagerScreenState extends ConsumerState<AddGeneralManagerScree
           child: SectionDivider(),
         ),
       ),
-      body: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 안내 문구
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF5FF),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Text(
-                  '같은 건물에 일반관리자를 추가합니다.\n관리자 코드와 임시 비밀번호는 입력한 번호로 문자 발송됩니다.',
-                  style: TextStyle(
-                    fontFamily: 'Pretendard',
-                    fontWeight: FontWeight.w400,
-                    fontSize: 12,
-                    color: Color(0xFF006FFF),
-                    height: 1.5,
+      // 하단 고정 버튼·마지막 목록 항목이 시스템 내비게이션 바에 가리지 않도록 감싼다.
+      body: SafeArea(
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 안내 문구
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF5FF),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    '같은 건물에 일반관리자를 추가합니다.\n관리자 코드와 임시 비밀번호는 입력한 번호로 문자 발송됩니다.',
+                    style: TextStyle(
+                      fontFamily: 'Pretendard',
+                      fontWeight: FontWeight.w400,
+                      fontSize: 12,
+                      color: Color(0xFF006FFF),
+                      height: 1.5,
+                    ),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-              // 이름 필드
-              fieldLabel('이름', context),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  hintText: '이름을 입력해주세요',
-                  hintStyle: TextStyle(color: Colors.grey),
-                  filled: true,
-                  fillColor: Color(0xFFF8F9FA),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(12)),
-                    borderSide: BorderSide.none,
+                // 이름 필드
+                fieldLabel('이름', context),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(
+                    hintText: '이름을 입력해주세요',
+                    hintStyle: TextStyle(color: Colors.grey),
+                    filled: true,
+                    fillColor: Color(0xFFF8F9FA),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return '이름을 입력해주세요';
+                    }
+                    return null;
+                  },
                 ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return '이름을 입력해주세요';
-                  }
-                  return null;
-                },
-              ),
 
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-              // 전화번호 필드
-              fieldLabel('전화번호', context),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  hintText: '전화번호를 입력해주세요',
-                  hintStyle: TextStyle(color: Colors.grey),
-                  filled: true,
-                  fillColor: Color(0xFFF8F9FA),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(12)),
-                    borderSide: BorderSide.none,
+                // 전화번호 필드
+                fieldLabel('전화번호', context),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    hintText: '전화번호를 입력해주세요',
+                    hintStyle: TextStyle(color: Colors.grey),
+                    filled: true,
+                    fillColor: Color(0xFFF8F9FA),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return '전화번호를 입력해주세요';
+                    }
+                    return null;
+                  },
                 ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return '전화번호를 입력해주세요';
-                  }
-                  return null;
-                },
-              ),
 
-              const SizedBox(height: 40),
+                const SizedBox(height: 40),
 
-              SizedBox(
-                width: double.infinity,
-                child: PrimaryActionButton(
-                  label: _isSubmitting ? '발급 중...' : '일반관리자 추가',
-                  backgroundColor: const Color(0xFF006FFF),
-                  foregroundColor: Colors.white,
-                  onPressed: _isSubmitting ? () {} : _submitForm,
+                SizedBox(
+                  width: double.infinity,
+                  child: PrimaryActionButton(
+                    label: _isSubmitting ? '발급 중...' : '일반관리자 추가',
+                    backgroundColor: const Color(0xFF006FFF),
+                    foregroundColor: Colors.white,
+                    onPressed: _isSubmitting ? () {} : _submitForm,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

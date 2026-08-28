@@ -92,30 +92,33 @@ class _ManagerListScreenState extends ConsumerState<ManagerListScreen> {
           ),
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _loadManagers,
-                        child: const Text('다시 시도'),
-                      ),
-                    ],
-                  ),
-                )
-              : _managers.isEmpty
-                  ? const Center(
-                      child: Text(
-                        '등록된 관리자가 없습니다.',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    )
-                  : _buildManagerList(),
+      // 하단 고정 버튼·마지막 목록 항목이 시스템 내비게이션 바에 가리지 않도록 감싼다.
+      body: SafeArea(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _errorMessage != null
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _loadManagers,
+                          child: const Text('다시 시도'),
+                        ),
+                      ],
+                    ),
+                  )
+                : _managers.isEmpty
+                    ? const Center(
+                        child: Text(
+                          '등록된 관리자가 없습니다.',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      )
+                    : _buildManagerList(),
+      ),
     );
   }
 

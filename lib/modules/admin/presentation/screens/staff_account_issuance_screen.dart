@@ -52,38 +52,41 @@ class _StaffAccountIssuanceScreenState
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: _buildAppBar(context),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // 이름 입력
-                _buildTextField(
-                  label: '이름',
-                  placeholder: '이름을 입력해주세요.',
-                  controller: _nameController,
-                ),
-                const SizedBox(height: 16),
+      // 하단 고정 버튼·마지막 목록 항목이 시스템 내비게이션 바에 가리지 않도록 감싼다.
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // 이름 입력
+                  _buildTextField(
+                    label: '이름',
+                    placeholder: '이름을 입력해주세요.',
+                    controller: _nameController,
+                  ),
+                  const SizedBox(height: 16),
 
-                // 전화번호 입력
-                _buildTextField(
-                  label: '전화번호',
-                  placeholder: '전화번호를 입력해주세요',
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                ),
-                const SizedBox(height: 16),
+                  // 전화번호 입력
+                  _buildTextField(
+                    label: '전화번호',
+                    placeholder: '전화번호를 입력해주세요',
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                  ),
+                  const SizedBox(height: 16),
 
-                // 담당부서 선택
-                _buildDepartmentSelect(),
-                const SizedBox(height: 32),
+                  // 담당부서 선택
+                  _buildDepartmentSelect(),
+                  const SizedBox(height: 32),
 
-                // 계정발급 버튼
-                _buildSubmitButton(),
-              ],
+                  // 계정발급 버튼
+                  _buildSubmitButton(),
+                ],
+              ),
             ),
           ),
         ),

@@ -107,18 +107,21 @@ class _StaffNoticeListScreenState extends ConsumerState<StaffNoticeListScreen> {
           ),
         ),
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                strokeWidth: 2.5,
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF006FFF)),
-              ),
-            )
-          : _error != null
-              ? _buildErrorState()
-              : _notices.isEmpty
-                  ? _buildEmptyState()
-                  : _buildNoticeList(),
+      // SafeArea 가 없어 목록 마지막 항목이 시스템 내비게이션 바에 가렸다.
+      body: SafeArea(
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF006FFF)),
+                ),
+              )
+            : _error != null
+                ? _buildErrorState()
+                : _notices.isEmpty
+                    ? _buildEmptyState()
+                    : _buildNoticeList(),
+      ),
     );
   }
 

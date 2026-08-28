@@ -240,228 +240,231 @@ class _AdminAccountIssuanceScreenState extends ConsumerState<AdminAccountIssuanc
           child: SectionDivider(),
         ),
       ),
-      body: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 이름 필드
-              fieldLabel('이름', context),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  hintText: '이름을 입력해주세요',
-                  hintStyle: TextStyle(color: Colors.grey),
-                  filled: true,
-                  fillColor: Color(0xFFF8F9FA),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(12)),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return '이름을 입력해주세요';
-                  }
-                  return null;
-                },
-              ),
-
-              const SizedBox(height: 24),
-
-              // 관리자 종류 선택
-              fieldLabel('관리자 종류', context),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  _buildManagerTypeOption(
-                    value: 'HEAD',
-                    title: '총관리자',
-                    description: '건물당 1명 · 모든 기능',
-                  ),
-                  const SizedBox(width: 12),
-                  _buildManagerTypeOption(
-                    value: 'GENERAL',
-                    title: '일반관리자',
-                    description: '여러 명 추가 가능',
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 24),
-
-              // 전화번호 필드
-              fieldLabel('전화번호', context),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  hintText: '전화번호를 입력해주세요',
-                  hintStyle: TextStyle(color: Colors.grey),
-                  filled: true,
-                  fillColor: Color(0xFFF8F9FA),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(12)),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return '전화번호를 입력해주세요';
-                  }
-                  return null;
-                },
-              ),
-
-              const SizedBox(height: 24),
-
-              // 건물 선택 필드
-              fieldLabel('건물 선택', context),
-              const SizedBox(height: 8),
-              if (_isLoadingBuildings)
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: const Color(0xFFE8EEF2),
-                      width: 1,
-                    ),
-                  ),
-                  child: const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                )
-              else if (_errorMessage != null)
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.red[50],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.red[200]!),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.error, color: Colors.red[600], size: 16),
-                      const SizedBox(width: 12),
-                      Expanded(child: Text(_errorMessage!, style: TextStyle(color: Colors.red[600]))),
-                      TextButton(
-                        onPressed: _loadBuildings,
-                        child: const Text('다시 시도'),
-                      ),
-                    ],
-                  ),
-                )
-              else
-                DropdownMenu<String>(
-                  initialSelection: _selectedBuilding?['id'] as String?,
-                  width: MediaQuery.of(context).size.width - 48,
-                  menuHeight: 300,
-                  requestFocusOnTap: true,
-                  enableFilter: false,
-                  menuStyle: MenuStyle(
-                    backgroundColor: WidgetStateProperty.all(Colors.white),
-                    surfaceTintColor: WidgetStateProperty.all(Colors.white),
-                    elevation: WidgetStateProperty.all(8),
-                    shape: WidgetStateProperty.all(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                  textStyle: const TextStyle(
-                    fontFamily: 'Pretendard',
-                    fontWeight: FontWeight.w400,
-                    fontSize: 16,
-                    color: Color(0xFF464A4D),
-                  ),
-                  inputDecorationTheme: InputDecorationTheme(
+      // 하단 고정 버튼·마지막 목록 항목이 시스템 내비게이션 바에 가리지 않도록 감싼다.
+      body: SafeArea(
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 이름 필드
+                fieldLabel('이름', context),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(
+                    hintText: '이름을 입력해주세요',
+                    hintStyle: TextStyle(color: Colors.grey),
                     filled: true,
-                    fillColor: const Color(0xFFF8F9FA),
-                    hintStyle: const TextStyle(
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w400,
-                      fontSize: 16,
-                      color: Colors.grey,
-                    ),
-                    border: const OutlineInputBorder(
+                    fillColor: Color(0xFFF8F9FA),
+                    border: OutlineInputBorder(
                       borderRadius: BorderRadius.all(Radius.circular(12)),
                       borderSide: BorderSide.none,
                     ),
-                    enabledBorder: const OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(12)),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF006FFF),
-                        width: 1.5,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
-                  trailingIcon: const Icon(
-                    Icons.keyboard_arrow_down,
-                    size: 20,
-                    color: Color(0xFF757B80),
-                  ),
-                  selectedTrailingIcon: const Icon(
-                    Icons.keyboard_arrow_up,
-                    size: 20,
-                    color: Color(0xFF006FFF),
-                  ),
-                  dropdownMenuEntries: _buildings.map((building) {
-                    return DropdownMenuEntry<String>(
-                      value: building['id'] as String,
-                      label: building['name'] as String,
-                      style: MenuItemButton.styleFrom(
-                        foregroundColor: const Color(0xFF464A4D),
-                        backgroundColor: Colors.white,
-                        textStyle: const TextStyle(
-                          fontFamily: 'Pretendard',
-                          fontWeight: FontWeight.w400,
-                          fontSize: 16,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                  onSelected: (value) {
-                    if (value != null) {
-                      setState(() {
-                        _selectedBuilding = _buildings.firstWhere(
-                          (building) => building['id'] as String == value,
-                        );
-                      });
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return '이름을 입력해주세요';
                     }
+                    return null;
                   },
                 ),
 
-              const SizedBox(height: 40),
+                const SizedBox(height: 24),
 
-              // 계정발급 버튼
-              SizedBox(
-                width: double.infinity,
-                child: PrimaryActionButton(
-                  label: _isSubmitting ? '발급 중...' : '계정발급',
-                  backgroundColor: const Color(0xFF006FFF),
-                  foregroundColor: Colors.white,
-                  onPressed: _isSubmitting ? () {} : _submitForm,
+                // 관리자 종류 선택
+                fieldLabel('관리자 종류', context),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    _buildManagerTypeOption(
+                      value: 'HEAD',
+                      title: '총관리자',
+                      description: '건물당 1명 · 모든 기능',
+                    ),
+                    const SizedBox(width: 12),
+                    _buildManagerTypeOption(
+                      value: 'GENERAL',
+                      title: '일반관리자',
+                      description: '여러 명 추가 가능',
+                    ),
+                  ],
                 ),
-              ),
-            ],
+
+                const SizedBox(height: 24),
+
+                // 전화번호 필드
+                fieldLabel('전화번호', context),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    hintText: '전화번호를 입력해주세요',
+                    hintStyle: TextStyle(color: Colors.grey),
+                    filled: true,
+                    fillColor: Color(0xFFF8F9FA),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return '전화번호를 입력해주세요';
+                    }
+                    return null;
+                  },
+                ),
+
+                const SizedBox(height: 24),
+
+                // 건물 선택 필드
+                fieldLabel('건물 선택', context),
+                const SizedBox(height: 8),
+                if (_isLoadingBuildings)
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFFE8EEF2),
+                        width: 1,
+                      ),
+                    ),
+                    child: const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                else if (_errorMessage != null)
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.red[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.red[200]!),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.error, color: Colors.red[600], size: 16),
+                        const SizedBox(width: 12),
+                        Expanded(child: Text(_errorMessage!, style: TextStyle(color: Colors.red[600]))),
+                        TextButton(
+                          onPressed: _loadBuildings,
+                          child: const Text('다시 시도'),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  DropdownMenu<String>(
+                    initialSelection: _selectedBuilding?['id'] as String?,
+                    width: MediaQuery.of(context).size.width - 48,
+                    menuHeight: 300,
+                    requestFocusOnTap: true,
+                    enableFilter: false,
+                    menuStyle: MenuStyle(
+                      backgroundColor: WidgetStateProperty.all(Colors.white),
+                      surfaceTintColor: WidgetStateProperty.all(Colors.white),
+                      elevation: WidgetStateProperty.all(8),
+                      shape: WidgetStateProperty.all(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    textStyle: const TextStyle(
+                      fontFamily: 'Pretendard',
+                      fontWeight: FontWeight.w400,
+                      fontSize: 16,
+                      color: Color(0xFF464A4D),
+                    ),
+                    inputDecorationTheme: InputDecorationTheme(
+                      filled: true,
+                      fillColor: const Color(0xFFF8F9FA),
+                      hintStyle: const TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w400,
+                        fontSize: 16,
+                        color: Colors.grey,
+                      ),
+                      border: const OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: const OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF006FFF),
+                          width: 1.5,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                    ),
+                    trailingIcon: const Icon(
+                      Icons.keyboard_arrow_down,
+                      size: 20,
+                      color: Color(0xFF757B80),
+                    ),
+                    selectedTrailingIcon: const Icon(
+                      Icons.keyboard_arrow_up,
+                      size: 20,
+                      color: Color(0xFF006FFF),
+                    ),
+                    dropdownMenuEntries: _buildings.map((building) {
+                      return DropdownMenuEntry<String>(
+                        value: building['id'] as String,
+                        label: building['name'] as String,
+                        style: MenuItemButton.styleFrom(
+                          foregroundColor: const Color(0xFF464A4D),
+                          backgroundColor: Colors.white,
+                          textStyle: const TextStyle(
+                            fontFamily: 'Pretendard',
+                            fontWeight: FontWeight.w400,
+                            fontSize: 16,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                    onSelected: (value) {
+                      if (value != null) {
+                        setState(() {
+                          _selectedBuilding = _buildings.firstWhere(
+                            (building) => building['id'] as String == value,
+                          );
+                        });
+                      }
+                    },
+                  ),
+
+                const SizedBox(height: 40),
+
+                // 계정발급 버튼
+                SizedBox(
+                  width: double.infinity,
+                  child: PrimaryActionButton(
+                    label: _isSubmitting ? '발급 중...' : '계정발급',
+                    backgroundColor: const Color(0xFF006FFF),
+                    foregroundColor: Colors.white,
+                    onPressed: _isSubmitting ? () {} : _submitForm,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

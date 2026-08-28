@@ -378,19 +378,22 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
           ),
         ),
       ),
-      body: Column(
-        children: [
-          _buildSearchField(),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildVerifiedResidentsTab(), // 건물
-                _buildPendingResidentsTab(), // 신규 입주민
-              ],
+      // 하단 고정 버튼·마지막 목록 항목이 시스템 내비게이션 바에 가리지 않도록 감싼다.
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildSearchField(),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildVerifiedResidentsTab(), // 건물
+                  _buildPendingResidentsTab(), // 신규 입주민
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

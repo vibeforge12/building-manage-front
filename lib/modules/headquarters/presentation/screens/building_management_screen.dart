@@ -181,178 +181,181 @@ class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScr
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 검색바와 건물 등록 버튼
-            Row(
-              children: [
-                // 검색바
-                Expanded(
-                  child: Container(
+      // 하단 고정 버튼·마지막 목록 항목이 시스템 내비게이션 바에 가리지 않도록 감싼다.
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 검색바와 건물 등록 버튼
+              Row(
+                children: [
+                  // 검색바
+                  Expanded(
+                    child: Container(
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (_) => _onSearchChanged(),
+                        decoration: const InputDecoration(
+                          hintText: '건물명을 입력해주세요',
+                          hintStyle: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 14,
+                          ),
+                          prefixIcon: Icon(Icons.search, color: Colors.grey),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+
+                  // 건물 등록 버튼
+                  Container(
                     height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (_) => _onSearchChanged(),
-                      decoration: const InputDecoration(
-                        hintText: '건물명을 입력해주세요',
-                        hintStyle: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 14,
+                    child: FilledButton(
+                      onPressed: () async {
+                        final result = await context.push('/headquarters/building-registration');
+                        // 건물 등록 성공 시 부서 목록도 새로고침
+                        if (result == true && mounted) {
+                          _loadDepartments();
+                        }
+                      },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF006FFF),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        prefixIcon: Icon(Icons.search, color: Colors.grey),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.add, size: 18),
+                          SizedBox(width: 4),
+                          Text('건물 등록', style: TextStyle(fontSize: 14)),
+                        ],
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-
-                // 건물 등록 버튼
-                Container(
-                  height: 48,
-                  child: FilledButton(
-                    onPressed: () async {
-                      final result = await context.push('/headquarters/building-registration');
-                      // 건물 등록 성공 시 부서 목록도 새로고침
-                      if (result == true && mounted) {
-                        _loadDepartments();
-                      }
-                    },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF006FFF),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.add, size: 18),
-                        SizedBox(width: 4),
-                        Text('건물 등록', style: TextStyle(fontSize: 14)),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 24),
-
-            // 부서 섹션과 부서 생성 버튼
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  '부서',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-                Container(
-                  height: 48,
-                  child: FilledButton(
-                    onPressed: () async {
-                      final result = await context.push('/headquarters/department-creation');
-                      // 부서 생성 성공 시 목록 새로고침
-                      if (result == true && mounted) {
-                        _loadDepartments();
-                      }
-                    },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF006FFF),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.add, size: 18),
-                        SizedBox(width: 4),
-                        Text('부서 생성', style: TextStyle(fontSize: 14)),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            // 부서 태그들
-            if (_isLoading)
-              const Center(child: CircularProgressIndicator())
-            else if (_errorMessage != null)
-              Center(
-                child: Column(
-                  children: [
-                    Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: _loadDepartments,
-                      child: const Text('다시 시도'),
-                    ),
-                  ],
-                ),
-              )
-            else if (_departments.isEmpty)
-              const Center(
-                child: Text(
-                  '등록된 부서가 없습니다.',
-                  style: TextStyle(color: Colors.grey),
-                ),
-              )
-            else
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Wrap(
-                    spacing: 8.0,
-                    runSpacing: 8.0,
-                    children: _departments.map((department) {
-                      final departmentId = department['id']?.toString() ?? '';
-                      final departmentName = department['name'] ?? '부서명 없음';
-
-                      return GestureDetector(
-                        onTap: () {
-                          _deleteDepartment(departmentId, departmentName);
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(36),
-                            border: Border.all(
-                              color: Color(0xFFE8EEF2),
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Text(
-                            departmentName,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF2D2D2D),
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
+                ],
               ),
-          ],
+
+              const SizedBox(height: 24),
+
+              // 부서 섹션과 부서 생성 버튼
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    '부서',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  Container(
+                    height: 48,
+                    child: FilledButton(
+                      onPressed: () async {
+                        final result = await context.push('/headquarters/department-creation');
+                        // 부서 생성 성공 시 목록 새로고침
+                        if (result == true && mounted) {
+                          _loadDepartments();
+                        }
+                      },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF006FFF),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.add, size: 18),
+                          SizedBox(width: 4),
+                          Text('부서 생성', style: TextStyle(fontSize: 14)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              // 부서 태그들
+              if (_isLoading)
+                const Center(child: CircularProgressIndicator())
+              else if (_errorMessage != null)
+                Center(
+                  child: Column(
+                    children: [
+                      Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: _loadDepartments,
+                        child: const Text('다시 시도'),
+                      ),
+                    ],
+                  ),
+                )
+              else if (_departments.isEmpty)
+                const Center(
+                  child: Text(
+                    '등록된 부서가 없습니다.',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                )
+              else
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Wrap(
+                      spacing: 8.0,
+                      runSpacing: 8.0,
+                      children: _departments.map((department) {
+                        final departmentId = department['id']?.toString() ?? '';
+                        final departmentName = department['name'] ?? '부서명 없음';
+
+                        return GestureDetector(
+                          onTap: () {
+                            _deleteDepartment(departmentId, departmentName);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(36),
+                              border: Border.all(
+                                color: Color(0xFFE8EEF2),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Text(
+                              departmentName,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF2D2D2D),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
