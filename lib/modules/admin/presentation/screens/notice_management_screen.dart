@@ -131,8 +131,11 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
   Widget build(BuildContext context) {
     // 현재 로그인한 관리자의 정보
     final currentUser = ref.watch(currentUserProvider);
-    // TODO: API 응답에서 건물명을 받아오도록 수정 필요
-    final buildingName = currentUser?.name ?? '건물명';
+    // 이 자리는 건물명이다. 예전에는 User 에 건물명이 없어 관리자 이름(user.name)을
+    // 임시로 넣고 TODO 를 달아 두었는데, 이후 로그인 응답의 building 객체에서
+    // buildingName 을 채우게 되면서(User.fromJson) 그 전제가 사라졌다.
+    // 고치지 않은 채로 남아 상단에 관리자 이름이 건물명처럼 표시되고 있었다.
+    final buildingName = currentUser?.buildingName ?? '건물명';
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -254,10 +257,86 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
       // 하단 고정 버튼·마지막 목록 항목이 시스템 내비게이션 바에 가리지 않도록 감싼다.
       body: SafeArea(
         child: Column(
-          children: [
-            // 정렬 필터
+        children: [
+          // 정렬 필터
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            decoration: const BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: Color(0xFFE8EEF2),
+                  width: 1,
+                ),
+              ),
+            ),
+            // 정렬 토글.
+            //
+            // 예전에는 Expanded 로 줄 전체를 차지하는 16px/w700 텍스트 하나였다.
+            // 그 크기는 위쪽 탭 라벨과 같아서 정렬 값이 제목처럼 보였고, 누를 수 있다는
+            // 신호가 전혀 없었다(테두리도 아이콘도 없음). 아래 칩 필터와 같은 형태로 줄여
+            // '누르는 것' 으로 보이게 하고, 폭도 글자만큼만 차지하게 한다.
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    // 최신순 <-> 오래된순 토글
+                    setState(() {
+                      _selectedFilter =
+                          _selectedFilter == '최신순' ? '오래된순' : '최신순';
+                    });
+                    // 정렬 변경 시 데이터 새로고침
+                    if (_tabController.index == 0) {
+                      _loadNotices();
+                    } else {
+                      _loadEvents();
+                    }
+                  },
+                  // 정렬은 아래 필터 칩보다 한 단계 아래의 보조 조작이므로 더 작게 둔다.
+                  // 다만 보이는 알약만 작게 하고, 바깥 여백으로 실제 터치 영역은 넉넉히 남긴다.
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: const Color(0xFFE8EEF2),
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _selectedFilter,
+                            style: const TextStyle(
+                              fontFamily: 'Pretendard',
+                              fontWeight: FontWeight.w500,
+                              fontSize: 12,
+                              color: Color(0xFF757B80),
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          // 눌러서 바뀌는 값임을 알리는 표시.
+                          const Icon(
+                            Icons.swap_vert,
+                            size: 13,
+                            color: Color(0xFF757B80),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // 칩스 필터 (공지사항 탭에서만 표시)
+          if (_tabController.index == 0)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              padding: const EdgeInsets.all(16),
               decoration: const BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
@@ -266,104 +345,28 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
                   ),
                 ),
               ),
-              // 정렬 토글.
-              //
-              // 예전에는 Expanded 로 줄 전체를 차지하는 16px/w700 텍스트 하나였다.
-              // 그 크기는 위쪽 탭 라벨과 같아서 정렬 값이 제목처럼 보였고, 누를 수 있다는
-              // 신호가 전혀 없었다(테두리도 아이콘도 없음). 아래 칩 필터와 같은 형태로 줄여
-              // '누르는 것' 으로 보이게 하고, 폭도 글자만큼만 차지하게 한다.
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () {
-                      // 최신순 <-> 오래된순 토글
-                      setState(() {
-                        _selectedFilter =
-                            _selectedFilter == '최신순' ? '오래된순' : '최신순';
-                      });
-                      // 정렬 변경 시 데이터 새로고침
-                      if (_tabController.index == 0) {
-                        _loadNotices();
-                      } else {
-                        _loadEvents();
-                      }
-                    },
-                    // 정렬은 아래 필터 칩보다 한 단계 아래의 보조 조작이므로 더 작게 둔다.
-                    // 다만 보이는 알약만 작게 하고, 바깥 여백으로 실제 터치 영역은 넉넉히 남긴다.
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: const Color(0xFFE8EEF2),
-                            width: 1,
-                          ),
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _selectedFilter,
-                              style: const TextStyle(
-                                fontFamily: 'Pretendard',
-                                fontWeight: FontWeight.w500,
-                                fontSize: 12,
-                                color: Color(0xFF757B80),
-                              ),
-                            ),
-                            const SizedBox(width: 2),
-                            // 눌러서 바뀌는 값임을 알리는 표시.
-                            const Icon(
-                              Icons.swap_vert,
-                              size: 13,
-                              color: Color(0xFF757B80),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                  _buildChip('전체', isActive: _selectedChip == '전체'),
+                  const SizedBox(width: 8),
+                  _buildChip('유저', isActive: _selectedChip == '유저'),
+                  const SizedBox(width: 8),
+                  _buildChip('담당자', isActive: _selectedChip == '담당자'),
                 ],
               ),
             ),
 
-            // 칩스 필터 (공지사항 탭에서만 표시)
-            if (_tabController.index == 0)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: Color(0xFFE8EEF2),
-                      width: 1,
-                    ),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    _buildChip('전체', isActive: _selectedChip == '전체'),
-                    const SizedBox(width: 8),
-                    _buildChip('유저', isActive: _selectedChip == '유저'),
-                    const SizedBox(width: 8),
-                    _buildChip('담당자', isActive: _selectedChip == '담당자'),
-                  ],
-                ),
-              ),
-
-            // 공지사항/이벤트 리스트
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildNoticeList(),
-                  _buildEventList(),
-                ],
-              ),
+          // 공지사항/이벤트 리스트
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildNoticeList(),
+                _buildEventList(),
+              ],
             ),
-          ],
+          ),
+        ],
         ),
       ),
     );
