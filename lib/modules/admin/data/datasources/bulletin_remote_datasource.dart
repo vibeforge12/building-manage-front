@@ -40,6 +40,16 @@ class AdminBulletinRemoteDataSource {
     return response.data;
   }
 
+  /// 공고문을 올릴 수 있는 건물 목록.
+  ///
+  /// /common/buildings 를 쓰지 않는다. 그것은 회원가입(로그인 전)에서 호출하려고
+  /// 공개해 둔 엔드포인트라 토큰이 없고, 따라서 본사별로 좁혀지지 않는다.
+  /// 실제로 본사A 의 건물 선택기에 다른 본사의 건물이 그대로 보였다.
+  Future<Map<String, dynamic>> getTargetBuildings() async {
+    final response = await _apiClient.get('/bulletins/target-buildings');
+    return response.data;
+  }
+
   Future<Map<String, dynamic>> getBulletinDetail(String bulletinId) async {
     final response = await _apiClient.get('/bulletins/$bulletinId');
     return response.data;

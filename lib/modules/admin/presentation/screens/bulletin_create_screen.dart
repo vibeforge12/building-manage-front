@@ -9,7 +9,6 @@ import 'package:building_manage_front/core/utils/error_message.dart';
 import 'package:building_manage_front/modules/admin/data/datasources/bulletin_remote_datasource.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 import 'package:building_manage_front/modules/common/services/image_upload_service.dart';
-import 'package:building_manage_front/modules/common/data/datasources/building_list_remote_datasource.dart';
 import 'package:building_manage_front/modules/resident/domain/entities/bulletin.dart';
 import 'package:building_manage_front/shared/widgets/error_alert.dart';
 
@@ -93,11 +92,11 @@ class _BulletinCreateScreenState extends ConsumerState<BulletinCreateScreen> {
   }
 
   Future<void> _loadBuildings() async {
-    final dataSource = ref.read(buildingListRemoteDataSourceProvider);
-    final response = await dataSource.getBuildings(limit: 100, sortOrder: 'DESC');
-    if (response['success'] == true) {
-      final data = response['data'];
-      _allBuildings = List<Map<String, dynamic>>.from(data['items'] ?? []);
+    final dataSource = ref.read(adminBulletinRemoteDataSourceProvider);
+    final response = await dataSource.getTargetBuildings();
+    if (response['success'] == true && response['data'] is List) {
+      _allBuildings =
+          List<Map<String, dynamic>>.from(response['data'] as List);
     }
   }
 
