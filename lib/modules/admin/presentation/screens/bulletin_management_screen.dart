@@ -33,6 +33,12 @@ class _BulletinManagementScreenState
   List<Bulletin> _bulletins = [];
   String? _loadError;
 
+  /// 펼쳐 놓은 묶음의 batchId.
+  ///
+  /// 다시 읽어도 유지한다. 묶음을 펼쳐 한 건물 것을 고치고 돌아오면 _load() 가 도는데,
+  /// 이때 접혀 버리면 나머지 건물을 고치려고 매번 다시 펼쳐야 한다.
+  final Set<String> _expandedBatches = <String>{};
+
   @override
   void initState() {
     super.initState();
@@ -281,111 +287,255 @@ class _BulletinManagementScreenState
     );
   }
 
+  /// 한 번에 여러 건물에 올린 공고문을 batchId 로 묶는다.
+  ///
+  /// 본사가 건물 5개를 골라 등록하면 건물마다 한 건씩 저장되므로 목록에 같은 제목이 5줄
+  /// 생긴다. 관리하는 건물이 늘면 그대로 늘어나서, 목록에서 다른 공고문을 찾을 수 없게 된다.
+  /// 묶어 두면 "무엇을 올렸는가" 는 한 줄이고, 건물별 수정·삭제는 펼쳐서 그대로 한다.
+  ///
+  /// 관리자·담당자에게는 자기 건물 것만 내려오므로 묶음이 대부분 1건이고 화면이 지금과 같다.
+  List<List<Bulletin>> _groupByBatch() {
+    final groups = <String, List<Bulletin>>{};
+    final order = <String>[];
+    for (final bulletin in _bulletins) {
+      // batchId 가 비어 있으면(구버전 응답) 묶지 않고 각자 한 줄로 둔다.
+      // 빈 문자열을 그대로 키로 쓰면 서로 무관한 공고문이 한 묶음이 된다.
+      final key =
+          bulletin.batchId.isEmpty ? 'single:${bulletin.id}' : bulletin.batchId;
+      if (!groups.containsKey(key)) order.add(key);
+      groups.putIfAbsent(key, () => <Bulletin>[]).add(bulletin);
+    }
+    return [for (final key in order) groups[key]!];
+  }
+
+  /// 지금 입주민에게 보이지 않는 공고문은 그 이유를 표시한다.
+  /// 관리 화면에서 만료·예약·숨김이 구분되지 않으면 "왜 안 보이냐" 는 문의가 관리자에게 간다.
+  (String?, Color) _badgeOf(Bulletin bulletin) => switch (bulletin) {
+        _ when bulletin.status == BulletinStatus.hidden =>
+          ('숨김', const Color(0xFF757B80)),
+        _ when bulletin.isExpired => ('게시 종료', const Color(0xFFA4ADB2)),
+        _ when bulletin.isScheduled => ('게시 예정', const Color(0xFF006FFF)),
+        _ => (null, Colors.transparent),
+      };
+
+  Widget _buildBadge(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: 'Pretendard',
+          fontWeight: FontWeight.w700,
+          fontSize: 11,
+          color: color,
+        ),
+      ),
+    );
+  }
+
   Widget _buildList(bool showBuildingName) {
+    final groups = _groupByBatch();
     return RefreshIndicator(
       onRefresh: _load,
       color: const Color(0xFF006FFF),
       child: ListView.separated(
         padding: const EdgeInsets.symmetric(vertical: 8),
-        itemCount: _bulletins.length,
+        itemCount: groups.length,
         separatorBuilder: (context, index) =>
             const Divider(height: 1, color: Color(0xFFE8EEF2)),
-        itemBuilder: (context, index) =>
-            _buildItem(_bulletins[index], showBuildingName),
+        itemBuilder: (context, index) {
+          final group = groups[index];
+          return group.length == 1
+              ? _buildItem(group.first, showBuildingName)
+              : _buildGroup(group);
+        },
       ),
     );
   }
 
-  Widget _buildItem(Bulletin bulletin, bool showBuildingName) {
-    // 지금 입주민에게 보이지 않는 공고문은 그 이유를 표시한다.
-    // 관리 화면에서 만료·예약·숨김이 구분되지 않으면 "왜 안 보이냐" 는 문의가 관리자에게 간다.
-    final (String? badge, Color badgeColor) = switch (bulletin) {
-      _ when bulletin.status == BulletinStatus.hidden => ('숨김', const Color(0xFF757B80)),
-      _ when bulletin.isExpired => ('게시 종료', const Color(0xFFA4ADB2)),
-      _ when bulletin.isScheduled => ('게시 예정', const Color(0xFF006FFF)),
-      _ => (null, Colors.transparent),
-    };
+  /// 여러 건물에 함께 올라간 공고문 한 묶음.
+  ///
+  /// 접힌 줄은 눌러도 수정 화면으로 가지 않는다. 어느 건물 것을 고칠지 정해지지 않아서다.
+  /// 펼치면 건물별 줄이 나오고, 수정·삭제는 거기서 지금과 똑같이 한다.
+  Widget _buildGroup(List<Bulletin> group) {
+    final first = group.first;
+    final isExpanded = _expandedBatches.contains(first.batchId);
 
-    return InkWell(
-      onTap: bulletin.canManage ? () => _openEdit(bulletin.id) : null,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+    // 묶음 안에서 상태가 갈리면(한 건물만 숨김 등) 배지 하나로 요약할 수 없다.
+    // 그때는 접힌 줄에 배지를 두지 않고 펼쳤을 때 건물별로 보게 한다.
+    final distinctBadges = group.map((b) => _badgeOf(b).$1).toSet();
+    final (String? badge, Color badgeColor) = distinctBadges.length == 1
+        ? _badgeOf(first)
+        : (null, Colors.transparent);
+
+    // 게시 종료일도 수정으로 건물마다 달라질 수 있어, 모두 같을 때만 적는다.
+    final sharedPostedUntil =
+        group.every((b) => b.postedUntil == first.postedUntil)
+            ? first.postedUntil
+            : null;
+
+    return Column(
+      children: [
+        InkWell(
+          onTap: () => setState(() {
+            if (isExpanded) {
+              _expandedBatches.remove(first.batchId);
+            } else {
+              _expandedBatches.add(first.batchId);
+            }
+          }),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (badge != null) ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: badgeColor.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            badge,
-                            style: TextStyle(
-                              fontFamily: 'Pretendard',
-                              fontWeight: FontWeight.w700,
-                              fontSize: 11,
-                              color: badgeColor,
+                      Row(
+                        children: [
+                          if (badge != null) ...[
+                            _buildBadge(badge, badgeColor),
+                            const SizedBox(width: 6),
+                          ],
+                          Expanded(
+                            child: Text(
+                              first.title,
+                              style: const TextStyle(
+                                fontFamily: 'Pretendard',
+                                fontWeight: FontWeight.w500,
+                                fontSize: 15,
+                                color: Color(0xFF17191A),
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 6),
-                      ],
-                      Expanded(
-                        child: Text(
-                          bulletin.title,
-                          style: const TextStyle(
-                            fontFamily: 'Pretendard',
-                            fontWeight: FontWeight.w500,
-                            fontSize: 15,
-                            color: Color(0xFF17191A),
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        [
+                          '${group.length}개 건물',
+                          _formatDate(first.createdAt),
+                          if (first.hasImages) '사진 ${first.imageUrls.length}장',
+                          if (sharedPostedUntil != null)
+                            '${_formatDate(sharedPostedUntil)}까지',
+                          if (first.pushSent) '알림 발송됨',
+                        ].join('  ·  '),
+                        style: const TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontWeight: FontWeight.w400,
+                          fontSize: 13,
+                          color: Color(0xFF757B80),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    [
-                      if (showBuildingName && bulletin.buildingName != null)
-                        bulletin.buildingName!,
-                      _formatDate(bulletin.createdAt),
-                      if (bulletin.hasImages) '사진 ${bulletin.imageUrls.length}장',
-                      if (bulletin.postedUntil != null)
-                        '${_formatDate(bulletin.postedUntil!)}까지',
-                      if (bulletin.pushSent) '알림 발송됨',
-                    ].join('  ·  '),
-                    style: const TextStyle(
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w400,
-                      fontSize: 13,
-                      color: Color(0xFF757B80),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+                Icon(
+                  isExpanded ? Icons.expand_less : Icons.expand_more,
+                  size: 20,
+                  color: const Color(0xFF757B80),
+                ),
+              ],
             ),
-            // 수정·삭제는 서버가 내려준 canManage 로만 노출한다.
-            // 담당자는 자기가 올린 것만 고칠 수 있어서, 같은 건물 목록에도 못 고치는 건이 섞인다.
-            if (bulletin.canManage)
-              IconButton(
-                icon: const Icon(Icons.delete_outline,
-                    size: 20, color: Color(0xFF757B80)),
-                onPressed: () => _confirmDelete(bulletin),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+          ),
+        ),
+        if (isExpanded)
+          // 펼친 줄은 건물별 공고문이므로 건물명을 반드시 함께 보여준다.
+          for (final bulletin in group) _buildItem(bulletin, true, nested: true),
+      ],
+    );
+  }
+
+  Widget _buildItem(Bulletin bulletin, bool showBuildingName,
+      {bool nested = false}) {
+    final (String? badge, Color badgeColor) = _badgeOf(bulletin);
+
+    return Container(
+      // 펼친 줄은 배경과 들여쓰기로 묶음에 속한다는 것을 나타낸다.
+      color: nested ? const Color(0xFFF7FAFC) : null,
+      child: InkWell(
+        onTap: bulletin.canManage ? () => _openEdit(bulletin.id) : null,
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: nested ? 32 : 16,
+            right: 16,
+            top: nested ? 12 : 14,
+            bottom: nested ? 12 : 14,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        if (badge != null) ...[
+                          _buildBadge(badge, badgeColor),
+                          const SizedBox(width: 6),
+                        ],
+                        Expanded(
+                          child: Text(
+                            // 묶음 안에서는 제목이 이미 위에 있으므로 건물명을 제목 자리에 둔다.
+                            nested
+                                ? (bulletin.buildingName ?? bulletin.title)
+                                : bulletin.title,
+                            style: const TextStyle(
+                              fontFamily: 'Pretendard',
+                              fontWeight: FontWeight.w500,
+                              fontSize: 15,
+                              color: Color(0xFF17191A),
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      [
+                        if (!nested &&
+                            showBuildingName &&
+                            bulletin.buildingName != null)
+                          bulletin.buildingName!,
+                        _formatDate(bulletin.createdAt),
+                        if (bulletin.hasImages) '사진 ${bulletin.imageUrls.length}장',
+                        if (bulletin.postedUntil != null)
+                          '${_formatDate(bulletin.postedUntil!)}까지',
+                        if (bulletin.pushSent) '알림 발송됨',
+                      ].join('  ·  '),
+                      style: const TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w400,
+                        fontSize: 13,
+                        color: Color(0xFF757B80),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-          ],
+              // 수정·삭제는 서버가 내려준 canManage 로만 노출한다.
+              // 담당자는 자기가 올린 것만 고칠 수 있어서, 같은 건물 목록에도 못 고치는 건이 섞인다.
+              if (bulletin.canManage)
+                IconButton(
+                  icon: const Icon(Icons.delete_outline,
+                      size: 20, color: Color(0xFF757B80)),
+                  onPressed: () => _confirmDelete(bulletin),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                ),
+            ],
+          ),
         ),
       ),
     );
