@@ -650,6 +650,12 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
                     context.push('/manager/attendance-history');
                   },
                 ),
+                _buildMenuItem(
+                  title: '공고문 관리',
+                  onTap: () {
+                    context.pushNamed('bulletinManage');
+                  },
+                ),
                 const Divider(
                   height: 1,
                   thickness: 1,

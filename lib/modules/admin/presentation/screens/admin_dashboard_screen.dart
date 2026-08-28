@@ -194,6 +194,26 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               ),
             ],
           ),
+          const SizedBox(height: 8),
+
+          // Third row
+          Row(
+            children: [
+              Expanded(
+                child: _buildMenuCard(
+                  icon: 'assets/icons/notice_filled.svg',
+                  title: '공고문 관리',
+                  onTap: () {
+                    context.pushNamed('bulletinManage');
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              // 한 줄에 카드가 하나만 있으면 폭이 두 배가 되어 다른 줄과 어긋난다.
+              // 빈 자리를 같은 비율로 채워 격자를 유지한다.
+              const Expanded(child: SizedBox()),
+            ],
+          ),
         ],
       ),
     );

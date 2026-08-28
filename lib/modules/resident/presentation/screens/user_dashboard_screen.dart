@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:building_manage_front/modules/resident/data/datasources/notice_remote_datasource.dart';
+import 'package:building_manage_front/modules/resident/data/datasources/bulletin_remote_datasource.dart';
 import 'package:building_manage_front/modules/resident/data/datasources/department_remote_datasource.dart';
 import 'package:building_manage_front/modules/headquarters/data/datasources/department_remote_datasource.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
@@ -20,10 +21,28 @@ class UserDashboardScreen extends ConsumerStatefulWidget {
   ConsumerState<UserDashboardScreen> createState() => _UserDashboardScreenState();
 }
 
+/// 대시보드 하단 탭.
+///
+/// 정수 인덱스를 직접 비교하지 않는 이유: 탭을 하나 추가하면 `index == 0` 이 가리키는
+/// 대상이 통째로 밀린다. 실제로 공고문 탭을 맨 앞에 넣을 때 인덱스를 비교하던 곳이
+/// 5군데 있었고, 하나만 놓쳐도 "공고문 탭인데 공지사항이 뜨는" 버그가 된다.
+/// 선언 순서가 곧 탭 순서이며, 순서를 바꾸려면 이 enum 만 고치면 된다.
+enum _DashboardTab {
+  bulletin('공고문', '공고문이 없습니다.'),
+  notice('공지사항', '공지사항이 없습니다.'),
+  event('이벤트', '이벤트가 없습니다.');
+
+  const _DashboardTab(this.label, this.emptyMessage);
+
+  final String label;
+  final String emptyMessage;
+}
+
 class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   List<Map<String, dynamic>> _departments = [];
+  List<Map<String, dynamic>> _bulletins = [];
   List<Map<String, dynamic>> _notices = [];
   List<Map<String, dynamic>> _events = [];
   bool _isLoadingDepartments = true;
@@ -45,10 +64,11 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController =
+        TabController(length: _DashboardTab.values.length, vsync: this);
     _tabController.addListener(_onTabChanged);
     _loadDepartments();
-    _loadNotices();
+    _loadCurrentTab();
   }
 
   @override
@@ -58,11 +78,19 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
     super.dispose();
   }
 
-  void _onTabChanged() {
-    if (_tabController.index == 0) {
-      _loadNotices();
-    } else {
-      _loadEvents();
+  /// 현재 선택된 탭. 인덱스를 직접 비교하지 않고 항상 이걸 거친다.
+  _DashboardTab get _currentTab => _DashboardTab.values[_tabController.index];
+
+  void _onTabChanged() => _loadCurrentTab();
+
+  Future<void> _loadCurrentTab() {
+    switch (_currentTab) {
+      case _DashboardTab.bulletin:
+        return _loadBulletins();
+      case _DashboardTab.notice:
+        return _loadNotices();
+      case _DashboardTab.event:
+        return _loadEvents();
     }
   }
 
@@ -111,6 +139,48 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
         });
       }
     }
+  }
+
+  Future<void> _loadBulletins() async {
+    setState(() {
+      _isLoadingContent = true;
+    });
+
+    try {
+      final dataSource = ref.read(bulletinRemoteDataSourceProvider);
+      // 미리보기는 5개만 쓰지만, 서버 목록 응답을 그대로 재사용한다.
+      final response = await dataSource.getBulletins(limit: 5);
+      if (!mounted) return;
+
+      if (response['success'] == true) {
+        setState(() {
+          _bulletins = _extractBulletinItems(response['data']);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _bulletins = [];
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingContent = false;
+        });
+      }
+    }
+  }
+
+  /// 공고문 목록 응답에서 항목 배열을 꺼낸다.
+  /// 공고문 API 는 { data: { data: [...] } } 형태다. 다른 목록이 쓰는 형태도 함께 받아 둔다.
+  List<Map<String, dynamic>> _extractBulletinItems(dynamic data) {
+    if (data is List) return data.cast<Map<String, dynamic>>();
+    if (data is Map) {
+      final items = data['data'] ?? data['items'];
+      if (items is List) return items.cast<Map<String, dynamic>>();
+    }
+    return const [];
   }
 
   Future<void> _loadNotices() async {
@@ -215,7 +285,11 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
 
   @override
   Widget build(BuildContext context) {
-    final currentItems = _tabController.index == 0 ? _notices : _events;
+    final currentItems = switch (_currentTab) {
+      _DashboardTab.bulletin => _bulletins,
+      _DashboardTab.notice => _notices,
+      _DashboardTab.event => _events,
+    };
     final currentUser = ref.watch(currentUserProvider);
     return Scaffold(
       key: _scaffoldKey,
@@ -271,13 +345,22 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
                             itemCount: currentItems.length > 5 ? 5 : currentItems.length,
                             itemBuilder: (context, index) {
                               final item = currentItems[index];
-                              final isNotice = _tabController.index == 0;
+                              final tab = _currentTab;
                               return _buildNoticeItem(
                                 item['title'] ?? '',
                                 _getTimeAgo(item['createdAt']),
-                                noticeId: isNotice ? item['id'] as String? : null,
-                                eventId: !isNotice ? item['id'] as String? : null,
-                                routeName: isNotice ? 'userNoticeDetail' : 'userEventDetail',
+                                id: item['id'] as String?,
+                                routeName: switch (tab) {
+                                  _DashboardTab.bulletin =>
+                                    'userBulletinDetail',
+                                  _DashboardTab.notice => 'userNoticeDetail',
+                                  _DashboardTab.event => 'userEventDetail',
+                                },
+                                idParamName: switch (tab) {
+                                  _DashboardTab.bulletin => 'bulletinId',
+                                  _DashboardTab.notice => 'noticeId',
+                                  _DashboardTab.event => 'eventId',
+                                },
                               );
                             },
                           ),
@@ -306,9 +389,7 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
                                     padding: const EdgeInsets.all(32.0),
                                     child: Center(
                                       child: Text(
-                                        _tabController.index == 0
-                                            ? '공지사항이 없습니다.'
-                                            : '이벤트가 없습니다.',
+                                        _currentTab.emptyMessage,
                                         style: const TextStyle(
                                           fontFamily: 'Pretendard',
                                           fontWeight: FontWeight.w400,
@@ -963,9 +1044,8 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
                   insets: EdgeInsets.zero,
                 ),
 
-                tabs: const [
-                  Tab(text: '공지사항'),
-                  Tab(text: '이벤트'),
+                tabs: [
+                  for (final tab in _DashboardTab.values) Tab(text: tab.label),
                 ],
               ),
             ),
@@ -975,12 +1055,12 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: TextButton(
                 onPressed: () {
-                  // 현재 탭에 따라 공지사항 또는 이벤트 목록으로 이동
-                  if (_tabController.index == 0) {
-                    context.pushNamed('userNoticeList');
-                  } else {
-                    context.pushNamed('userEventList');
-                  }
+                  // 현재 탭에 해당하는 전체 목록으로 이동
+                  context.pushNamed(switch (_currentTab) {
+                    _DashboardTab.bulletin => 'userBulletinList',
+                    _DashboardTab.notice => 'userNoticeList',
+                    _DashboardTab.event => 'userEventList',
+                  });
                 },
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.zero,
@@ -1006,20 +1086,28 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
 
 
 
-  Widget _buildNoticeItem(String title, String time, {String? noticeId, String? eventId, String? routeName}) {
+  /// 대시보드의 목록 한 줄.
+  ///
+  /// 경로 파라미터 이름을 [idParamName] 으로 받는다. 예전에는 noticeId 가 채워졌는지로
+  /// 'noticeId' / 'eventId' 를 골랐는데, 공고문 탭이 생기면서 그 방식으로는
+  /// 'bulletinId' 를 만들 수 없어 GoRouter 가 pathParameters 단언에서 죽었다.
+  /// 라우트가 요구하는 이름은 호출하는 쪽이 알고 있으므로 그대로 받는다.
+  Widget _buildNoticeItem(
+    String title,
+    String time, {
+    String? id,
+    required String routeName,
+    required String idParamName,
+  }) {
     return InkWell(
-      onTap: (noticeId != null || eventId != null)
-          ? () {
-              final id = noticeId ?? eventId;
-              final route = routeName ?? 'userNoticeDetail';
+      onTap: id == null || id.isEmpty
+          ? null
+          : () {
               context.pushNamed(
-                route,
-                pathParameters: {
-                  noticeId != null ? 'noticeId' : 'eventId': id!,
-                },
+                routeName,
+                pathParameters: {idParamName: id},
               );
-            }
-          : null,
+            },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(

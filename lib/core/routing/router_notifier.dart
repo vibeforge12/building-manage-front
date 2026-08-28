@@ -12,6 +12,8 @@ import 'package:building_manage_front/modules/resident/presentation/screens/user
 import 'package:building_manage_front/modules/resident/presentation/screens/user_dashboard_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/notice_detail_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/notice_list_screen.dart';
+import 'package:building_manage_front/modules/resident/presentation/screens/bulletin_list_screen.dart';
+import 'package:building_manage_front/modules/resident/presentation/screens/bulletin_detail_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/event_detail_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/event_list_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/complaint_create_screen.dart';
@@ -34,6 +36,8 @@ import 'package:building_manage_front/modules/admin/presentation/screens/residen
 import 'package:building_manage_front/modules/admin/presentation/screens/resident_detail_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/notice_management_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/notice_create_screen.dart';
+import 'package:building_manage_front/modules/admin/presentation/screens/bulletin_management_screen.dart';
+import 'package:building_manage_front/modules/admin/presentation/screens/bulletin_create_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/complaint_management_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/complaint_detail_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/staff_attendance_list_screen.dart';
@@ -104,19 +108,22 @@ class RouterNotifier extends ChangeNotifier {
       return '/resident-approval-rejected';
     }
 
-    // 접근 권한이 필요한 경로인지 판정 (접두어 기반)
-    final requiredUserType = _requiredUserTypeFor(path);
+    // 접근 권한이 필요한 경로인지 판정 (접두어 기반 + 다중 역할 공용 경로)
+    final allowedUserTypes = _allowedUserTypesFor(path);
 
     // 보호된 경로에 접근하려는데 인증되지 않은 경우 → 역할별 로그인 화면
-    if (requiredUserType != null && authState != AuthState.authenticated) {
-      return _getLoginPath(requiredUserType);
+    // 여러 역할이 쓰는 경로는 어느 로그인으로 보낼지 정할 수 없으므로 메인 홈(역할 선택)으로 보낸다.
+    if (allowedUserTypes != null && authState != AuthState.authenticated) {
+      return allowedUserTypes.length == 1
+          ? _getLoginPath(allowedUserTypes.first)
+          : '/';
     }
 
-    // 인증된 사용자가 잘못된 권한의 경로에 접근하는 경우 → 자기 역할 대시보드
-    if (requiredUserType != null &&
+    // 인증된 사용자가 허용되지 않은 역할로 접근하는 경우 → 자기 역할 대시보드
+    if (allowedUserTypes != null &&
         authState == AuthState.authenticated &&
         currentUser != null &&
-        currentUser.userType != requiredUserType) {
+        !allowedUserTypes.contains(currentUser.userType)) {
       return _getDefaultDashboard(currentUser.userType);
     }
 
@@ -220,6 +227,48 @@ class RouterNotifier extends ChangeNotifier {
       path: '/user/change-password',
       name: 'changePassword',
       builder: (context, state) => const ChangePasswordScreen(),
+    ),
+
+    // 공고문 목록 (보호된 경로) - 입주민용
+    GoRoute(
+      path: '/user/bulletins',
+      name: 'userBulletinList',
+      builder: (context, state) => const BulletinListScreen(),
+    ),
+
+    // 공고문 관리 (본사·관리자·담당자 공용)
+    // 역할별로 경로를 나누지 않는다. 서버가 역할에 맞는 목록과 canManage 를 내려주므로
+    // 화면 하나로 충분하고, 나누면 같은 권한 규칙을 세 곳에 적게 된다.
+    GoRoute(
+      path: '/bulletins/manage',
+      name: 'bulletinManage',
+      builder: (context, state) => const BulletinManagementScreen(),
+    ),
+
+    // 공고문 등록
+    GoRoute(
+      path: '/bulletins/create',
+      name: 'bulletinCreate',
+      builder: (context, state) => const BulletinCreateScreen(),
+    ),
+
+    // 공고문 수정 (등록과 같은 화면. bulletinId 가 있으면 수정으로 동작한다)
+    GoRoute(
+      path: '/bulletins/:bulletinId/edit',
+      name: 'bulletinEdit',
+      builder: (context, state) => BulletinCreateScreen(
+        bulletinId: state.pathParameters['bulletinId']!,
+      ),
+    ),
+
+    // 공고문 상세 (보호된 경로) - 입주민용
+    GoRoute(
+      path: '/user/bulletin/:bulletinId',
+      name: 'userBulletinDetail',
+      builder: (context, state) {
+        final bulletinId = state.pathParameters['bulletinId']!;
+        return BulletinDetailScreen(bulletinId: bulletinId);
+      },
     ),
 
     // 공지사항 목록 (보호된 경로) - 입주민용
@@ -626,6 +675,35 @@ class RouterNotifier extends ChangeNotifier {
   static const Map<String, UserType> _routeOwnerOverrides = {
     '/manager/add-general-manager': UserType.admin,
   };
+
+  /// 여러 역할이 함께 쓰는 경로.
+  ///
+  /// 접두어 표는 "경로 하나 = 역할 하나" 를 전제하는데, 공고문 관리는 본사·관리자·담당자가
+  /// 같은 화면을 쓴다. 서버가 역할에 맞는 목록과 수정 권한(canManage)을 내려주므로
+  /// 화면을 셋으로 복제할 이유가 없고, 복제하면 같은 권한 규칙이 세 곳에 생긴다.
+  ///
+  /// 이 표에 없으면 기존 접두어 규칙이 그대로 적용된다. 즉 이 표는 접두어 규칙을
+  /// 대체하지 않고, 접두어로 표현할 수 없는 경로만 추가로 받는다.
+  /// **여기 넣지 않고 새 최상위 경로를 만들면 그 경로는 보호되지 않는다.**
+  static const Map<String, Set<UserType>> _sharedRoutePrefixes = {
+    '/bulletins/': {
+      UserType.headquarters,
+      UserType.admin,
+      UserType.manager,
+    },
+  };
+
+  /// 해당 경로를 쓸 수 있는 역할들. 공개 경로면 null.
+  Set<UserType>? _allowedUserTypesFor(String? path) {
+    if (path == null) return null;
+
+    for (final entry in _sharedRoutePrefixes.entries) {
+      if (path.startsWith(entry.key)) return entry.value;
+    }
+
+    final single = _requiredUserTypeFor(path);
+    return single == null ? null : {single};
+  }
 
   /// 해당 경로에 필요한 사용자 유형. 공개 경로면 null.
   UserType? _requiredUserTypeFor(String? path) {

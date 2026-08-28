@@ -201,6 +201,51 @@ class HeadquartersDashboardScreen extends ConsumerWidget {
                     ],
                   ),
 
+                  const SizedBox(height: 16),
+
+                  // 공고문 관리 (본사는 산하 건물을 골라 한 번에 게시할 수 있다)
+                  SizedBox(
+                    height: 80,
+                    width: double.infinity,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () {
+                            context.pushNamed('bulletinManage');
+                          },
+                          child: const Padding(
+                            padding: EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  Icons.campaign,
+                                  color: Color(0xFF006FFF),
+                                  size: 24,
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  '공고문 관리',
+                                  style: TextStyle(
+                                    color: Color(0xff17191A),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
                   const SizedBox(height: 40),
                   FutureBuilder<PackageInfo>(
                     future: PackageInfo.fromPlatform(),
