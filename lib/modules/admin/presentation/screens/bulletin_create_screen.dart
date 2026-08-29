@@ -1,14 +1,16 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
 import 'package:building_manage_front/core/constants/user_types.dart';
 import 'package:building_manage_front/core/utils/error_message.dart';
 import 'package:building_manage_front/modules/admin/data/datasources/bulletin_remote_datasource.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 import 'package:building_manage_front/modules/common/services/image_upload_service.dart';
+import 'package:building_manage_front/modules/admin/presentation/widgets/bulletin_building_field.dart';
+import 'package:building_manage_front/modules/admin/presentation/widgets/bulletin_image_strip.dart';
+import 'package:building_manage_front/modules/admin/presentation/widgets/bulletin_period_field.dart';
+import 'package:building_manage_front/modules/admin/presentation/widgets/bulletin_push_checkbox.dart';
 import 'package:building_manage_front/modules/resident/domain/entities/bulletin.dart';
 import 'package:building_manage_front/shared/widgets/error_alert.dart';
 
@@ -175,29 +177,6 @@ class _BulletinCreateScreenState extends ConsumerState<BulletinCreateScreen> {
     }
   }
 
-  Future<void> _pickDate({required bool isStart}) async {
-    final now = DateTime.now();
-    final initial = (isStart ? _postedFrom : _postedUntil) ?? now;
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initial,
-      firstDate: DateTime(now.year - 1),
-      lastDate: DateTime(now.year + 5),
-      locale: const Locale('ko', 'KR'),
-    );
-    if (picked == null) return;
-
-    setState(() {
-      if (isStart) {
-        _postedFrom = DateTime(picked.year, picked.month, picked.day);
-      } else {
-        // 종료일은 그날 끝까지 게시되어야 한다. 자정으로 두면 그날 하루가 통째로 빠진다.
-        _postedUntil =
-            DateTime(picked.year, picked.month, picked.day, 23, 59, 59);
-      }
-    });
-  }
-
   Future<void> _submit() async {
     if (!_canSubmit) return;
 
@@ -276,7 +255,6 @@ class _BulletinCreateScreenState extends ConsumerState<BulletinCreateScreen> {
     return service.uploadMultipleImages(files: files, folder: 'bulletins');
   }
 
-  String _formatDate(DateTime date) => DateFormat('yyyy.MM.dd').format(date);
 
   @override
   Widget build(BuildContext context) {
@@ -375,13 +353,27 @@ class _BulletinCreateScreenState extends ConsumerState<BulletinCreateScreen> {
               children: [
                 // 본사만 건물을 고른다. 수정에서는 건물을 바꿀 수 없으므로 등록에서만 보인다.
                 if (_isHeadquarters && !widget.isEdit) ...[
-                  _buildBuildingSelector(),
+                  BulletinBuildingField(
+                    buildings: _allBuildings,
+                    selectedIds: _selectedBuildingIds,
+                    onChanged: () => setState(() {}),
+                  ),
                   const SizedBox(height: 8),
                 ],
-                _buildPeriodSection(),
+                BulletinPeriodField(
+                  postedFrom: _postedFrom,
+                  postedUntil: _postedUntil,
+                  onChanged: (from, until) => setState(() {
+                    _postedFrom = from;
+                    _postedUntil = until;
+                  }),
+                ),
                 if (!widget.isEdit) ...[
                   const SizedBox(height: 8),
-                  _buildPushSection(),
+                  BulletinPushCheckbox(
+                    value: _sendPush,
+                    onChanged: (value) => setState(() => _sendPush = value),
+                  ),
                 ],
               ],
             ),
@@ -434,7 +426,15 @@ class _BulletinCreateScreenState extends ConsumerState<BulletinCreateScreen> {
 
                 // 붙인 사진은 내용 위에 미리보기로 놓는다(민원 등록과 같은 순서).
                 if (_totalImageCount > 0) ...[
-                  _buildImageSection(),
+                  BulletinImageStrip(
+                    existingUrls: _existingImageUrls,
+                    pickedImages: _pickedImages,
+                    maxImages: _maxImages,
+                    onRemoveExisting: (i) =>
+                        setState(() => _existingImageUrls.removeAt(i)),
+                    onRemovePicked: (i) =>
+                        setState(() => _pickedImages.removeAt(i)),
+                  ),
                   const SizedBox(height: 16),
                 ],
 
@@ -457,37 +457,6 @@ class _BulletinCreateScreenState extends ConsumerState<BulletinCreateScreen> {
       ),
     );
   }
-
-  /// 선택 컨트롤 한 칸. 공지 등록의 드롭다운과 같은 생김새로 맞춘다.
-  Widget _selectBox({required Widget child, VoidCallback? onTap}) {
-    final box = Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF2F8FC),
-        border: Border.all(color: const Color(0xFFE8EEF2), width: 1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: child,
-    );
-    return onTap == null
-        ? box
-        : GestureDetector(onTap: onTap, child: box);
-  }
-
-  static const _boxTextStyle = TextStyle(
-    fontFamily: 'Pretendard',
-    fontWeight: FontWeight.w400,
-    fontSize: 16,
-    color: Color(0xFF17191A),
-  );
-
-  static const _boxHintStyle = TextStyle(
-    fontFamily: 'Pretendard',
-    fontWeight: FontWeight.w400,
-    fontSize: 16,
-    color: Color(0xFF757B80),
-  );
 
   /// 제목 — 공지·민원 등록과 같은 크기·굵기.
   static const _titleTextStyle = TextStyle(
@@ -520,484 +489,6 @@ class _BulletinCreateScreenState extends ConsumerState<BulletinCreateScreen> {
     color: Color(0xFFA4ADB2),
     height: 1.8,
   );
-
-  /// 건물 선택. 폼 안에 체크박스를 늘어놓지 않고 요약 한 줄 + 바텀시트로 둔다.
-  /// 본사가 건물을 수십 개 가질 수 있어, 체크박스를 깔면 아래 입력란이 화면 밖으로 밀린다.
-  Widget _buildBuildingSelector() {
-    final selectedNames = _allBuildings
-        .where((b) => _selectedBuildingIds.contains(b['id']))
-        .map((b) => b['name']?.toString() ?? '')
-        .toList();
-
-    final summary = switch (selectedNames.length) {
-      0 => '게시할 건물 선택',
-      1 => selectedNames.first,
-      _ => '${selectedNames.first} 외 ${selectedNames.length - 1}곳',
-    };
-
-    return _selectBox(
-      onTap: _openBuildingPicker,
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              summary,
-              style: selectedNames.isEmpty ? _boxHintStyle : _boxTextStyle,
-            ),
-          ),
-          const Icon(Icons.keyboard_arrow_down, size: 24, color: Color(0xFF757B80)),
-        ],
-      ),
-    );
-  }
-
-
-  Future<void> _openBuildingPicker() async {
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (sheetContext) => StatefulBuilder(
-        builder: (context, setSheetState) {
-          final allSelected =
-              _allBuildings.isNotEmpty &&
-                  _selectedBuildingIds.length == _allBuildings.length;
-
-          return SafeArea(
-            child: SizedBox(
-              height: MediaQuery.of(context).size.height * 0.7,
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                    child: Row(
-                      children: [
-                        const Expanded(
-                          child: Text(
-                            '게시 건물 선택',
-                            style: TextStyle(
-                              fontFamily: 'Pretendard',
-                              fontWeight: FontWeight.w700,
-                              fontSize: 16,
-                              color: Color(0xFF17191A),
-                            ),
-                          ),
-                        ),
-                        // 본사의 실제 용도가 "전 건물 안내" 라 전체 선택이 사실상 필수다.
-                        TextButton(
-                          onPressed: () {
-                            setSheetState(() {
-                              setState(() {
-                                if (allSelected) {
-                                  _selectedBuildingIds.clear();
-                                } else {
-                                  _selectedBuildingIds
-                                    ..clear()
-                                    ..addAll(_allBuildings
-                                        .map((b) => b['id'].toString()));
-                                }
-                              });
-                            });
-                          },
-                          child: Text(
-                            allSelected ? '전체 해제' : '전체 선택',
-                            style: const TextStyle(
-                              fontFamily: 'Pretendard',
-                              fontWeight: FontWeight.w700,
-                              fontSize: 14,
-                              color: Color(0xFF006FFF),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Divider(height: 1, color: Color(0xFFE8EEF2)),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: _allBuildings.length,
-                      itemBuilder: (context, index) {
-                        final building = _allBuildings[index];
-                        final id = building['id'].toString();
-                        final checked = _selectedBuildingIds.contains(id);
-                        return CheckboxListTile(
-                          value: checked,
-                          activeColor: const Color(0xFF006FFF),
-                          controlAffinity: ListTileControlAffinity.leading,
-                          title: Text(
-                            building['name']?.toString() ?? '',
-                            style: const TextStyle(
-                              fontFamily: 'Pretendard',
-                              fontSize: 15,
-                              color: Color(0xFF17191A),
-                            ),
-                          ),
-                          onChanged: (value) {
-                            setSheetState(() {
-                              setState(() {
-                                if (value == true) {
-                                  _selectedBuildingIds.add(id);
-                                } else {
-                                  _selectedBuildingIds.remove(id);
-                                }
-                              });
-                            });
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.of(sheetContext).pop(),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF006FFF),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: Text(
-                          '${_selectedBuildingIds.length}곳 선택 완료',
-                          style: const TextStyle(
-                            fontFamily: 'Pretendard',
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  /// 붙인 사진 미리보기. 첨부 버튼은 제목 오른쪽에 따로 있으므로 여기엔 라벨을 두지 않는다.
-  /// (민원 등록도 같은 구조다 — 아이콘으로 붙이고, 미리보기는 본문 위에 나온다)
-  Widget _buildImageSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Align(
-          alignment: Alignment.centerRight,
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              '사진 $_totalImageCount / $_maxImages',
-              style: const TextStyle(
-                fontFamily: 'Pretendard',
-                fontSize: 13,
-                color: Color(0xFF757B80),
-              ),
-            ),
-          ),
-        ),
-        SizedBox(
-          height: 96,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children: [
-              for (int i = 0; i < _existingImageUrls.length; i++)
-                _thumb(
-                  child: CachedNetworkImage(
-                    imageUrl: _existingImageUrls[i],
-                    fit: BoxFit.cover,
-                    errorWidget: (_, __, ___) => const Icon(
-                        Icons.broken_image_outlined,
-                        color: Color(0xFF757B80)),
-                  ),
-                  onRemove: () =>
-                      setState(() => _existingImageUrls.removeAt(i)),
-                ),
-              for (int i = 0; i < _pickedImages.length; i++)
-                _thumb(
-                  child: Image.network(
-                    _pickedImages[i].path,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: const Color(0xFFF2F8FC),
-                      child: const Icon(Icons.image_outlined,
-                          color: Color(0xFF757B80)),
-                    ),
-                  ),
-                  onRemove: () => setState(() => _pickedImages.removeAt(i)),
-                ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _thumb({required Widget child, required VoidCallback onRemove}) {
-    return Container(
-      width: 96,
-      height: 96,
-      margin: const EdgeInsets.only(right: 8),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          ClipRRect(borderRadius: BorderRadius.circular(8), child: child),
-          Positioned(
-            top: 2,
-            right: 2,
-            child: GestureDetector(
-              onTap: onRemove,
-              child: Container(
-                padding: const EdgeInsets.all(2),
-                decoration: const BoxDecoration(
-                  color: Colors.black54,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.close, size: 14, color: Colors.white),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 게시 기간. 건물 선택과 같은 박스 하나로 두고, 실제 선택은 시트에서 한다.
-  ///
-  /// 칩과 날짜 입력줄을 폼에 그대로 펼치면 상단 선택 영역에서 이것만 모양이 달라진다.
-  /// 이 저장소의 상단 선택 컨트롤은 전부 "채운 박스를 눌러 고르는" 형태다.
-  Widget _buildPeriodSection() {
-    final summary = switch ((_postedFrom, _postedUntil)) {
-      (null, null) => '무기한 게시',
-      (final from?, null) => '${_formatDate(from)}부터 무기한',
-      (null, final until?) => '${_formatDate(until)}까지 게시',
-      (final from?, final until?) =>
-        '${_formatDate(from)} ~ ${_formatDate(until)}',
-    };
-    final isDefault = _postedFrom == null && _postedUntil == null;
-
-    return _selectBox(
-      onTap: _openPeriodPicker,
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(summary,
-                style: isDefault ? _boxHintStyle : _boxTextStyle),
-          ),
-          const Icon(Icons.keyboard_arrow_down,
-              size: 24, color: Color(0xFF757B80)),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _openPeriodPicker() async {
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (sheetContext) => StatefulBuilder(
-        builder: (context, setSheetState) => SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    '게시 기간',
-                    style: TextStyle(
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                      color: Color(0xFF17191A),
-                    ),
-                  ),
-                ),
-              ),
-              const Divider(height: 1, color: Color(0xFFE8EEF2)),
-              _periodOption(
-                label: '무기한 게시',
-                description: '직접 내릴 때까지 계속 보입니다.',
-                selected: _postedFrom == null && _postedUntil == null,
-                onTap: () {
-                  setSheetState(() {
-                    setState(() {
-                      _postedFrom = null;
-                      _postedUntil = null;
-                    });
-                  });
-                },
-              ),
-              _periodOption(
-                label: _postedUntil == null
-                    ? '종료일 지정'
-                    : '${_formatDate(_postedUntil!)}까지',
-                description: '기간이 지나면 입주민 화면에서 자동으로 사라집니다.',
-                selected: _postedUntil != null,
-                onTap: () async {
-                  await _pickDate(isStart: false);
-                  setSheetState(() {});
-                },
-              ),
-              _periodOption(
-                label: _postedFrom == null
-                    ? '시작일 지정 (예약 게시)'
-                    : '${_formatDate(_postedFrom!)}부터',
-                description: '지정한 날짜가 되어야 입주민에게 보입니다.',
-                selected: _postedFrom != null,
-                onTap: () async {
-                  await _pickDate(isStart: true);
-                  setSheetState(() {});
-                },
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: FilledButton(
-                    onPressed: () => Navigator.of(sheetContext).pop(),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF006FFF),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      '확인',
-                      style: TextStyle(
-                        fontFamily: 'Pretendard',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-    if (mounted) setState(() {});
-  }
-
-  Widget _periodOption({
-    required String label,
-    required String description,
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15,
-                      color: selected
-                          ? const Color(0xFF006FFF)
-                          : const Color(0xFF17191A),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    description,
-                    style: const TextStyle(
-                      fontFamily: 'Pretendard',
-                      fontSize: 12,
-                      color: Color(0xFF757B80),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (selected)
-              const Icon(Icons.check, size: 20, color: Color(0xFF006FFF)),
-          ],
-        ),
-      ),
-    );
-  }
-
-
-  Widget _buildPushSection() {
-    // 박스 전체가 하나의 버튼이다. 체크박스만 누를 수 있게 두면 옆의 설명 글을 눌러도
-    // 아무 일이 없어, 체크박스 자체를 정확히 겨눠야 한다.
-    // 위의 건물·게시기간 박스도 박스 전체를 누르므로 조작 방식이 같아진다.
-    //
-    // 체크박스는 자기 탭을 스스로 처리하므로(부모로 전달되지 않는다) 두 번 토글되지 않는다.
-    return InkWell(
-      onTap: () => setState(() => _sendPush = !_sendPush),
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF2F8FC),
-          border: Border.all(color: const Color(0xFFE8EEF2), width: 1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Checkbox(
-              value: _sendPush,
-              activeColor: const Color(0xFF006FFF),
-              onChanged: (value) => setState(() => _sendPush = value ?? false),
-            ),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '입주민에게 알림 보내기',
-                    style: TextStyle(
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                      color: Color(0xFF17191A),
-                    ),
-                  ),
-                  SizedBox(height: 2),
-                  // 기본이 꺼짐인 이유를 등록자에게 알려준다. 이유를 모르면 매번 켜게 되고,
-                  // 그러면 입주민이 앱 알림 자체를 꺼버려 정작 급한 공지가 닿지 않는다.
-                  Text(
-                    '공고문마다 알림을 보내면 입주민이 알림을 꺼버립니다. 긴급할 때만 사용해주세요.',
-                    style: TextStyle(
-                      fontFamily: 'Pretendard',
-                      fontSize: 12,
-                      color: Color(0xFF757B80),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildSubmitBar() {
     return Container(
