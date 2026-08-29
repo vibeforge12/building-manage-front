@@ -1,3 +1,9 @@
+> **보관 문서** · 2026-08-29 폐기. 현재 코드와 다릅니다. 참고하지 마십시오.
+> 대체 문서: [앱 코드지도](../코드지도.md) · [기능정의서](../../../docs/2-사양서/기능정의서.md)
+> 남겨 둔 이유: 역할 분기 8단계 계획. 전부 구현 완료. 참조 경로 lib/core/auth/user_role.dart 는 존재하지 않음(실제 lib/core/constants/user_types.dart)
+
+---
+
 # 역할 기반 분기 계획
 
 이 문서는 건물관리 애플리케이션에서 네 가지 사용자 역할(본사, 건물관리자, 건물담당자, 일반유저)에 따라 화면과 기능을 분기 처리하기 위한 계획을 정리한다.
@@ -197,6 +203,6 @@ flutter run
 
 ### 참고 문서
 
-- 📖 [FCM_INTEGRATION_GUIDE.md](./FCM_INTEGRATION_GUIDE.md) - 상세 구현 가이드
+- 📖 [FCM_INTEGRATION_GUIDE.md](../FCM연동.md) - 상세 구현 가이드
 - 📚 [Firebase 공식 문서](https://firebase.flutter.dev/)
-- 📝 [CLAUDE.md](../CLAUDE.md) - 프로젝트 전체 문서
+- 📝 [CLAUDE.md](../../CLAUDE.md) - 프로젝트 전체 문서

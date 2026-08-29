@@ -1,7 +1,12 @@
 # AGENTS.md
 
+> **관례 파일** · 여러 AI 도구가 이 이름을 찾으므로 메타 블록 없이 둔다.
+> **역할 분담**: 이 문서는 *진입점*(규칙 요약·금지사항), [`CLAUDE.md`](CLAUDE.md) 는 *상세*(아키텍처·예제 코드).
+> 규칙이 바뀌면 **둘 다** 고친다. 상세만 필요하면 CLAUDE.md 로 바로 가도 된다.
+
 이 저장소(`building-manage-front/`)에서 작업하는 AI 에이전트 및 신규 기여자를 위한 **작업 규칙 요약본**입니다.
-아키텍처 상세와 예제 코드는 `CLAUDE.md`, 미해결 이슈 목록은 `docs/프론트엔드_구조_및_문제점_분석.md` 를 보세요.
+아키텍처 상세와 예제 코드는 `CLAUDE.md`, 코드 구조는 `docs/코드지도.md`, 미해결 이슈는 `../docs/3-할일/부채.md` 를 보세요.
+문서 규칙은 `../docs/문서체계.md`, 전체 문서 목록은 `../docs/README.md` 에 있습니다.
 
 > 최종 갱신: **2026-08-21** (전면 재작성. 이전 버전은 제목이 `# CLAUDE.md` 였고 내용이
 > "기본적인 Flutter 카운터 데모" 로 되어 있어 사실과 전혀 달랐습니다.)
@@ -161,7 +166,7 @@ feat / fix / refactor / style / test / docs / chore
 
 ## 6. 현재 알려진 미해결 이슈 (2026-08-21)
 
-작업 전 `docs/프론트엔드_구조_및_문제점_분석.md` §3 을 확인하세요. 우선순위 상위 항목:
+작업 전 `../docs/3-할일/부채.md` 3장을 확인하세요. 우선순위 상위 항목:
 
 | ID | 내용 |
 |---|---|
@@ -175,8 +180,9 @@ feat / fix / refactor / style / test / docs / chore
 
 ## 7. 문서 상태
 
-- **유효**: `CLAUDE.md`, `README.md`, `AGENTS.md`, `docs/프론트엔드_구조_및_문제점_분석.md`, `docs/배포_가이드.md`
-- **부분 개정 필요**: `docs/FCM_INTEGRATION_GUIDE.md`, `PRIVACY_CONSENT_PLAN.md`, `docs/user_types.md`
+- **유효**: `CLAUDE.md`, `README.md`, `AGENTS.md`, `docs/코드지도.md`, `docs/배포절차.md`, `docs/FCM연동.md`
+- **부분 개정 필요**: `docs/FCM연동.md`(공고문 푸시 미반영), `PRIVACY_CONSENT_PLAN.md`
+- **보관됨**: `docs/7-보관/` 15개 — 참고하지 마세요
 - **폐기 예정 (13개)**: 파일 상단에 `⚠️ 폐기 예정 문서` 배너가 있는 문서는 **참고하지 마세요.**
   아직 삭제되지 않았을 뿐입니다.
 

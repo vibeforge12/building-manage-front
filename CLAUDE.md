@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> **관례 파일** · Claude Code 가 자동으로 읽는 위치라 메타 블록 없이 둔다.
+> **역할 분담**: 이 문서는 *상세*(아키텍처·예제 코드), [`AGENTS.md`](AGENTS.md) 는 *진입점*(규칙 요약).
+> 전체 문서 목록은 [`../docs/README.md`](../docs/README.md), 문서 규칙은 [`../docs/문서체계.md`](../docs/문서체계.md).
+
 ## 프로젝트 개요
 
 **다중 역할 기반의 건물 관리 Flutter 애플리케이션** - 4가지 사용자 타입(입주민/유저, 관리자, 담당자, 본사)을 지원하는 프로덕션급 앱입니다.
@@ -940,7 +944,7 @@ try {
 - `auth` 모듈의 데이터 레이어는 모듈 밖 `lib/data/datasources/auth_remote_datasource.dart` 에 있습니다.
 - `common` 모듈은 `data/datasources/` 4개 + `services/` 2개(`image_upload_service`, `notification_service`) 구성이며 화면이 없습니다.
 - 3계층 모듈도 DataSource 대비 Repository/UseCase 커버리지는 절반 이하입니다.
-  (상세 실측: `docs/프론트엔드_구조_및_문제점_분석.md` §1.2)
+  (상세 실측: `docs/코드지도.md` §1.2)
 
 아래는 **3계층을 갖춘 4개 모듈**의 적용 내역입니다:
 
@@ -1147,7 +1151,7 @@ Data Layer (DataSources, Repositories Implementation)
 
 ## 배포 및 빌드 설정
 
-**모든 스토어 배포는 Fastlane 으로 수행한다.** 상세 절차·인증·트러블슈팅은 [`docs/배포_가이드.md`](docs/배포_가이드.md) 를 참조. CLAUDE(AI) 가 배포 관련 명령을 받으면 이 섹션과 배포 가이드를 함께 읽고 따를 것.
+**모든 스토어 배포는 Fastlane 으로 수행한다.** 상세 절차·인증·트러블슈팅은 [`docs/배포절차.md`](docs/배포절차.md) 를 참조. CLAUDE(AI) 가 배포 관련 명령을 받으면 이 섹션과 배포 가이드를 함께 읽고 따를 것.
 
 ### 배포 4가지 모드
 
