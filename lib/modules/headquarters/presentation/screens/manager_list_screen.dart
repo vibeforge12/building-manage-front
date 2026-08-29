@@ -153,6 +153,9 @@ class _ManagerListScreenState extends ConsumerState<ManagerListScreen> {
               alignment: Alignment.centerLeft,
               child: Text(
                 buildingName,
+                // 고정 높이 44 안에 들어가야 한다. 두 줄이 되면 잘려 보인다.
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontFamily: 'Pretendard',
                   fontWeight: FontWeight.w700,

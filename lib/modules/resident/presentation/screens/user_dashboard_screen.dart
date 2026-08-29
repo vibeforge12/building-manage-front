@@ -315,6 +315,9 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
                         alignment: Alignment.centerLeft,
                         child: Text(
                           currentUser?.buildingName ?? '-',
+                          // 36pt 라 조금만 길어도 두 줄이 된다. 한 줄로 자른다.
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontFamily: 'Pretendard',
                             fontWeight: FontWeight.w700,

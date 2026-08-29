@@ -398,7 +398,8 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
     );
   }
 
-  /// 검색창 (이름/아이디) — 입력 후 엔터 시 두 탭 모두 재조회
+  /// 검색창 — 입력 후 엔터 시 두 탭 모두 재조회.
+  /// 서버가 이름·아이디·동·호수·전화번호를 부분 일치로 찾는다.
   Widget _buildSearchField() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
@@ -407,7 +408,7 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
         textInputAction: TextInputAction.search,
         onSubmitted: _applySearch,
         decoration: InputDecoration(
-          hintText: '이름 또는 아이디 검색',
+          hintText: '이름 · 아이디 · 호실 · 전화번호 검색',
           hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
           prefixIcon: const Icon(Icons.search, color: Color(0xFF757B80)),
           suffixIcon: _keyword.isNotEmpty

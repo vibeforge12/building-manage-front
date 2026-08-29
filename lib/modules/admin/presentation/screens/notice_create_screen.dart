@@ -269,6 +269,9 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
         // 건물명을 못 받은 경우에는 자리표시자를 내보내지 않고 하던 대로 동작 이름을 쓴다.
         title: Text(
           buildingName ?? actionLabel,
+          // 건물명이 길면 두 줄이 되어 AppBar 높이가 늘어난다. 한 줄로 자른다.
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             fontFamily: 'Pretendard',
             fontWeight: FontWeight.w700,

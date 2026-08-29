@@ -275,6 +275,9 @@ class _BulletinCreateScreenState extends ConsumerState<BulletinCreateScreen> {
         // 직접 고르므로 상단에 건물명을 띄울 것이 없다. 그래서 동작 이름으로 돌아간다.
         title: Text(
           buildingName ?? actionLabel,
+          // 건물명이 길면 두 줄이 되어 AppBar 높이가 늘어난다. 한 줄로 자른다.
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             fontFamily: 'Pretendard',
             fontWeight: FontWeight.w700,

@@ -316,6 +316,9 @@ class _BuildingItem extends StatelessWidget {
                 children: [
                   Text(
                     name,
+                    // 건물명이 길면 카드 높이가 들쭉날쭉해진다. 한 줄로 자른다.
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontFamily: 'Pretendard',
                       fontWeight: FontWeight.w700,

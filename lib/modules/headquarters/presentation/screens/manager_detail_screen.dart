@@ -267,6 +267,9 @@ class _ManagerDetailScreenState extends ConsumerState<ManagerDetailScreen> {
           ),
           title: Text(
             buildingName,
+            // 건물명이 길면 두 줄이 되어 AppBar 높이가 늘어난다. 한 줄로 자른다.
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontFamily: 'Pretendard',
               fontWeight: FontWeight.w700,
