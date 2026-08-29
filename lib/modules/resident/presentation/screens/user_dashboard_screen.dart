@@ -13,6 +13,7 @@ import 'package:building_manage_front/modules/auth/presentation/providers/auth_s
 import '../../../../shared/widgets/custom_confirmation_dialog.dart';
 import '../../../../shared/widgets/error_alert.dart';
 import '../../../../core/utils/error_message.dart';
+import 'package:building_manage_front/shared/widgets/shrink_to_fit_text.dart';
 
 class UserDashboardScreen extends ConsumerStatefulWidget {
   const UserDashboardScreen({super.key});
@@ -313,11 +314,12 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
                       padding: const EdgeInsets.only(top: 24, left: 16, right: 16),
                       child: Align(
                         alignment: Alignment.centerLeft,
-                        child: Text(
+                        // 36pt 라 조금만 길어도 두 줄이 된다. 말줄임만 쓰면 긴 건물명이
+                        // 앞 아홉 자쯤만 남아 어느 건물인지 알 수 없으므로, 폭에 맞춰
+                        // 글자를 줄여 이름 전체가 보이게 한다.
+                        child: ShrinkToFitText(
                           currentUser?.buildingName ?? '-',
-                          // 36pt 라 조금만 길어도 두 줄이 된다. 한 줄로 자른다.
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          minFontSize: 20,
                           style: const TextStyle(
                             fontFamily: 'Pretendard',
                             fontWeight: FontWeight.w700,
