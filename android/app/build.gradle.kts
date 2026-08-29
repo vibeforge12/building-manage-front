@@ -20,7 +20,10 @@ val keyProperties = Properties().apply {
 
 android {
     namespace = "com.j2partners.buildingManageFront"
-    compileSdk = 35
+    // Android 16. Google Play 는 매년 8/31 까지 targetSdk 갱신을 요구한다.
+    // flutter.targetSdkVersion 을 그대로 쓰면 Flutter SDK 버전에 묶여
+    // (3.32.1 기준 35) 마감에 맞출 수 없으므로 여기서 명시한다.
+    compileSdk = 36
     ndkVersion = "27.0.12077973"
 
     compileOptions {
@@ -36,7 +39,7 @@ android {
     defaultConfig {
         applicationId = "com.j2partners.buildingManageFront"
         minSdk = 23
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true
