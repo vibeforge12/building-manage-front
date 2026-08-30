@@ -19,6 +19,7 @@ class BulletinImageStrip extends StatelessWidget {
     required this.maxImages,
     required this.onRemoveExisting,
     required this.onRemovePicked,
+    this.readOnly = false,
   });
 
   final List<String> existingUrls;
@@ -26,6 +27,9 @@ class BulletinImageStrip extends StatelessWidget {
   final int maxImages;
   final ValueChanged<int> onRemoveExisting;
   final ValueChanged<int> onRemovePicked;
+
+  /// 읽기 모드에서는 사진을 보여 주기만 하고 뗄 수 없다.
+  final bool readOnly;
 
   int get _total => existingUrls.length + pickedImages.length;
 
@@ -55,7 +59,7 @@ class BulletinImageStrip extends StatelessWidget {
             children: [
               for (int i = 0; i < existingUrls.length; i++)
                 _Thumb(
-                  onRemove: () => onRemoveExisting(i),
+                  onRemove: readOnly ? null : () => onRemoveExisting(i),
                   child: CachedNetworkImage(
                     imageUrl: existingUrls[i],
                     fit: BoxFit.cover,
@@ -66,7 +70,7 @@ class BulletinImageStrip extends StatelessWidget {
                 ),
               for (int i = 0; i < pickedImages.length; i++)
                 _Thumb(
-                  onRemove: () => onRemovePicked(i),
+                  onRemove: readOnly ? null : () => onRemovePicked(i),
                   // 방금 고른 사진은 아직 서버에 없다. XFile.path 는 기기 안의 파일 경로라
                   // 네트워크 이미지로 그리면 반드시 실패한다. 등록 화면에서만 안 보이고
                   // 올린 뒤 상세에서는 보였던 이유가 이것이다(상세는 서명 URL 을 받는다).
@@ -92,7 +96,7 @@ class _Thumb extends StatelessWidget {
   const _Thumb({required this.child, required this.onRemove});
 
   final Widget child;
-  final VoidCallback onRemove;
+  final VoidCallback? onRemove;
 
   @override
   Widget build(BuildContext context) {
@@ -104,21 +108,22 @@ class _Thumb extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           ClipRRect(borderRadius: BorderRadius.circular(8), child: child),
-          Positioned(
-            top: 2,
-            right: 2,
-            child: GestureDetector(
-              onTap: onRemove,
-              child: Container(
-                padding: const EdgeInsets.all(2),
-                decoration: const BoxDecoration(
-                  color: Colors.black54,
-                  shape: BoxShape.circle,
+          if (onRemove != null)
+            Positioned(
+              top: 2,
+              right: 2,
+              child: GestureDetector(
+                onTap: onRemove,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close, size: 14, color: Colors.white),
                 ),
-                child: const Icon(Icons.close, size: 14, color: Colors.white),
               ),
             ),
-          ),
         ],
       ),
     );

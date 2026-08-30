@@ -16,6 +16,7 @@ class BulletinPeriodField extends StatelessWidget {
     required this.postedFrom,
     required this.postedUntil,
     required this.onChanged,
+    this.readOnly = false,
   });
 
   final DateTime? postedFrom;
@@ -23,6 +24,9 @@ class BulletinPeriodField extends StatelessWidget {
 
   /// 고른 기간을 부모에게 돌려준다. 둘 다 `null` 이면 무기한.
   final void Function(DateTime? from, DateTime? until) onChanged;
+
+  /// 읽기 모드에서는 기간을 보여 주기만 하고 달력을 열지 않는다.
+  final bool readOnly;
 
   static String formatDate(DateTime date) =>
       DateFormat('yyyy.MM.dd').format(date);
@@ -39,7 +43,7 @@ class BulletinPeriodField extends StatelessWidget {
     final isDefault = postedFrom == null && postedUntil == null;
 
     return BulletinSelectBox(
-      onTap: () => _openPicker(context),
+      onTap: readOnly ? null : () => _openPicker(context),
       child: Row(
         children: [
           Expanded(

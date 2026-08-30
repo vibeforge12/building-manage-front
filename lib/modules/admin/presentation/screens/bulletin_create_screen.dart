@@ -56,6 +56,12 @@ class _BulletinCreateScreenState extends ConsumerState<BulletinCreateScreen> {
   final Set<String> _selectedBuildingIds = {};
 
   bool _isLoading = false;
+
+  /// 이미 있는 공고문을 열었을 때는 '읽기' 로 시작한다.
+  /// 목록에서 눌렀다고 바로 고쳐지면 무엇을 눌렀는지 확인하기도 전에
+  /// 내용이 바뀌어 있을 수 있다. 고치려면 '수정' 을 한 번 더 눌러야 한다.
+  /// 새로 쓰는 경우(isEdit == false)에는 처음부터 편집 상태다.
+  late bool _readOnly = widget.isEdit;
   bool _isSubmitting = false;
   String? _loadError;
 
@@ -259,7 +265,8 @@ class _BulletinCreateScreenState extends ConsumerState<BulletinCreateScreen> {
   @override
   Widget build(BuildContext context) {
     final buildingName = ref.watch(currentUserProvider)?.buildingName;
-    final actionLabel = widget.isEdit ? '공고문 수정' : '공고문 등록';
+    final actionLabel =
+        !widget.isEdit ? '공고문 등록' : (_readOnly ? '공고문' : '공고문 수정');
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -286,6 +293,22 @@ class _BulletinCreateScreenState extends ConsumerState<BulletinCreateScreen> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          // 읽는 중일 때만 나온다. 누르면 이 화면이 그대로 편집 상태가 된다.
+          if (_readOnly)
+            TextButton(
+              onPressed: () => setState(() => _readOnly = false),
+              child: const Text(
+                '수정',
+                style: TextStyle(
+                  fontFamily: 'Pretendard',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  color: Color(0xFF464A4D),
+                ),
+              ),
+            ),
+        ],
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(buildingName == null ? 1 : 55),
           child: Column(
@@ -335,7 +358,7 @@ class _BulletinCreateScreenState extends ConsumerState<BulletinCreateScreen> {
                         )
                       : _buildForm(),
             ),
-            _buildSubmitBar(),
+            if (!_readOnly) _buildSubmitBar(),
           ],
         ),
       ),
@@ -364,6 +387,7 @@ class _BulletinCreateScreenState extends ConsumerState<BulletinCreateScreen> {
                   const SizedBox(height: 8),
                 ],
                 BulletinPeriodField(
+                  readOnly: _readOnly,
                   postedFrom: _postedFrom,
                   postedUntil: _postedUntil,
                   onChanged: (from, until) => setState(() {
@@ -394,6 +418,7 @@ class _BulletinCreateScreenState extends ConsumerState<BulletinCreateScreen> {
                     Expanded(
                       child: TextField(
                         controller: _titleController,
+                        readOnly: _readOnly,
                         maxLength: 200,
                         onChanged: (_) => setState(() {}),
                         decoration: const InputDecoration(
@@ -408,8 +433,12 @@ class _BulletinCreateScreenState extends ConsumerState<BulletinCreateScreen> {
                     ),
                     const SizedBox(width: 12),
                     // 사진 첨부는 민원 등록과 같은 자리(제목 오른쪽)에 같은 아이콘으로 둔다.
-                    GestureDetector(
-                      onTap: _totalImageCount >= _maxImages ? null : _pickImages,
+                    // 읽는 중에는 붙일 수 없으므로 아이콘 자체를 감춘다.
+                    if (!_readOnly)
+                      GestureDetector(
+                      onTap: _readOnly || _totalImageCount >= _maxImages
+                          ? null
+                          : _pickImages,
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         child: Icon(
@@ -437,12 +466,14 @@ class _BulletinCreateScreenState extends ConsumerState<BulletinCreateScreen> {
                         setState(() => _existingImageUrls.removeAt(i)),
                     onRemovePicked: (i) =>
                         setState(() => _pickedImages.removeAt(i)),
+                    readOnly: _readOnly,
                   ),
                   const SizedBox(height: 16),
                 ],
 
                 TextField(
                   controller: _contentController,
+                  readOnly: _readOnly,
                   maxLines: 10,
                   onChanged: (_) => setState(() {}),
                   decoration: const InputDecoration(

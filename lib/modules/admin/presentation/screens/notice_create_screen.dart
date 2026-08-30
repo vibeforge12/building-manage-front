@@ -32,6 +32,11 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
   List<Map<String, dynamic>> _departments = [];
   bool _isDepartmentsLoading = false;
   bool _isEditing = false;
+
+  /// 이미 있는 글을 열었을 때는 '읽기' 로 시작한다(공고문 화면과 같은 규칙).
+  /// 목록에서 눌렀다고 바로 고쳐지면 확인만 하려던 글이 바뀔 수 있다.
+  /// 고치려면 '수정' 을 한 번 더 눌러야 한다.
+  late bool _readOnly = widget.noticeId != null;
   String? _existingImageUrl;
 
   // 모든 필드가 채워졌는지 확인
@@ -253,9 +258,10 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
     // "어느 건물에 쓰는 글인지" 를 먼저 보이고 무엇을 쓰는 중인지는 아랫줄에 적는다.
     // 관리자·담당자는 건물이 하나뿐이라 이 값이 항상 채워진다.
     final buildingName = ref.watch(currentUserProvider)?.buildingName;
-    final actionLabel = _isEditing
-        ? (widget.isEvent ? '이벤트 수정' : '공지 수정')
-        : (widget.isEvent ? '이벤트 등록' : '공지 등록');
+    final what = widget.isEvent ? '이벤트' : '공지';
+    final actionLabel = widget.noticeId == null
+        ? '$what 등록'
+        : (_readOnly ? what : '$what 수정');
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -280,6 +286,22 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          // 읽는 중일 때만 나온다. 누르면 이 화면이 그대로 편집 상태가 된다.
+          if (_readOnly)
+            TextButton(
+              onPressed: () => setState(() => _readOnly = false),
+              child: const Text(
+                '수정',
+                style: TextStyle(
+                  fontFamily: 'Pretendard',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  color: Color(0xFF464A4D),
+                ),
+              ),
+            ),
+        ],
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(buildingName == null ? 1 : 55),
           child: Column(
@@ -322,6 +344,7 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           DropdownMenu<String>(
+                            enabled: !_readOnly,
                             initialSelection: _selectedTarget,
                             width: MediaQuery.of(context).size.width - 32,
                             menuHeight: 300,
@@ -426,6 +449,7 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
                                   ),
                                 )
                               : DropdownMenu<String>(
+                                  enabled: !_readOnly,
                                   initialSelection: _selectedDepartmentId,
                                   width: MediaQuery.of(context).size.width - 32,
                                   menuHeight: 300,
@@ -492,6 +516,7 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
                           // 제목
                           TextFormField(
                             controller: _titleController,
+                            readOnly: _readOnly,
                             decoration: const InputDecoration(
                               hintText: '제목 입력란',
                               hintStyle: TextStyle(
@@ -521,6 +546,7 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
                           // 내용
                           TextFormField(
                             controller: _contentController,
+                            readOnly: _readOnly,
                             decoration: const InputDecoration(
                               hintText: '내용을 입력하세요.',
                               hintStyle: TextStyle(
@@ -555,9 +581,10 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
               ),
             ),
 
-            // 등록 버튼
-            Container(
-              padding: const EdgeInsets.all(22),
+            // 등록 버튼. 읽는 중에는 없앤다.
+            if (!_readOnly)
+              Container(
+                padding: const EdgeInsets.all(22),
               child: SizedBox(
                 width: double.infinity,
                 height: 56,
