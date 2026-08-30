@@ -200,7 +200,9 @@ class _StaffNoticeListScreenState extends ConsumerState<StaffNoticeListScreen> {
         padding: const EdgeInsets.symmetric(vertical: 8),
         itemCount: _notices.length,
         separatorBuilder: (context, index) => const Divider(
-          height: 1,
+          // 항목 사이를 가로지르는 선은 앱 공통으로 2px 이다.
+          height: 2,
+          thickness: 2,
           color: Color(0xFFE8EEF2),
         ),
         itemBuilder: (context, index) {

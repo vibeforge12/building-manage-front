@@ -348,12 +348,14 @@ class _BulletinManagementScreenState
       child: ListView.separated(
         padding: const EdgeInsets.symmetric(vertical: 8),
         itemCount: groups.length,
-        // 서로 다른 공고문 사이는 '띠' 로 끊는다. 1px 실선으로는 어디까지가 한 건인지
-        // 눈에 들어오지 않는다(묶음을 펼치면 줄이 여러 개가 되어 특히 그렇다).
-        // 묶음 안의 건물별 줄은 실선으로만 나눠, 띠=다른 공고문 / 실선=같은 공고문이
-        // 그대로 위계로 읽히게 한다.
-        separatorBuilder: (context, index) =>
-            const _ItemBand(),
+        // 서로 다른 공고문 사이는 앱 공통 규칙대로 2px 로 끊는다.
+        // 묶음 안의 건물별 줄은 1px 을 들여쓴 것이라, 2px=다른 공고문 /
+        // 들여쓴 1px=같은 공고문이 그대로 위계로 읽힌다.
+        separatorBuilder: (context, index) => const Divider(
+          height: 2,
+          thickness: 2,
+          color: Color(0xFFE8EEF2),
+        ),
         itemBuilder: (context, index) {
           final group = groups[index];
           return group.length == 1
@@ -553,16 +555,5 @@ class _BulletinManagementScreenState
         ),
       ),
     );
-  }
-}
-
-/// 목록에서 서로 다른 공고문을 끊어 주는 띠.
-/// 실선 한 줄로는 묶음이 펼쳐졌을 때 경계가 묻혀서, 배경색 있는 간격으로 나눈다.
-class _ItemBand extends StatelessWidget {
-  const _ItemBand();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(height: 8, color: const Color(0xFFF2F5F8));
   }
 }

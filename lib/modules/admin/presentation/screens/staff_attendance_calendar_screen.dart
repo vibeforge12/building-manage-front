@@ -298,7 +298,8 @@ class _StaffAttendanceCalendarScreenState
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: staffsWithRecords.length,
-      separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFF3F4F6)),
+      separatorBuilder: (_, __) =>
+          const Divider(height: 2, thickness: 2, color: Color(0xFFF3F4F6)),
       itemBuilder: (context, index) {
         final data = staffsWithRecords[index];
         final hasRecord = data['hasRecord'] as bool;
