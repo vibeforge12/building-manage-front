@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 
 /// 등록 시 입주민에게 푸시를 보낼지 고르는 체크박스.
 ///
+/// 공고문·공지사항·이벤트가 같이 쓴다. 셋 다 입주민 휴대폰을 울리는 글이라
+/// 보낼지 말지를 고르는 방식이 서로 달라야 할 이유가 없다.
+///
 /// 기본이 꺼짐인 이유를 등록자에게 함께 보여준다. 이유를 모르면 매번 켜게 되고,
 /// 그러면 입주민이 앱 알림 자체를 꺼버려 정작 급한 공지가 닿지 않는다.
-class BulletinPushCheckbox extends StatelessWidget {
-  const BulletinPushCheckbox({
+class PushOptInCheckbox extends StatelessWidget {
+  const PushOptInCheckbox({
     super.key,
     required this.value,
     required this.onChanged,

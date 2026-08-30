@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:building_manage_front/modules/admin/presentation/widgets/push_opt_in_checkbox.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/headquarters/data/datasources/department_remote_datasource.dart';
@@ -37,6 +38,11 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
   /// 목록에서 눌렀다고 바로 고쳐지면 확인만 하려던 글이 바뀔 수 있다.
   /// 고치려면 '수정' 을 한 번 더 눌러야 한다.
   late bool _readOnly = widget.noticeId != null;
+
+  /// 등록할 때 입주민에게 알림을 보낼지. 공고문과 같은 규칙으로 기본은 꺼짐이다.
+  /// 지금까지 공지·이벤트는 올릴 때마다 무조건 울렸는데, 그러면 입주민이
+  /// 앱 알림 자체를 꺼버려 정작 급한 공지가 닿지 않는다.
+  bool _sendPush = false;
   String? _existingImageUrl;
 
   // 모든 필드가 채워졌는지 확인
@@ -226,6 +232,7 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
             title: _titleController.text.trim(),
             content: _contentController.text.trim(),
             imageUrl: _existingImageUrl,
+            sendPush: _sendPush,
           );
         } else {
           await noticeDataSource.createNotice(
@@ -234,6 +241,7 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
             target: _selectedTarget,
             departmentId: effectiveDepartmentId,
             imageUrl: _existingImageUrl,
+            sendPush: _sendPush,
           );
         }
       }
@@ -505,6 +513,17 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
                         ],
                       ),
                     ),
+                    // 알림 발송 여부. 등록할 때만 고른다 —
+                    // 수정으로 다시 보낼 수는 없다(공고문과 같은 규칙).
+                    if (widget.noticeId == null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: PushOptInCheckbox(
+                          value: _sendPush,
+                          onChanged: (value) => setState(() => _sendPush = value),
+                        ),
+                      ),
+
                     const SizedBox(height: 16),
 
                     // 제목 및 내용 입력

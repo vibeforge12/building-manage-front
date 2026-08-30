@@ -10,7 +10,7 @@ import 'package:building_manage_front/modules/common/services/image_upload_servi
 import 'package:building_manage_front/modules/admin/presentation/widgets/bulletin_building_field.dart';
 import 'package:building_manage_front/modules/admin/presentation/widgets/bulletin_image_strip.dart';
 import 'package:building_manage_front/modules/admin/presentation/widgets/bulletin_period_field.dart';
-import 'package:building_manage_front/modules/admin/presentation/widgets/bulletin_push_checkbox.dart';
+import 'package:building_manage_front/modules/admin/presentation/widgets/push_opt_in_checkbox.dart';
 import 'package:building_manage_front/modules/admin/presentation/widgets/bulletin_push_status.dart';
 import 'package:building_manage_front/modules/resident/domain/entities/bulletin.dart';
 import 'package:building_manage_front/shared/widgets/error_alert.dart';
@@ -408,7 +408,7 @@ class _BulletinCreateScreenState extends ConsumerState<BulletinCreateScreen> {
                 ],
                 if (!widget.isEdit) ...[
                   const SizedBox(height: 8),
-                  BulletinPushCheckbox(
+                  PushOptInCheckbox(
                     value: _sendPush,
                     onChanged: (value) => setState(() => _sendPush = value),
                   ),

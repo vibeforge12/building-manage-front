@@ -47,11 +47,13 @@ class NoticeRemoteDataSource {
     required String target, // BOTH, RESIDENT, STAFF
     String? departmentId,
     String? imageUrl,
+    required bool sendPush,
   }) async {
     final data = {
       'title': title,
       'content': content,
       'target': target,
+      'sendPush': sendPush,
       if (imageUrl != null) 'imageUrl': imageUrl,
       if (departmentId != null) 'departmentId': departmentId,
     };
@@ -98,10 +100,12 @@ class NoticeRemoteDataSource {
     required String title,
     required String content,
     String? imageUrl,
+    required bool sendPush,
   }) async {
     final data = {
       'title': title,
       'content': content,
+      'sendPush': sendPush,
       if (imageUrl != null) 'imageUrl': imageUrl,
     };
 
