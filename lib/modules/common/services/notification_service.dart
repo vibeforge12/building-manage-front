@@ -258,7 +258,10 @@ class NotificationService {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       try {
-        ref.read(routerNotifierProvider).router.go(path);
+        // go 가 아니라 push 다. go 는 경로를 '갈아끼워' 스택을 지우기 때문에,
+        // 알림으로 연 화면이 최상위가 되어 뒤로가기가 갈 곳을 잃는다.
+        // push 는 지금 화면(대개 대시보드) 위에 얹으므로 뒤로가면 거기로 돌아온다.
+        ref.read(routerNotifierProvider).router.push(path);
       } catch (_) {
         // 라우터가 아직 없거나 경로가 막힌 경우. 알림을 눌러 앱이 열린 것만으로도
         // 최소한의 목적은 이뤄졌으므로 여기서 조용히 멈춘다.
