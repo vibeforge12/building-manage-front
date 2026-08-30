@@ -30,6 +30,16 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
   // 출퇴근 버튼 연타 방지 (5초 쿨다운)
   bool _isAttendanceCooldown = false;
 
+  /// 당겨서 새로고침. 화면에 보이는 것(출퇴근 상태 · 미처리 민원 · 공지)을 다시 읽는다.
+  /// 완료를 기다려야 인디케이터가 제때 사라진다.
+  Future<void> _refresh() async {
+    await Future.wait([
+      ref.read(attendanceProvider.notifier).initialize(),
+      _loadPendingComplaints(),
+      _loadNotices(),
+    ]);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -150,7 +160,12 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
         ],
       ),
       endDrawer: _buildMenuDrawer(context),
-      body: CustomScrollView(
+      body: RefreshIndicator(
+        onRefresh: _refresh,
+        color: const Color(0xFF006FFF),
+        child: CustomScrollView(
+        // 내용이 화면보다 짧아도 당길 수 있어야 새로고침이 걸린다.
+        physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           SliverToBoxAdapter(
             child: Builder(
@@ -411,6 +426,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 24)),
         ],
+      ),
       ),
     );
   }

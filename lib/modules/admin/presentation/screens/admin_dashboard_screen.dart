@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:building_manage_front/shared/widgets/separator.dart';
+import 'package:building_manage_front/shared/widgets/shrink_to_fit_text.dart';
 import 'package:building_manage_front/shared/widgets/common_navigation_bar.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 import 'package:building_manage_front/modules/admin/presentation/providers/admin_providers.dart';
@@ -52,24 +53,50 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 
             // Scrollable content below navigation bar
             Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header with background image
-                    _buildHeader(),
+              child: RefreshIndicator(
+                onRefresh: _refresh,
+                color: const Color(0xFF006FFF),
+                child: SingleChildScrollView(
+                  // 내용이 화면보다 짧아도 당길 수 있어야 새로고침이 걸린다.
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header with background image
+                      _buildHeader(),
 
-                    // Account issuance button
-                    _buildAccountIssuanceButton(context),
+                      // 어느 건물을 보고 있는지. 입주민 대시보드와 같은 자리·같은 방식이다.
+                      // 말줄임만 쓰면 긴 건물명이 앞부분만 남아 건물을 구분할 수 없으므로
+                      // 폭에 맞춰 글자를 줄여 이름 전체가 보이게 한다.
+                      Padding(
+                        padding: const EdgeInsets.only(top: 24, left: 16, right: 16),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: ShrinkToFitText(
+                            ref.watch(currentUserProvider)?.buildingName ?? '-',
+                            minFontSize: 20,
+                            style: const TextStyle(
+                              fontFamily: 'Pretendard',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 36,
+                              color: Color(0xFF17191A),
+                            ),
+                          ),
+                        ),
+                      ),
 
-                    const SizedBox(height: 30),
-                    const SeparatorWidget(),
+                      // Account issuance button
+                      _buildAccountIssuanceButton(context),
 
-                    // Menu grid
-                    _buildMenuGrid(context),
+                      const SizedBox(height: 30),
+                      const SeparatorWidget(),
 
-                    _buildFixedBottomButton(context),
-                  ],
+                      // Menu grid
+                      _buildMenuGrid(context),
+
+                      _buildFixedBottomButton(context),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -77,6 +104,17 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
         ),
       ),
     );
+  }
+
+  /// 당겨서 새로고침. 화면에 보이는 값(승인 대기 뱃지)을 다시 읽는다.
+  /// 완료를 기다려야 인디케이터가 제때 사라진다.
+  Future<void> _refresh() async {
+    ref.invalidate(hasPendingResidentsProvider);
+    ref.invalidate(hasPendingComplaintsProvider);
+    await Future.wait([
+      ref.read(hasPendingResidentsProvider.future),
+      ref.read(hasPendingComplaintsProvider.future),
+    ]);
   }
 
   Widget _buildHeader() {

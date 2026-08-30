@@ -62,6 +62,12 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
     '전기': 'assets/icons/lightning_filled.svg',
   };
 
+  /// 당겨서 새로고침. 화면에 보이는 것(부서 목록 + 지금 열려 있는 탭)을 다시 읽는다.
+  /// 완료를 기다려야 인디케이터가 제때 사라진다.
+  Future<void> _refresh() async {
+    await Future.wait([_loadDepartments(), _loadCurrentTab()]);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -303,11 +309,16 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
             _buildTopBar(),
 
             Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    // 배경 이미지 영역
-                    _buildHeaderImage(),
+              child: RefreshIndicator(
+                onRefresh: _refresh,
+                color: const Color(0xFF006FFF),
+                child: SingleChildScrollView(
+                  // 내용이 화면보다 짧아도 당길 수 있어야 새로고침이 걸린다.
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    children: [
+                      // 배경 이미지 영역
+                      _buildHeaderImage(),
 
                     // 건물명 (위 패딩 추가)
                     Padding(
@@ -410,6 +421,7 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
                   ],
                 ),
               ),
+            ),
             ),
           ],
         ),

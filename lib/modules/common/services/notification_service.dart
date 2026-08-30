@@ -1,9 +1,15 @@
+import 'dart:convert';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/exceptions/api_exception.dart';
 import '../../../core/utils/device_info_helper.dart';
+import '../../../core/constants/user_types.dart';
+import '../../../core/providers/router_provider.dart';
+import '../../auth/presentation/providers/auth_state_provider.dart';
 import '../data/datasources/push_token_remote_datasource.dart';
 
 /// FCM 푸시 알림을 관리하는 싱글톤 서비스
@@ -26,6 +32,12 @@ class NotificationService {
   bool _isTokenListenerRegistered = false;
   // 현재 등록된 사용자 타입 (토큰 리프레시 시 사용)
   String? _currentUserType;
+
+  // 알림을 눌렀을 때 화면을 옮기려면 라우터와 '지금 로그인한 사람' 이 필요하다.
+  // 이 서비스는 싱글톤이라 provider 가 만들어질 때 한 번 붙여 준다.
+  Ref? _ref;
+
+  void attachRef(Ref ref) => _ref = ref;
 
   /// 서비스 초기화
   /// 매번 호출되어도 안전 - 메시지 리스너만 한 번 등록
@@ -74,7 +86,21 @@ class NotificationService {
       iOS: iosSettings,
     );
 
-    await _localNotifications.initialize(initSettings);
+    await _localNotifications.initialize(
+      initSettings,
+      // 앱이 떠 있는 동안 온 알림은 FCM 이 배너를 띄우지 않아 직접 띄운다(_handleForegroundMessage).
+      // 그렇게 띄운 알림은 onMessageOpenedApp 을 타지 않으므로, 탭 처리도 여기서 따로 받아야 한다.
+      onDidReceiveNotificationResponse: (response) {
+        final payload = response.payload;
+        if (payload == null || payload.isEmpty) return;
+        try {
+          final decoded = jsonDecode(payload);
+          if (decoded is Map<String, dynamic>) _navigateFor(decoded);
+        } catch (_) {
+          // 예전 판이 남긴 Map.toString() 페이로드는 JSON 이 아니다. 무시한다.
+        }
+      },
+    );
   }
 
   /// FCM 토큰 획득 및 서버 등록
@@ -196,9 +222,95 @@ class NotificationService {
 
   /// 알림 클릭 처리
   void _handleMessageTap(RemoteMessage message) {
-    // TODO: 알림 데이터에 따라 네비게이션 처리
-    // 예: 민원 알림이면 민원 상세화면으로 이동
-    // GoRouter를 사용하여 네비게이션 수행
+    _navigateFor(message.data);
+  }
+
+  /// 알림 데이터로 갈 곳을 정해 이동한다.
+  ///
+  /// 프레임 뒤로 미루는 이유: 앱이 꺼진 상태에서 알림으로 시작하면
+  /// (getInitialMessage) 라우터가 아직 첫 경로를 정하는 중이라
+  /// 지금 옮겨 봐야 곧바로 덮어써진다.
+  void _navigateFor(Map<String, dynamic> data) {
+    final ref = _ref;
+    if (ref == null) return;
+
+    final path = _routeFor(data);
+    if (path == null) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        ref.read(routerNotifierProvider).router.go(path);
+      } catch (_) {
+        // 라우터가 아직 없거나 경로가 막힌 경우. 알림을 눌러 앱이 열린 것만으로도
+        // 최소한의 목적은 이뤄졌으므로 여기서 조용히 멈춘다.
+      }
+    });
+  }
+
+  /// 알림 종류 + 지금 로그인한 사람 → 갈 경로.
+  ///
+  /// 같은 알림이라도 받는 사람에 따라 화면이 다르다. 민원 접수 알림은
+  /// 관리자와 담당자가 서로 다른 상세 화면을 쓴다.
+  /// 대상 화면을 특정할 수 없으면 null 을 돌려 아무 데도 가지 않는다.
+  /// (엉뚱한 화면으로 튀는 것보다 그대로 두는 편이 낫다)
+  String? _routeFor(Map<String, dynamic> data) {
+    final type = data['type']?.toString();
+    if (type == null || type.isEmpty) return null;
+
+    final userType = _ref?.read(currentUserProvider)?.userType;
+
+    // FCM 의 data 는 값이 전부 문자열로 와서, 빈 문자열도 '없음' 으로 본다.
+    String? idOf(String key) {
+      final v = data[key]?.toString();
+      return (v == null || v.isEmpty) ? null : v;
+    }
+
+    switch (type) {
+      // ── 입주민에게만 가는 알림 ──
+      case 'BULLETIN_PUBLISHED':
+        final id = idOf('bulletinId');
+        return id == null ? '/user/bulletins' : '/user/bulletin/$id';
+      case 'NOTICE_PUBLISHED':
+        final id = idOf('noticeId');
+        return id == null ? '/user/notices' : '/user/notice/$id';
+      case 'EVENT_PUBLISHED':
+        final id = idOf('eventId');
+        return id == null ? '/user/events' : '/user/event/$id';
+
+      // 처리 결과 알림에는 민원 id 가 실리지 않아 목록으로 보낸다.
+      case 'COMPLAINT_RESOLVED':
+        return '/user/my-complaints';
+
+      // ── 받는 사람에 따라 화면이 갈리는 알림 ──
+      case 'COMPLAINT_REGISTERED':
+      case 'COMPLAINT_TRANSFERRED':
+        final id = idOf('complaintId');
+        switch (userType) {
+          case UserType.admin:
+            return id == null
+                ? '/admin/complaint-management'
+                : '/admin/complaint-detail/$id';
+          case UserType.manager:
+            return id == null
+                ? '/manager/complaints'
+                : '/manager/complaint-detail/$id';
+          case UserType.user:
+            return id == null ? '/user/my-complaints' : '/user/complaint/$id';
+          default:
+            return null;
+        }
+
+      // ── 관리자에게만 가는 알림 ──
+      // 둘 다 알림에 id 가 없어 목록·현황으로 보낸다.
+      case 'RESIDENT_REGISTERED':
+        return userType == UserType.admin ? '/admin/resident-management' : null;
+      case 'STAFF_CHECK_IN':
+      case 'STAFF_CHECK_OUT':
+        return userType == UserType.admin
+            ? '/admin/staff-attendance-current'
+            : null;
+    }
+    return null;
   }
 
   /// 로컬 알림 표시
@@ -233,7 +345,8 @@ class NotificationService {
       title,
       body,
       notificationDetails,
-      payload: payload?.toString(),
+      // toString() 은 다시 읽을 수 없다. 탭했을 때 어디로 갈지 알려면 JSON 이어야 한다.
+      payload: payload == null ? null : jsonEncode(payload),
     );
   }
 
@@ -288,7 +401,9 @@ class NotificationService {
 
 /// Riverpod Provider
 final notificationServiceProvider = Provider((ref) {
-  return NotificationService();
+  // 알림을 눌렀을 때 화면을 옮기려면 라우터와 현재 사용자가 필요하다.
+  // 서비스가 싱글톤이라 여러 번 붙어도 같은 ref 로 덮어쓸 뿐이다.
+  return NotificationService()..attachRef(ref);
 });
 
 /// 현재 사용자 정보를 기반으로 FCM 토큰 등록

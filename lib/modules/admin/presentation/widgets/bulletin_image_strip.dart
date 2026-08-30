@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -65,8 +67,11 @@ class BulletinImageStrip extends StatelessWidget {
               for (int i = 0; i < pickedImages.length; i++)
                 _Thumb(
                   onRemove: () => onRemovePicked(i),
-                  child: Image.network(
-                    pickedImages[i].path,
+                  // 방금 고른 사진은 아직 서버에 없다. XFile.path 는 기기 안의 파일 경로라
+                  // 네트워크 이미지로 그리면 반드시 실패한다. 등록 화면에서만 안 보이고
+                  // 올린 뒤 상세에서는 보였던 이유가 이것이다(상세는 서명 URL 을 받는다).
+                  child: Image.file(
+                    File(pickedImages[i].path),
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
                       color: const Color(0xFFF2F8FC),
