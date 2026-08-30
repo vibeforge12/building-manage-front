@@ -11,6 +11,7 @@ import 'package:building_manage_front/modules/admin/presentation/widgets/bulleti
 import 'package:building_manage_front/modules/admin/presentation/widgets/bulletin_image_strip.dart';
 import 'package:building_manage_front/modules/admin/presentation/widgets/bulletin_period_field.dart';
 import 'package:building_manage_front/modules/admin/presentation/widgets/bulletin_push_checkbox.dart';
+import 'package:building_manage_front/modules/admin/presentation/widgets/bulletin_push_status.dart';
 import 'package:building_manage_front/modules/resident/domain/entities/bulletin.dart';
 import 'package:building_manage_front/shared/widgets/error_alert.dart';
 
@@ -62,6 +63,9 @@ class _BulletinCreateScreenState extends ConsumerState<BulletinCreateScreen> {
   /// 내용이 바뀌어 있을 수 있다. 고치려면 '수정' 을 한 번 더 눌러야 한다.
   /// 새로 쓰는 경우(isEdit == false)에는 처음부터 편집 상태다.
   late bool _readOnly = widget.isEdit;
+
+  /// 이미 올린 공고문이 알림을 보냈는지. 읽기 상태에서만 쓴다.
+  bool _pushSent = false;
   bool _isSubmitting = false;
   String? _loadError;
 
@@ -119,6 +123,7 @@ class _BulletinCreateScreenState extends ConsumerState<BulletinCreateScreen> {
     _existingImageUrls = List<String>.from(bulletin.imageUrls);
     _postedFrom = bulletin.postedFrom;
     _postedUntil = bulletin.postedUntil;
+    _pushSent = bulletin.pushSent;
   }
 
   int get _totalImageCount => _existingImageUrls.length + _pickedImages.length;
@@ -395,6 +400,12 @@ class _BulletinCreateScreenState extends ConsumerState<BulletinCreateScreen> {
                     _postedUntil = until;
                   }),
                 ),
+                // 읽기 상태에서는 알림을 '보냈는지' 를 보여준다.
+                // 등록에서는 '보낼지' 를 고르는 체크박스가 대신 나온다.
+                if (_readOnly) ...[
+                  const SizedBox(height: 8),
+                  BulletinPushStatus(sent: _pushSent),
+                ],
                 if (!widget.isEdit) ...[
                   const SizedBox(height: 8),
                   BulletinPushCheckbox(

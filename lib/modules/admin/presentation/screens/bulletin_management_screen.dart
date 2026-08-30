@@ -428,14 +428,15 @@ class _BulletinManagementScreenState
                         ],
                       ),
                       const SizedBox(height: 6),
+                      // 목록은 '무엇이 언제까지 걸려 있는가' 만 본다.
+                      // 사진 장수와 알림 발송 여부는 한 건을 들여다볼 때 필요한 것이라
+                      // 상세로 옮겼다(줄이 길어지면 정작 제목이 밀린다).
                       Text(
                         [
                           '${group.length}개 건물',
                           _formatDate(first.createdAt),
-                          if (first.hasImages) '사진 ${first.imageUrls.length}장',
                           if (sharedPostedUntil != null)
                             '${_formatDate(sharedPostedUntil)}까지',
-                          if (first.pushSent) '알림 발송됨',
                         ].join('  ·  '),
                         style: const TextStyle(
                           fontFamily: 'Pretendard',
@@ -525,10 +526,8 @@ class _BulletinManagementScreenState
                             bulletin.buildingName != null)
                           bulletin.buildingName!,
                         _formatDate(bulletin.createdAt),
-                        if (bulletin.hasImages) '사진 ${bulletin.imageUrls.length}장',
                         if (bulletin.postedUntil != null)
                           '${_formatDate(bulletin.postedUntil!)}까지',
-                        if (bulletin.pushSent) '알림 발송됨',
                       ].join('  ·  '),
                       style: const TextStyle(
                         fontFamily: 'Pretendard',
