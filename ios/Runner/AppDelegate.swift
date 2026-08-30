@@ -36,37 +36,42 @@ import FirebaseMessaging
     print("😭 Failed to register for remote notifications:", error)
   }
 
-  // 앱이 포그라운드에 있을 때 푸시 알림 수신
+  // 앱이 포그라운드에 있을 때 푸시 알림 수신.
+  //
+  // 반드시 super 로 넘긴다. 여기서 completionHandler 를 직접 부르고 끝내면
+  // FirebaseMessaging 이 이 알림을 보지 못해 Dart 쪽 onMessage 가 오지 않는다.
+  // 배너를 띄울지 말지는 Dart 에서
+  // setForegroundNotificationPresentationOptions 로 정한다.
   override func userNotificationCenter(
     _ center: UNUserNotificationCenter,
     willPresent notification: UNNotification,
     withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
   ) {
-    print("😎 Received notification in foreground")
-
-    // 푸시 알림 데이터가 userInfo에 담겨있다
-    let userInfo = notification.request.content.userInfo
-    print("Notification data:", userInfo)
-
-    if #available(iOS 14.0, *) {
-      completionHandler([.sound, .banner, .list])
-    } else {
-      completionHandler([])
-    }
+    super.userNotificationCenter(
+      center,
+      willPresent: notification,
+      withCompletionHandler: completionHandler
+    )
   }
 
-  // 사용자가 푸시 알림을 탭할 때
+  // 사용자가 푸시 알림을 탭할 때.
+  //
+  // 여기도 반드시 super 로 넘긴다. 이 화살표가 끊겨 있으면 탭이
+  // FirebaseMessaging 까지 가지 못해서
+  //   - 앱이 떠 있다 눌린 경우: onMessageOpenedApp 이 울리지 않고
+  //   - 앱이 꺼져 있다 눌린 경우: getInitialMessage() 가 계속 nil 을 준다.
+  // 즉 iOS 에서만 '알림을 눌러도 아무 데도 가지 않는' 상태가 된다.
+  // (2026-08-30 실기기 검증에서 이 증상으로 발견했다)
   override func userNotificationCenter(
     _ center: UNUserNotificationCenter,
     didReceive response: UNNotificationResponse,
     withCompletionHandler completionHandler: @escaping () -> Void
   ) {
-    print("👆 User tapped notification")
-
-    let userInfo = response.notification.request.content.userInfo
-    print("Tapped notification data:", userInfo)
-
-    completionHandler()
+    super.userNotificationCenter(
+      center,
+      didReceive: response,
+      withCompletionHandler: completionHandler
+    )
   }
 }
 
