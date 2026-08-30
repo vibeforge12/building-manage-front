@@ -9,12 +9,16 @@ import 'package:building_manage_front/modules/auth/presentation/providers/auth_s
 
 class NoticeCreateScreen extends ConsumerStatefulWidget {
   final bool isEvent;
+
+  /// 목록에서 '수정' 을 눌러 들어온 경우 읽기 상태를 건너뛴다.
+  final bool startInEdit;
   final String? noticeId;
 
   const NoticeCreateScreen({
     super.key,
     this.isEvent = false,
     this.noticeId,
+    this.startInEdit = false,
   });
 
   @override
@@ -37,7 +41,7 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
   /// 이미 있는 글을 열었을 때는 '읽기' 로 시작한다(공고문 화면과 같은 규칙).
   /// 목록에서 눌렀다고 바로 고쳐지면 확인만 하려던 글이 바뀔 수 있다.
   /// 고치려면 '수정' 을 한 번 더 눌러야 한다.
-  late bool _readOnly = widget.noticeId != null;
+  late bool _readOnly = widget.noticeId != null && !widget.startInEdit;
 
   /// 등록할 때 입주민에게 알림을 보낼지. 공고문과 같은 규칙으로 기본은 꺼짐이다.
   /// 지금까지 공지·이벤트는 올릴 때마다 무조건 울렸는데, 그러면 입주민이

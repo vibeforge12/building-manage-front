@@ -436,9 +436,13 @@ class RouterNotifier extends ChangeNotifier {
       builder: (context, state) {
         final noticeId = state.pathParameters['noticeId']!;
         final isEvent = state.uri.queryParameters['isEvent'] == 'true';
+        // 목록에서 '수정' 을 눌러 온 경우다. 읽기 상태를 한 번 더 거치지 않고
+        // 바로 편집으로 연다 — 수정을 눌렀는데 또 수정을 눌러야 하면 이상하다.
+        final startInEdit = state.uri.queryParameters['edit'] == 'true';
         return NoticeCreateScreen(
           noticeId: noticeId,
           isEvent: isEvent,
+          startInEdit: startInEdit,
         );
       },
     ),

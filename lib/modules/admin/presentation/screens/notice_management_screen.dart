@@ -696,12 +696,12 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
                   ),
                 ),
                 const SizedBox(width: 8),
-                // 수정 버튼 (아이템 클릭으로도 이동 가능)
+                // 수정 버튼. 카드를 누르면 읽기로 열리고, 이 버튼은 바로 편집으로 연다.
                 GestureDetector(
                   onTap: () async {
                     // 수정 화면에서 돌아올 때 true가 반환되면 목록 새로고침
                     final result = await context.push<bool>(
-                      '/admin/notice-detail/$id?isEvent=${isEvent.toString()}',
+                      '/admin/notice-detail/$id?isEvent=${isEvent.toString()}&edit=true',
                     );
                     if (result == true) {
                       if (isEvent) {

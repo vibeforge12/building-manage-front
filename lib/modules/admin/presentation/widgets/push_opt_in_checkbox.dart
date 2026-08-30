@@ -56,7 +56,7 @@ class PushOptInCheckbox extends StatelessWidget {
                   ),
                   SizedBox(height: 2),
                   Text(
-                    '공고문마다 알림을 보내면 입주민이 알림을 꺼버립니다. 긴급할 때만 사용해주세요.',
+                    '올릴 때마다 알림을 보내면 입주민이 알림을 꺼버립니다. 긴급할 때만 사용해주세요.',
                     style: TextStyle(
                       fontFamily: 'Pretendard',
                       fontSize: 12,
