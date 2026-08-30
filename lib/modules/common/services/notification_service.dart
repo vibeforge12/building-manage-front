@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/widgets.dart';
@@ -51,6 +52,20 @@ class NotificationService {
         await _initializeLocalNotifications();
       } catch (e) {
         // Local notification initialization failed
+      }
+
+      // iOS 는 앱이 떠 있을 때 온 알림도 '시스템이' 배너로 띄우게 한다.
+      //
+      // 안드로이드처럼 앱이 직접 로컬 알림을 띄우면, iOS 에서는 그 알림을 눌러도
+      // 아무 일이 없다. FirebaseMessaging 이 UNUserNotificationCenter 의 delegate 를
+      // 가로채기 때문에 flutter_local_notifications 의 탭 콜백이 오지 않는다.
+      // 시스템이 띄운 알림은 onMessageOpenedApp 을 타므로 다른 상태와 경로가 같아진다.
+      if (Platform.isIOS) {
+        await _messaging.setForegroundNotificationPresentationOptions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
       }
 
       // 포그라운드 메시지 핸들러 (한 번만 등록)
@@ -210,7 +225,11 @@ class NotificationService {
 
   /// 포그라운드에서 메시지 수신 처리
   void _handleForegroundMessage(RemoteMessage message) {
-    // 알림 정보가 있으면 로컬 알림으로 표시
+    // iOS 는 위에서 시스템이 직접 띄우도록 해 두었다. 여기서 또 띄우면
+    // 배너가 두 번 뜨는 데다, 그렇게 띄운 쪽은 눌러도 이동하지 않는다.
+    if (Platform.isIOS) return;
+
+    // 안드로이드는 앱이 떠 있는 동안 FCM 이 배너를 띄우지 않으므로 직접 띄운다.
     if (message.notification != null) {
       showLocalNotification(
         title: message.notification!.title ?? '알림',

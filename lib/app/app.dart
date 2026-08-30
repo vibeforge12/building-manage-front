@@ -71,6 +71,14 @@ class BuildingManageApp extends ConsumerWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF006FFF)),
         useMaterial3: true,
+        // Material 3 는 본문이 상단바 밑으로 스크롤돼 들어가면 상단바에 색을 덧입힌다.
+        // 이 앱의 상단바는 흰 배경에 얇은 경계선 하나로 되어 있어, 그 틴트가 얹히면
+        // 스크롤할 때마다 상단바 색이 변하는 것처럼 보인다.
+        // 화면마다 따로 끄던 것을(본사 화면 몇 곳에만 걸려 있었다) 여기서 한 번에 끈다.
+        appBarTheme: const AppBarTheme(
+          scrolledUnderElevation: 0,
+          surfaceTintColor: Colors.transparent,
+        ),
       ),
       // 한국어 로케일 설정
       locale: const Locale('ko', 'KR'),
