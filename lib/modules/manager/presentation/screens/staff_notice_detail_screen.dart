@@ -2,22 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:intl/intl.dart';
 import 'package:building_manage_front/modules/manager/data/datasources/staff_complaints_remote_datasource.dart';
 
 class StaffNoticeDetailScreen extends ConsumerStatefulWidget {
   final String noticeId;
 
-  const StaffNoticeDetailScreen({
-    super.key,
-    required this.noticeId,
-  });
+  const StaffNoticeDetailScreen({super.key, required this.noticeId});
 
   @override
-  ConsumerState<StaffNoticeDetailScreen> createState() => _StaffNoticeDetailScreenState();
+  ConsumerState<StaffNoticeDetailScreen> createState() =>
+      _StaffNoticeDetailScreenState();
 }
 
-class _StaffNoticeDetailScreenState extends ConsumerState<StaffNoticeDetailScreen> {
+class _StaffNoticeDetailScreenState
+    extends ConsumerState<StaffNoticeDetailScreen> {
   bool _isLoading = true;
   Map<String, dynamic>? _noticeData;
   String? _error;
@@ -58,16 +56,6 @@ class _StaffNoticeDetailScreenState extends ConsumerState<StaffNoticeDetailScree
     }
   }
 
-  String _formatDate(String? dateString) {
-    if (dateString == null) return '';
-    try {
-      final dateTime = DateTime.parse(dateString).toLocal();
-      return DateFormat('yyyy.MM.dd').format(dateTime);
-    } catch (e) {
-      return '';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -77,145 +65,143 @@ class _StaffNoticeDetailScreenState extends ConsumerState<StaffNoticeDetailScree
             ? const Center(
                 child: CircularProgressIndicator(
                   strokeWidth: 2.5,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    Color(0xFF006FFF),
-                  ),
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF006FFF)),
                 ),
               )
             : _error != null
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.error_outline,
-                          size: 48,
-                          color: Color(0xFF757B80),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          _error!,
-                          style: const TextStyle(
-                            fontFamily: 'Pretendard',
-                            fontWeight: FontWeight.w400,
-                            fontSize: 14,
-                            color: Color(0xFF757B80),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        ElevatedButton(
-                          onPressed: _loadNoticeDetail,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF006FFF),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 12,
-                            ),
-                          ),
-                          child: const Text(
-                            '다시 시도',
-                            style: TextStyle(
-                              fontFamily: 'Pretendard',
-                              fontWeight: FontWeight.w700,
-                              fontSize: 14,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ],
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 48,
+                      color: Color(0xFF757B80),
                     ),
-                  )
-                : SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // 네비게이션 바
-                        Container(
-                          height: 48,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            border: Border(
-                              bottom: BorderSide(
-                                color: Color(0xFFE8EEF2),
-                                width: 1,
-                              ),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.arrow_back, size: 24),
-                                onPressed: () => context.pop(),
-                                padding: const EdgeInsets.all(12),
-                              ),
-                              const Expanded(
-                                child: Align(
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    '공지사항',
-                                    style: TextStyle(
-                                      fontFamily: 'Pretendard',
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 16,
-                                      color: Color(0xFF17191A),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 48),
-                            ],
+                    const SizedBox(height: 16),
+                    Text(
+                      _error!,
+                      style: const TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w400,
+                        fontSize: 14,
+                        color: Color(0xFF757B80),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: _loadNoticeDetail,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF006FFF),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: const Text(
+                        '다시 시도',
+                        style: TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 네비게이션 바
+                    Container(
+                      height: 48,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Color(0xFFE8EEF2),
+                            width: 1,
                           ),
                         ),
-                        // 콘텐츠 영역 (제목, 구분선, 이미지, 본문)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 16,
+                      ),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back, size: 24),
+                            onPressed: () => context.pop(),
+                            padding: const EdgeInsets.all(12),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // 제목
-                              Text(
-                                _noticeData?['title'] ?? '제목없음',
-                                style: const TextStyle(
+                          const Expanded(
+                            child: Align(
+                              alignment: Alignment.center,
+                              child: Text(
+                                '공지사항',
+                                style: TextStyle(
                                   fontFamily: 'Pretendard',
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 20,
-                                  color: Color(0xFF000000),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              // 제목 밑 구분선
-                              Container(
-                                height: 1,
-                                color: const Color(0xFFE8EEF2),
-                              ),
-                              const SizedBox(height: 16),
-                              // 본문 시작 부분
-                              Text(
-                                _noticeData?['content'] ?? '',
-                                style: const TextStyle(
-                                  fontFamily: 'Pretendard',
-                                  fontWeight: FontWeight.w400,
                                   fontSize: 16,
-                                  color: Color(0xFF464A4D),
-                                  height: 1.8,
+                                  color: Color(0xFF17191A),
                                 ),
                               ),
-                              // 이미지 (본문 안에)
-                              if (_noticeData?['imageUrl'] != null &&
-                                  (_noticeData?['imageUrl'] as String?)?.isNotEmpty == true) ...[
-                                const SizedBox(height: 16),
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: CachedNetworkImage(
-                                    imageUrl: _noticeData!['imageUrl'] as String,
-                                    fit: BoxFit.cover,
-                                    width: double.infinity,
-                                    height: 240,
-                                    progressIndicatorBuilder: (context, url, downloadProgress) {
+                            ),
+                          ),
+                          const SizedBox(width: 48),
+                        ],
+                      ),
+                    ),
+                    // 콘텐츠 영역 (제목, 구분선, 이미지, 본문)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 제목
+                          Text(
+                            _noticeData?['title'] ?? '제목없음',
+                            style: const TextStyle(
+                              fontFamily: 'Pretendard',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 20,
+                              color: Color(0xFF000000),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          // 제목 밑 구분선
+                          Container(height: 1, color: const Color(0xFFE8EEF2)),
+                          const SizedBox(height: 16),
+                          // 본문 시작 부분
+                          Text(
+                            _noticeData?['content'] ?? '',
+                            style: const TextStyle(
+                              fontFamily: 'Pretendard',
+                              fontWeight: FontWeight.w400,
+                              fontSize: 16,
+                              color: Color(0xFF464A4D),
+                              height: 1.8,
+                            ),
+                          ),
+                          // 이미지 (본문 안에)
+                          if (_noticeData?['imageUrl'] != null &&
+                              (_noticeData?['imageUrl'] as String?)
+                                      ?.isNotEmpty ==
+                                  true) ...[
+                            const SizedBox(height: 16),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: CachedNetworkImage(
+                                imageUrl: _noticeData!['imageUrl'] as String,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: 240,
+                                progressIndicatorBuilder:
+                                    (context, url, downloadProgress) {
                                       return Container(
                                         color: const Color(0xFFF2F8FC),
                                         height: 240,
@@ -227,25 +213,25 @@ class _StaffNoticeDetailScreenState extends ConsumerState<StaffNoticeDetailScree
                                         ),
                                       );
                                     },
-                                    errorWidget: (context, url, error) => Container(
-                                      color: const Color(0xFFF2F8FC),
-                                      height: 240,
-                                      child: const Center(
-                                        child: Icon(
-                                          Icons.error,
-                                          color: Color(0xFFA4ADB2),
-                                        ),
-                                      ),
+                                errorWidget: (context, url, error) => Container(
+                                  color: const Color(0xFFF2F8FC),
+                                  height: 240,
+                                  child: const Center(
+                                    child: Icon(
+                                      Icons.error,
+                                      color: Color(0xFFA4ADB2),
                                     ),
                                   ),
                                 ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
+                ),
+              ),
       ),
     );
   }

@@ -3,19 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/headquarters/data/datasources/department_remote_datasource.dart';
 import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
-import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
-import 'package:building_manage_front/modules/headquarters/presentation/screens/building_registration_screen.dart';
-import 'package:building_manage_front/modules/headquarters/presentation/screens/department_creation_screen.dart';
 import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
 
 class BuildingManagementScreen extends ConsumerStatefulWidget {
   const BuildingManagementScreen({super.key});
 
   @override
-  ConsumerState<BuildingManagementScreen> createState() => _BuildingManagementScreenState();
+  ConsumerState<BuildingManagementScreen> createState() =>
+      _BuildingManagementScreenState();
 }
 
-class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScreen> {
+class _BuildingManagementScreenState
+    extends ConsumerState<BuildingManagementScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<Map<String, dynamic>> _departments = [];
   bool _isLoading = false;
@@ -42,7 +41,9 @@ class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScr
     try {
       final departmentDataSource = ref.read(departmentRemoteDataSourceProvider);
       final response = await departmentDataSource.getDepartments(
-        keyword: _searchController.text.trim().isEmpty ? null : _searchController.text.trim(),
+        keyword: _searchController.text.trim().isEmpty
+            ? null
+            : _searchController.text.trim(),
         // headquartersId는 JWT 토큰에서 자동으로 인식되므로 전달하지 않음 (관리자와 동일)
       );
 
@@ -78,7 +79,10 @@ class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScr
   }
 
   /// 부서 삭제 확인 및 실행
-  Future<void> _deleteDepartment(String departmentId, String departmentName) async {
+  Future<void> _deleteDepartment(
+    String departmentId,
+    String departmentName,
+  ) async {
     // 삭제 확인 모달 표시
     final confirmed = await showCustomConfirmationDialog(
       context: context,
@@ -104,7 +108,9 @@ class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScr
 
     try {
       final departmentDataSource = ref.read(departmentRemoteDataSourceProvider);
-      final response = await departmentDataSource.deleteDepartment(departmentId);
+      final response = await departmentDataSource.deleteDepartment(
+        departmentId,
+      );
 
       if (response['success'] == true && mounted) {
         // 삭제 완료 모달 표시
@@ -113,7 +119,7 @@ class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScr
           title: '부서가 삭제되었습니다.',
           content: const SizedBox.shrink(),
           confirmText: '확인',
-          cancelText: '',  // 빈 문자열로 취소 버튼 숨김
+          cancelText: '', // 빈 문자열로 취소 버튼 숨김
           barrierDismissible: false,
         );
 
@@ -165,11 +171,7 @@ class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScr
         ),
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(1),
-          child: Divider(
-            height: 1,
-            thickness: 1,
-            color: Color(0xFFE8EEF2),
-          ),
+          child: Divider(height: 1, thickness: 1, color: Color(0xFFE8EEF2)),
         ),
         centerTitle: true,
         actions: [
@@ -210,7 +212,10 @@ class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScr
                           ),
                           prefixIcon: Icon(Icons.search, color: Colors.grey),
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
                         ),
                       ),
                     ),
@@ -218,11 +223,13 @@ class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScr
                   const SizedBox(width: 12),
 
                   // 건물 등록 버튼
-                  Container(
+                  SizedBox(
                     height: 48,
                     child: FilledButton(
                       onPressed: () async {
-                        final result = await context.push('/headquarters/building-registration');
+                        final result = await context.push(
+                          '/headquarters/building-registration',
+                        );
                         // 건물 등록 성공 시 부서 목록도 새로고침
                         if (result == true && mounted) {
                           _loadDepartments();
@@ -262,11 +269,13 @@ class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScr
                       color: Colors.black,
                     ),
                   ),
-                  Container(
+                  SizedBox(
                     height: 48,
                     child: FilledButton(
                       onPressed: () async {
-                        final result = await context.push('/headquarters/department-creation');
+                        final result = await context.push(
+                          '/headquarters/department-creation',
+                        );
                         // 부서 생성 성공 시 목록 새로고침
                         if (result == true && mounted) {
                           _loadDepartments();
@@ -301,7 +310,10 @@ class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScr
                 Center(
                   child: Column(
                     children: [
-                      Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+                      Text(
+                        _errorMessage!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 8),
                       TextButton(
                         onPressed: _loadDepartments,
@@ -332,7 +344,10 @@ class _BuildingManagementScreenState extends ConsumerState<BuildingManagementScr
                             _deleteDepartment(departmentId, departmentName);
                           },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(36),

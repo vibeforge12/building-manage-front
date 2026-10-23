@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/admin/presentation/providers/admin_providers.dart';
-import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
 import 'package:building_manage_front/shared/widgets/error_alert.dart';
 import 'package:building_manage_front/core/utils/error_message.dart';
@@ -11,30 +10,19 @@ class StaffManagementScreen extends ConsumerStatefulWidget {
   const StaffManagementScreen({super.key});
 
   @override
-  ConsumerState<StaffManagementScreen> createState() => _StaffManagementScreenState();
+  ConsumerState<StaffManagementScreen> createState() =>
+      _StaffManagementScreenState();
 }
 
 class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
   List<Map<String, dynamic>> _staffs = [];
   bool _isLoading = false;
   String? _errorMessage;
-  String? _buildingName;
 
   @override
   void initState() {
     super.initState();
     _loadStaffs();
-    _loadBuildingName();
-  }
-
-  void _loadBuildingName() {
-    // 현재 로그인한 관리자의 이름을 건물명으로 사용
-    final currentUser = ref.read(currentUserProvider);
-    if (currentUser != null) {
-      setState(() {
-        _buildingName = currentUser.name;
-      });
-    }
   }
 
   Future<void> _loadStaffs() async {
@@ -69,7 +57,6 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
   }
 
   Future<void> _deleteStaff(String staffId, String staffName) async {
-
     final confirmed = await showCustomConfirmationDialog(
       context: context,
       content: Text(
@@ -134,11 +121,7 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
         centerTitle: true,
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(1),
-          child: Divider(
-            height: 1,
-            thickness: 1,
-            color: Color(0xFFE8EEF2),
-          ),
+          child: Divider(height: 1, thickness: 1, color: Color(0xFFE8EEF2)),
         ),
       ),
       // 하단 고정 버튼·마지막 목록 항목이 시스템 내비게이션 바에 가리지 않도록 감싼다.
@@ -146,27 +129,30 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _errorMessage != null
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _loadStaffs,
-                          child: const Text('다시 시도'),
-                        ),
-                      ],
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      _errorMessage!,
+                      style: const TextStyle(color: Colors.red),
                     ),
-                  )
-                : _staffs.isEmpty
-                    ? const Center(
-                        child: Text(
-                          '등록된 담당자가 없습니다.',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      )
-                    : _buildStaffList(),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _loadStaffs,
+                      child: const Text('다시 시도'),
+                    ),
+                  ],
+                ),
+              )
+            : _staffs.isEmpty
+            ? const Center(
+                child: Text(
+                  '등록된 담당자가 없습니다.',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              )
+            : _buildStaffList(),
       ),
     );
   }
@@ -285,7 +271,9 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
               // 수정 버튼
               GestureDetector(
                 onTap: () async {
-                  final result = await context.push('/admin/staff-edit/$staffId');
+                  final result = await context.push(
+                    '/admin/staff-edit/$staffId',
+                  );
                   // 수정 성공 시 목록 새로고침
                   if (result == true && mounted) {
                     _loadStaffs();

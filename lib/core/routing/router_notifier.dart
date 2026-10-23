@@ -66,6 +66,11 @@ import 'package:building_manage_front/modules/headquarters/presentation/screens/
 import 'package:building_manage_front/modules/headquarters/presentation/screens/headquarters_profile_screen.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/headquarters_change_password_screen.dart';
 import 'package:building_manage_front/modules/auth/presentation/screens/splash_screen.dart';
+import 'package:building_manage_front/modules/life_service/presentation/screens/life_service_list_screen.dart';
+import 'package:building_manage_front/modules/life_service/presentation/screens/life_service_history_screen.dart';
+import 'package:building_manage_front/modules/life_service/presentation/screens/life_service_detail_screen.dart';
+import 'package:building_manage_front/modules/life_service/presentation/screens/life_service_form_screen.dart';
+import 'package:building_manage_front/modules/life_service/presentation/screens/life_service_applicant_list_screen.dart';
 
 class RouterNotifier extends ChangeNotifier {
   final Ref _ref;
@@ -180,10 +185,7 @@ class RouterNotifier extends ChangeNotifier {
       builder: (context, state) {
         final phoneNumber = state.uri.queryParameters['phoneNumber']!;
         final code = state.uri.queryParameters['code']!;
-        return NewPasswordResetScreen(
-          phoneNumber: phoneNumber,
-          code: code,
-        );
+        return NewPasswordResetScreen(phoneNumber: phoneNumber, code: code);
       },
     ),
 
@@ -256,9 +258,8 @@ class RouterNotifier extends ChangeNotifier {
     GoRoute(
       path: '/bulletins/:bulletinId/edit',
       name: 'bulletinEdit',
-      builder: (context, state) => BulletinCreateScreen(
-        bulletinId: state.pathParameters['bulletinId']!,
-      ),
+      builder: (context, state) =>
+          BulletinCreateScreen(bulletinId: state.pathParameters['bulletinId']!),
     ),
 
     // 공고문 상세 (보호된 경로) - 입주민용
@@ -269,6 +270,48 @@ class RouterNotifier extends ChangeNotifier {
         final bulletinId = state.pathParameters['bulletinId']!;
         return BulletinDetailScreen(bulletinId: bulletinId);
       },
+    ),
+
+    GoRoute(
+      path: '/user/life-services',
+      name: 'residentLifeServices',
+      builder: (context, state) => const LifeServiceListScreen(),
+    ),
+    GoRoute(
+      path: '/user/life-services/history',
+      name: 'lifeServiceHistory',
+      builder: (context, state) => const LifeServiceHistoryScreen(),
+    ),
+    GoRoute(
+      path: '/operations/life-services/manage',
+      name: 'lifeServiceManage',
+      builder: (context, state) => const LifeServiceListScreen(),
+    ),
+    GoRoute(
+      path: '/operations/life-services/create',
+      name: 'lifeServiceCreate',
+      builder: (context, state) => const LifeServiceFormScreen(),
+    ),
+    GoRoute(
+      path: '/operations/life-services/:lifeServiceId/edit',
+      name: 'lifeServiceEdit',
+      builder: (context, state) => LifeServiceFormScreen(
+        lifeServiceId: state.pathParameters['lifeServiceId']!,
+      ),
+    ),
+    GoRoute(
+      path: '/operations/life-services/:lifeServiceId/applicants',
+      name: 'lifeServiceApplicants',
+      builder: (context, state) => LifeServiceApplicantListScreen(
+        lifeServiceId: state.pathParameters['lifeServiceId']!,
+      ),
+    ),
+    GoRoute(
+      path: '/life-services/:lifeServiceId',
+      name: 'lifeServiceDetail',
+      builder: (context, state) => LifeServiceDetailScreen(
+        lifeServiceId: state.pathParameters['lifeServiceId']!,
+      ),
     ),
 
     // 공지사항 목록 (보호된 경로) - 입주민용
@@ -690,11 +733,9 @@ class RouterNotifier extends ChangeNotifier {
   /// 대체하지 않고, 접두어로 표현할 수 없는 경로만 추가로 받는다.
   /// **여기 넣지 않고 새 최상위 경로를 만들면 그 경로는 보호되지 않는다.**
   static const Map<String, Set<UserType>> _sharedRoutePrefixes = {
-    '/bulletins/': {
-      UserType.headquarters,
-      UserType.admin,
-      UserType.manager,
-    },
+    '/bulletins/': {UserType.headquarters, UserType.admin, UserType.manager},
+    '/operations/life-services/': {UserType.admin, UserType.manager},
+    '/life-services/': {UserType.user, UserType.admin, UserType.manager},
   };
 
   /// 해당 경로를 쓸 수 있는 역할들. 공개 경로면 null.

@@ -32,7 +32,6 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
 
   String _selectedTarget = 'BOTH'; // 전체
   String? _selectedDepartmentId;
-  String _selectedDepartmentName = '부서 선택';
 
   List<Map<String, dynamic>> _departments = [];
   bool _isDepartmentsLoading = false;
@@ -114,11 +113,8 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
             final departmentObj = data['department'];
             if (departmentObj != null && departmentObj is Map) {
               final deptId = departmentObj['id'] as String?;
-              final deptName = departmentObj['name'] as String?;
-
               if (deptId != null) {
                 _selectedDepartmentId = deptId;
-                _selectedDepartmentName = deptName ?? '부서 선택';
               }
             }
           }
@@ -205,10 +201,10 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
       // BOTH/RESIDENT이거나 "전체 부서"(ALL) 선택 시 null
       final effectiveDepartmentId =
           (_selectedTarget == 'STAFF' &&
-           _selectedDepartmentId != null &&
-           _selectedDepartmentId != 'ALL')
-              ? _selectedDepartmentId
-              : null;
+              _selectedDepartmentId != null &&
+              _selectedDepartmentId != 'ALL')
+          ? _selectedDepartmentId
+          : null;
 
       if (_isEditing && widget.noticeId != null) {
         // 수정 모드
@@ -251,7 +247,7 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
       }
 
       if (mounted) {
-        context.pop(true);  // true를 반환하여 목록 새로고침 신호
+        context.pop(true); // true를 반환하여 목록 새로고침 신호
       }
     } catch (e) {
       if (!mounted) return;
@@ -342,305 +338,320 @@ class _NoticeCreateScreenState extends ConsumerState<NoticeCreateScreen> {
       // 목록처럼 스크롤되는 화면은 티가 안 나지만, 하단에 고정된 버튼은 그대로 잘린다.
       body: SafeArea(
         child: Form(
-        key: _formKey,
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    // 유저 섹션 드롭다운
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          DropdownMenu<String>(
-                            enabled: !_readOnly,
-                            initialSelection: _selectedTarget,
-                            width: MediaQuery.of(context).size.width - 32,
-                            menuHeight: 300,
-                            menuStyle: MenuStyle(
-                              backgroundColor: WidgetStateProperty.all(Colors.white),
-                              surfaceTintColor: WidgetStateProperty.all(Colors.white),
-                            ),
-                            inputDecorationTheme: InputDecorationTheme(
-                              filled: true,
-                              fillColor: const Color(0xFFF2F8FC),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFFE8EEF2),
-                                  width: 1,
-                                ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFFE8EEF2),
-                                  width: 1,
-                                ),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 16,
-                              ),
-                            ),
-                            dropdownMenuEntries: const [
-                              DropdownMenuEntry<String>(
-                                value: 'BOTH',
-                                label: '전체',
-                              ),
-                              DropdownMenuEntry<String>(
-                                value: 'RESIDENT',
-                                label: '유저',
-                              ),
-                              DropdownMenuEntry<String>(
-                                value: 'STAFF',
-                                label: '담당자',
-                              ),
-                            ],
-                            onSelected: (value) {
-                              if (value != null) {
-                                setState(() {
-                                  _selectedTarget = value;
-                                  // 담당자가 아닌 경우 부서 선택 초기화
-                                  if (value != 'STAFF') {
-                                    _selectedDepartmentId = null;
-                                    _selectedDepartmentName = '부서 선택';
-                                  }
-                                });
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // 부서 드롭다운 (담당자 선택 시에만 표시)
-                    if (!widget.isEvent && _selectedTarget == 'STAFF')
+          key: _formKey,
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      // 유저 섹션 드롭다운
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        padding: const EdgeInsets.all(16.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const SizedBox(height: 8),
-                            _isDepartmentsLoading
-                                ? Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 16,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF2F8FC),
-                                    border: Border.all(
-                                      color: const Color(0xFFE8EEF2),
-                                      width: 1,
-                                    ),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        '부서 목록 불러오는 중...',
-                                        style: TextStyle(
-                                          fontFamily: 'Pretendard',
-                                          fontWeight: FontWeight.w400,
-                                          fontSize: 16,
-                                          color: Color(0xFF757B80),
-                                        ),
-                                      ),
-                                      SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(strokeWidth: 2),
-                                      ),
-                                    ],
-                                  ),
-                                )
-                              : DropdownMenu<String>(
-                                  enabled: !_readOnly,
-                                  initialSelection: _selectedDepartmentId,
-                                  width: MediaQuery.of(context).size.width - 32,
-                                  menuHeight: 300,
-                                  menuStyle: MenuStyle(
-                                    backgroundColor: WidgetStateProperty.all(Colors.white),
-                                    surfaceTintColor: WidgetStateProperty.all(Colors.white),
-                                  ),
-                                  inputDecorationTheme: InputDecorationTheme(
-                                    filled: true,
-                                    fillColor: const Color(0xFFF2F8FC),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: const BorderSide(
-                                        color: Color(0xFFE8EEF2),
-                                        width: 1,
-                                      ),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: const BorderSide(
-                                        color: Color(0xFFE8EEF2),
-                                        width: 1,
-                                      ),
-                                    ),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 16,
-                                    ),
-                                  ),
-                                  dropdownMenuEntries: [
-                                    const DropdownMenuEntry<String>(
-                                      value: 'ALL',
-                                      label: '전체 부서',
-                                    ),
-                                    ..._departments.map((dept) {
-                                      return DropdownMenuEntry<String>(
-                                        value: dept['id'] as String,
-                                        label: dept['name'] as String,
-                                      );
-                                    }),
-                                  ],
-                                  onSelected: (value) {
-                                    if (value != null) {
-                                      setState(() {
-                                        _selectedDepartmentId = value;
-                                        _selectedDepartmentName = _departments
-                                            .firstWhere((dept) => dept['id'] == value)['name']
-                                            as String;
-                                      });
-                                    }
-                                  },
+                            DropdownMenu<String>(
+                              enabled: !_readOnly,
+                              initialSelection: _selectedTarget,
+                              width: MediaQuery.of(context).size.width - 32,
+                              menuHeight: 300,
+                              menuStyle: MenuStyle(
+                                backgroundColor: WidgetStateProperty.all(
+                                  Colors.white,
                                 ),
-                        ],
-                      ),
-                    ),
-                    // 알림 발송 여부. 등록할 때만 고른다 —
-                    // 수정으로 다시 보낼 수는 없다(공고문과 같은 규칙).
-                    if (widget.noticeId == null)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: PushOptInCheckbox(
-                          value: _sendPush,
-                          onChanged: (value) => setState(() => _sendPush = value),
+                                surfaceTintColor: WidgetStateProperty.all(
+                                  Colors.white,
+                                ),
+                              ),
+                              inputDecorationTheme: InputDecorationTheme(
+                                filled: true,
+                                fillColor: const Color(0xFFF2F8FC),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE8EEF2),
+                                    width: 1,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE8EEF2),
+                                    width: 1,
+                                  ),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 16,
+                                ),
+                              ),
+                              dropdownMenuEntries: const [
+                                DropdownMenuEntry<String>(
+                                  value: 'BOTH',
+                                  label: '전체',
+                                ),
+                                DropdownMenuEntry<String>(
+                                  value: 'RESIDENT',
+                                  label: '유저',
+                                ),
+                                DropdownMenuEntry<String>(
+                                  value: 'STAFF',
+                                  label: '담당자',
+                                ),
+                              ],
+                              onSelected: (value) {
+                                if (value != null) {
+                                  setState(() {
+                                    _selectedTarget = value;
+                                    // 담당자가 아닌 경우 부서 선택 초기화
+                                    if (value != 'STAFF') {
+                                      _selectedDepartmentId = null;
+                                    }
+                                  });
+                                }
+                              },
+                            ),
+                          ],
                         ),
                       ),
 
-                    const SizedBox(height: 16),
+                      // 부서 드롭다운 (담당자 선택 시에만 표시)
+                      if (!widget.isEvent && _selectedTarget == 'STAFF')
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 8),
+                              _isDepartmentsLoading
+                                  ? Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 16,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF2F8FC),
+                                        border: Border.all(
+                                          color: const Color(0xFFE8EEF2),
+                                          width: 1,
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            '부서 목록 불러오는 중...',
+                                            style: TextStyle(
+                                              fontFamily: 'Pretendard',
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 16,
+                                              color: Color(0xFF757B80),
+                                            ),
+                                          ),
+                                          SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  : DropdownMenu<String>(
+                                      enabled: !_readOnly,
+                                      initialSelection: _selectedDepartmentId,
+                                      width:
+                                          MediaQuery.of(context).size.width -
+                                          32,
+                                      menuHeight: 300,
+                                      menuStyle: MenuStyle(
+                                        backgroundColor:
+                                            WidgetStateProperty.all(
+                                              Colors.white,
+                                            ),
+                                        surfaceTintColor:
+                                            WidgetStateProperty.all(
+                                              Colors.white,
+                                            ),
+                                      ),
+                                      inputDecorationTheme:
+                                          InputDecorationTheme(
+                                            filled: true,
+                                            fillColor: const Color(0xFFF2F8FC),
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                              borderSide: const BorderSide(
+                                                color: Color(0xFFE8EEF2),
+                                                width: 1,
+                                              ),
+                                            ),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                              borderSide: const BorderSide(
+                                                color: Color(0xFFE8EEF2),
+                                                width: 1,
+                                              ),
+                                            ),
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
+                                                  horizontal: 16,
+                                                  vertical: 16,
+                                                ),
+                                          ),
+                                      dropdownMenuEntries: [
+                                        const DropdownMenuEntry<String>(
+                                          value: 'ALL',
+                                          label: '전체 부서',
+                                        ),
+                                        ..._departments.map((dept) {
+                                          return DropdownMenuEntry<String>(
+                                            value: dept['id'] as String,
+                                            label: dept['name'] as String,
+                                          );
+                                        }),
+                                      ],
+                                      onSelected: (value) {
+                                        if (value != null) {
+                                          setState(() {
+                                            _selectedDepartmentId = value;
+                                          });
+                                        }
+                                      },
+                                    ),
+                            ],
+                          ),
+                        ),
+                      // 알림 발송 여부. 등록할 때만 고른다 —
+                      // 수정으로 다시 보낼 수는 없다(공고문과 같은 규칙).
+                      if (widget.noticeId == null)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: PushOptInCheckbox(
+                            value: _sendPush,
+                            onChanged: (value) =>
+                                setState(() => _sendPush = value),
+                          ),
+                        ),
 
-                    // 제목 및 내용 입력
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // 제목
-                          TextFormField(
-                            controller: _titleController,
-                            readOnly: _readOnly,
-                            decoration: const InputDecoration(
-                              hintText: '제목 입력란',
-                              hintStyle: TextStyle(
+                      const SizedBox(height: 16),
+
+                      // 제목 및 내용 입력
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // 제목
+                            TextFormField(
+                              controller: _titleController,
+                              readOnly: _readOnly,
+                              decoration: const InputDecoration(
+                                hintText: '제목 입력란',
+                                hintStyle: TextStyle(
+                                  fontFamily: 'Pretendard',
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 20,
+                                  color: Color(0xFFA4ADB2),
+                                ),
+                                border: InputBorder.none,
+                              ),
+                              style: const TextStyle(
                                 fontFamily: 'Pretendard',
                                 fontWeight: FontWeight.w700,
                                 fontSize: 20,
-                                color: Color(0xFFA4ADB2),
+                                color: Color(0xFF17191A),
                               ),
-                              border: InputBorder.none,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return '제목을 입력해주세요';
+                                }
+                                return null;
+                              },
                             ),
-                            style: const TextStyle(
-                              fontFamily: 'Pretendard',
-                              fontWeight: FontWeight.w700,
-                              fontSize: 20,
-                              color: Color(0xFF17191A),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return '제목을 입력해주세요';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 8),
-                          const Divider(height: 1, color: Color(0xFFE8EEF2)),
-                          const SizedBox(height: 8),
-                          // 내용
-                          TextFormField(
-                            controller: _contentController,
-                            readOnly: _readOnly,
-                            decoration: const InputDecoration(
-                              hintText: '내용을 입력하세요.',
-                              hintStyle: TextStyle(
+                            const SizedBox(height: 8),
+                            const Divider(height: 1, color: Color(0xFFE8EEF2)),
+                            const SizedBox(height: 8),
+                            // 내용
+                            TextFormField(
+                              controller: _contentController,
+                              readOnly: _readOnly,
+                              decoration: const InputDecoration(
+                                hintText: '내용을 입력하세요.',
+                                hintStyle: TextStyle(
+                                  fontFamily: 'Pretendard',
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 16,
+                                  color: Color(0xFFA4ADB2),
+                                  height: 1.8,
+                                ),
+                                border: InputBorder.none,
+                              ),
+                              style: const TextStyle(
                                 fontFamily: 'Pretendard',
                                 fontWeight: FontWeight.w400,
                                 fontSize: 16,
-                                color: Color(0xFFA4ADB2),
+                                color: Color(0xFF17191A),
                                 height: 1.8,
                               ),
-                              border: InputBorder.none,
+                              maxLines: 10,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return '내용을 입력해주세요';
+                                }
+                                return null;
+                              },
                             ),
-                            style: const TextStyle(
-                              fontFamily: 'Pretendard',
-                              fontWeight: FontWeight.w400,
-                              fontSize: 16,
-                              color: Color(0xFF17191A),
-                              height: 1.8,
-                            ),
-                            maxLines: 10,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return '내용을 입력해주세요';
-                              }
-                              return null;
-                            },
-                          ),
-                        ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // 등록 버튼. 읽는 중에는 없앤다.
+              if (!_readOnly)
+                Container(
+                  padding: const EdgeInsets.all(22),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: FilledButton(
+                      onPressed: _isFormValid ? _submitNotice : null,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: _isFormValid
+                            ? const Color(0xFF006FFF)
+                            : const Color(0xFFE8EEF2),
+                        disabledBackgroundColor: const Color(0xFFE8EEF2),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        _isEditing ? '수정하기' : '등록하기',
+                        style: TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: _isFormValid
+                              ? Colors.white
+                              : const Color(0xFFA4ADB2),
+                        ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-
-            // 등록 버튼. 읽는 중에는 없앤다.
-            if (!_readOnly)
-              Container(
-                padding: const EdgeInsets.all(22),
-              child: SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: FilledButton(
-                  onPressed: _isFormValid ? _submitNotice : null,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: _isFormValid
-                        ? const Color(0xFF006FFF)
-                        : const Color(0xFFE8EEF2),
-                    disabledBackgroundColor: const Color(0xFFE8EEF2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(
-                    _isEditing ? '수정하기' : '등록하기',
-                    style: TextStyle(
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                      color: _isFormValid
-                          ? Colors.white
-                          : const Color(0xFFA4ADB2),
-                    ),
                   ),
                 ),
-              ),
-            ),
-          ],
-        ),
+            ],
+          ),
         ),
       ),
     );
   }
-
 }

@@ -292,7 +292,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" embed_and_thin";
+			shellScript = "set -e\n/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" embed_and_thin\n/bin/bash \"$SRCROOT/../tool/ios_firebase_config.sh\"";
 		};
 		460E39A42A44D9732E45C803 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -501,13 +501,15 @@
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				DEVELOPMENT_TEAM = 6FPY2KA2DA;
 				ENABLE_BITCODE = NO;
-				INFOPLIST_FILE = Runner/Info.plist;
+				BM_INFO_PLIST = Runner/Info.plist;
+				INFOPLIST_FILE = "$(BM_INFO_PLIST)";
 				INFOPLIST_KEY_CFBundleDisplayName = "엄지";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.j2partners.buildingManageFront;
+				BM_BUNDLE_ID = com.j2partners.buildingManageFront;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(BM_BUNDLE_ID)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -693,13 +695,15 @@
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				DEVELOPMENT_TEAM = 6FPY2KA2DA;
 				ENABLE_BITCODE = NO;
-				INFOPLIST_FILE = Runner/Info.plist;
+				BM_INFO_PLIST = Runner/Info.plist;
+				INFOPLIST_FILE = "$(BM_INFO_PLIST)";
 				INFOPLIST_KEY_CFBundleDisplayName = "엄지";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.j2partners.buildingManageFront;
+				BM_BUNDLE_ID = com.j2partners.buildingManageFront;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(BM_BUNDLE_ID)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -722,13 +726,15 @@
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				DEVELOPMENT_TEAM = 6FPY2KA2DA;
 				ENABLE_BITCODE = NO;
-				INFOPLIST_FILE = Runner/Info.plist;
+				BM_INFO_PLIST = Runner/Info.plist;
+				INFOPLIST_FILE = "$(BM_INFO_PLIST)";
 				INFOPLIST_KEY_CFBundleDisplayName = "엄지";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.j2partners.buildingManageFront;
+				BM_BUNDLE_ID = com.j2partners.buildingManageFront;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(BM_BUNDLE_ID)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;

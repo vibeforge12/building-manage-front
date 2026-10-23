@@ -7,7 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:building_manage_front/app/app.dart';
 import 'package:building_manage_front/core/network/api_client.dart';
 import 'package:building_manage_front/core/network/interceptors/auth_interceptor.dart';
-import 'firebase_options.dart';
+import 'package:building_manage_front/core/config/app_config.dart';
+import 'core/config/firebase_environment.dart';
 
 /// 백그라운드에서 FCM 메시지 처리
 /// 앱이 종료되거나 백그라운드에 있을 때 실행
@@ -17,7 +18,9 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // Firebase는 이미 초기화되어 있을 수 있으므로 조건부 초기화
   try {
     if (Firebase.apps.isEmpty) {
-      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+      await Firebase.initializeApp(
+        options: FirebaseEnvironment.currentPlatform,
+      );
     }
   } catch (e) {
     // Firebase 이미 초기화됨 - 무시
@@ -45,18 +48,22 @@ void main() async {
     // .env file load failed, using defaults
   }
 
-  // Firebase 초기화 (실패해도 앱 실행)
-  try {
-    if (Firebase.apps.isEmpty) {
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
+  // Dev builds explicitly opt into their separate Firebase project.
+  if (AppConfig.fcmEnabled) {
+    try {
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp(
+          options: FirebaseEnvironment.currentPlatform,
+        );
+      }
+      // FCM 백그라운드 메시지 핸들러 등록
+      FirebaseMessaging.onBackgroundMessage(
+        _firebaseMessagingBackgroundHandler,
       );
+    } catch (e) {
+      initError = 'Firebase 초기화 실패';
+      // Firebase 실패해도 앱은 실행 (FCM 기능만 비활성화)
     }
-    // FCM 백그라운드 메시지 핸들러 등록
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  } catch (e) {
-    initError = 'Firebase 초기화 실패';
-    // Firebase 실패해도 앱은 실행 (FCM 기능만 비활성화)
   }
 
   // API 클라이언트 초기화 (실패해도 앱 실행)
@@ -75,11 +82,7 @@ void main() async {
   }
 
   // 앱 실행 (초기화 에러가 있어도 실행)
-  runApp(
-    ProviderScope(
-      child: BuildingManageApp(initError: initError),
-    ),
-  );
+  runApp(ProviderScope(child: BuildingManageApp(initError: initError)));
 }
 
 /// 앱 첫 실행 시 저장된 토큰 삭제

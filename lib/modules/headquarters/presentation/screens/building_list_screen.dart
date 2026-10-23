@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/common/data/datasources/building_list_remote_datasource.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/providers/headquarters_providers.dart';
 import 'package:building_manage_front/modules/headquarters/presentation/screens/building_edit_screen.dart';
-import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
 import '../../../../core/utils/error_message.dart';
 
@@ -16,53 +15,6 @@ class BuildingListScreen extends ConsumerStatefulWidget {
 }
 
 class _BuildingListScreenState extends ConsumerState<BuildingListScreen> {
-  List<Map<String, dynamic>> _buildings = [];
-  bool _isLoading = false;
-  String? _errorMessage;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadBuildings();
-  }
-
-  Future<void> _loadBuildings() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final buildingDataSource = ref.read(buildingListRemoteDataSourceProvider);
-      final response = await buildingDataSource.getBuildings(
-        limit: 100,
-        sortOrder: 'DESC',
-      );
-
-      if (response['success'] == true) {
-        final data = response['data'];
-        setState(() {
-          _buildings = List<Map<String, dynamic>>.from(data['items'] ?? []);
-        });
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        if (e is ApiException) {
-          _errorMessage = e.userFriendlyMessage;
-        } else {
-          _errorMessage = '건물 목록을 불러오는 중 오류가 발생했습니다.';
-        }
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
   Future<void> _deleteBuilding(String buildingId, String buildingName) async {
     // 삭제 확인 다이얼로그
     final confirmed = await showCustomConfirmationDialog(
@@ -71,10 +23,9 @@ class _BuildingListScreenState extends ConsumerState<BuildingListScreen> {
       content: const SizedBox.shrink(), // 본문 없이 제목만 중앙 굵게
       confirmText: '예',
       cancelText: '아니오',
-      confirmOnLeft: true,     // ← 이미지처럼 "예"를 왼쪽에
+      confirmOnLeft: true, // ← 이미지처럼 "예"를 왼쪽에
       barrierDismissible: false,
     );
-
 
     if (confirmed != true) return;
 
@@ -153,10 +104,12 @@ class _BuildingListScreenState extends ConsumerState<BuildingListScreen> {
         actions: [
           TextButton(
             onPressed: () async {
-              final result = await context.push('/headquarters/building-registration');
+              final result = await context.push(
+                '/headquarters/building-registration',
+              );
               // 건물 등록 성공 시 목록 새로고침
               if (result == true && mounted) {
-                _loadBuildings();
+                ref.invalidate(buildingsProvider(null));
               }
             },
             child: const Text(
@@ -192,12 +145,17 @@ class _BuildingListScreenState extends ConsumerState<BuildingListScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(userMessageOf(error, fallback: '건물 목록을 불러오는 중 오류가 발생했습니다.'),
-                        style: const TextStyle(color: Colors.red)),
+                    Text(
+                      userMessageOf(
+                        error,
+                        fallback: '건물 목록을 불러오는 중 오류가 발생했습니다.',
+                      ),
+                      style: const TextStyle(color: Colors.red),
+                    ),
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () {
-                        ref.refresh(buildingsProvider(null));
+                        ref.invalidate(buildingsProvider(null));
                       },
                       child: const Text('다시 시도'),
                     ),
@@ -232,7 +190,8 @@ class _BuildingListScreenState extends ConsumerState<BuildingListScreen> {
                       onEdit: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (context) => BuildingEditScreen(building: building),
+                            builder: (context) =>
+                                BuildingEditScreen(building: building),
                           ),
                         );
                       },
@@ -280,10 +239,7 @@ class _BuildingItem extends StatelessWidget {
               decoration: BoxDecoration(
                 color: const Color(0xFFF8F9FA),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: const Color(0xFFE8EEF2),
-                  width: 1,
-                ),
+                border: Border.all(color: const Color(0xFFE8EEF2), width: 1),
               ),
               child: imageUrl != null && imageUrl.isNotEmpty
                   ? ClipRRect(
@@ -349,7 +305,10 @@ class _BuildingItem extends StatelessWidget {
                   onTap: onDelete,
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(8),

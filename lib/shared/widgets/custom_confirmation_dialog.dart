@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 Future<bool?> showCustomConfirmationDialog({
   required BuildContext context,
   String? title,
-  required Widget content,            // 본문 위젯(없으면 SizedBox.shrink())
+  required Widget content, // 본문 위젯(없으면 SizedBox.shrink())
   String confirmText = '확인',
   String cancelText = '취소',
-  bool isDestructive = false,         // 텍스트 색만 빨강 계열로
+  bool isDestructive = false, // 텍스트 색만 빨강 계열로
   bool barrierDismissible = true,
-  bool confirmOnLeft = true,          // ← 이미지처럼 "확인(예)"을 왼쪽에 둘지
+  bool confirmOnLeft = true, // ← 이미지처럼 "확인(예)"을 왼쪽에 둘지
 }) {
   return showDialog<bool>(
     context: context,
@@ -33,7 +33,6 @@ class _CustomConfirmationDialog extends StatelessWidget {
   final bool confirmOnLeft;
 
   const _CustomConfirmationDialog({
-    super.key,
     this.title,
     required this.content,
     required this.confirmText,
@@ -44,18 +43,19 @@ class _CustomConfirmationDialog extends StatelessWidget {
 
   static const _primaryBlue = Color(0xFF006FFF);
   static const _lightBlueBg = Color(0xFFEFF6FF);
-  static const _divider = Color(0xFFE8EEF2);
 
   @override
   Widget build(BuildContext context) {
     // 버튼 공통 스타일
-    final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(16));
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+    );
 
     final confirmBtn = FilledButton(
       onPressed: () => Navigator.of(context).pop(true),
       style: FilledButton.styleFrom(
-        backgroundColor: _lightBlueBg,     // 옅은 파랑 배경
-        foregroundColor: _primaryBlue,     // 파랑 텍스트
+        backgroundColor: _lightBlueBg, // 옅은 파랑 배경
+        foregroundColor: _primaryBlue, // 파랑 텍스트
         minimumSize: const Size.fromHeight(64),
         shape: shape,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -75,8 +75,8 @@ class _CustomConfirmationDialog extends StatelessWidget {
     final cancelBtn = FilledButton(
       onPressed: () => Navigator.of(context).pop(false),
       style: FilledButton.styleFrom(
-        backgroundColor: _primaryBlue,     // 진한 파랑 배경
-        foregroundColor: Colors.white,     // 흰 텍스트
+        backgroundColor: _primaryBlue, // 진한 파랑 배경
+        foregroundColor: Colors.white, // 흰 텍스트
         minimumSize: const Size.fromHeight(64),
         shape: shape,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -98,8 +98,16 @@ class _CustomConfirmationDialog extends StatelessWidget {
     final buttons = cancelText.trim().isEmpty
         ? <Widget>[Expanded(child: confirmBtn)]
         : confirmOnLeft
-            ? <Widget>[Expanded(child: cancelBtn), const SizedBox(width: 16), Expanded(child: confirmBtn)]
-            : <Widget>[Expanded(child: confirmBtn), const SizedBox(width: 16), Expanded(child: cancelBtn)];
+        ? <Widget>[
+            Expanded(child: cancelBtn),
+            const SizedBox(width: 16),
+            Expanded(child: confirmBtn),
+          ]
+        : <Widget>[
+            Expanded(child: confirmBtn),
+            const SizedBox(width: 16),
+            Expanded(child: cancelBtn),
+          ];
 
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),

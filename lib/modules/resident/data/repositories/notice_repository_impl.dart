@@ -39,7 +39,7 @@ class NoticeRepositoryImpl implements NoticeRepository {
   @override
   Future<Notice> getNoticeById(String id) async {
     try {
-      final result = await _dataSource.getNoticeById(id);
+      final result = await _dataSource.getUserNoticeById(id);
       return Notice.fromJson(result['data'] ?? result);
     } catch (e) {
       rethrow;

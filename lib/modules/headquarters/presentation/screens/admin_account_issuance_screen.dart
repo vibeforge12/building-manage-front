@@ -13,10 +13,12 @@ class AdminAccountIssuanceScreen extends ConsumerStatefulWidget {
   const AdminAccountIssuanceScreen({super.key});
 
   @override
-  ConsumerState<AdminAccountIssuanceScreen> createState() => _AdminAccountIssuanceScreenState();
+  ConsumerState<AdminAccountIssuanceScreen> createState() =>
+      _AdminAccountIssuanceScreenState();
 }
 
-class _AdminAccountIssuanceScreenState extends ConsumerState<AdminAccountIssuanceScreen> {
+class _AdminAccountIssuanceScreenState
+    extends ConsumerState<AdminAccountIssuanceScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -89,9 +91,11 @@ class _AdminAccountIssuanceScreenState extends ConsumerState<AdminAccountIssuanc
     });
 
     try {
-      final adminAccountDataSource = ref.read(adminAccountRemoteDataSourceProvider);
+      final adminAccountDataSource = ref.read(
+        adminAccountRemoteDataSourceProvider,
+      );
 
-      final response = await adminAccountDataSource.createAdminAccount(
+      await adminAccountDataSource.createAdminAccount(
         name: _nameController.text.trim(),
         phoneNumber: _phoneController.text.trim(),
         buildingId: _selectedBuilding!['id'].toString(),
@@ -103,7 +107,14 @@ class _AdminAccountIssuanceScreenState extends ConsumerState<AdminAccountIssuanc
         await showCustomConfirmationDialog(
           context: context,
           title: '',
-          content: const Text('관리자 계정이 발급 되었습니다.', style: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.w700),),
+          content: const Text(
+            '관리자 계정이 발급 되었습니다.',
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           confirmText: '확인',
           cancelText: '',
           barrierDismissible: false,
@@ -162,7 +173,9 @@ class _AdminAccountIssuanceScreenState extends ConsumerState<AdminAccountIssuanc
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFEFF5FF) : const Color(0xFFF8F9FA),
+            color: isSelected
+                ? const Color(0xFFEFF5FF)
+                : const Color(0xFFF8F9FA),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected ? const Color(0xFF006FFF) : Colors.transparent,
@@ -175,9 +188,13 @@ class _AdminAccountIssuanceScreenState extends ConsumerState<AdminAccountIssuanc
               Row(
                 children: [
                   Icon(
-                    isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                    isSelected
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_unchecked,
                     size: 18,
-                    color: isSelected ? const Color(0xFF006FFF) : const Color(0xFF9CA3AF),
+                    color: isSelected
+                        ? const Color(0xFF006FFF)
+                        : const Color(0xFF9CA3AF),
                   ),
                   const SizedBox(width: 6),
                   Text(
@@ -186,7 +203,9 @@ class _AdminAccountIssuanceScreenState extends ConsumerState<AdminAccountIssuanc
                       fontFamily: 'Pretendard',
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
-                      color: isSelected ? const Color(0xFF006FFF) : const Color(0xFF464A4D),
+                      color: isSelected
+                          ? const Color(0xFF006FFF)
+                          : const Color(0xFF464A4D),
                     ),
                   ),
                 ],
@@ -263,7 +282,10 @@ class _AdminAccountIssuanceScreenState extends ConsumerState<AdminAccountIssuanc
                       borderRadius: BorderRadius.all(Radius.circular(12)),
                       borderSide: BorderSide.none,
                     ),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -311,7 +333,10 @@ class _AdminAccountIssuanceScreenState extends ConsumerState<AdminAccountIssuanc
                       borderRadius: BorderRadius.all(Radius.circular(12)),
                       borderSide: BorderSide.none,
                     ),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -355,7 +380,12 @@ class _AdminAccountIssuanceScreenState extends ConsumerState<AdminAccountIssuanc
                       children: [
                         Icon(Icons.error, color: Colors.red[600], size: 16),
                         const SizedBox(width: 12),
-                        Expanded(child: Text(_errorMessage!, style: TextStyle(color: Colors.red[600]))),
+                        Expanded(
+                          child: Text(
+                            _errorMessage!,
+                            style: TextStyle(color: Colors.red[600]),
+                          ),
+                        ),
                         TextButton(
                           onPressed: _loadBuildings,
                           child: const Text('다시 시도'),

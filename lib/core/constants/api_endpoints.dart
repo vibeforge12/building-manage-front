@@ -27,8 +27,8 @@ class ApiEndpoints {
   static const String user = '/user';
   static const String userProfile = '$user/profile';
   static const String userDashboard = '$user/dashboard';
-  static const String userPushToken = '/users/push-token';  // FCM 토큰 등록 (입주민)
-  static const String userWithdraw = '/users/me';  // 회원 탈퇴 (DELETE)
+  static const String userPushToken = '/users/push-token'; // FCM 토큰 등록 (입주민)
+  static const String userWithdraw = '/users/me'; // 회원 탈퇴 (DELETE)
 
   // Admin endpoints - 관리자 관련
   static const String admin = '/admin';
@@ -39,15 +39,18 @@ class ApiEndpoints {
   static const String manager = '/manager';
   static const String managerDashboard = '$manager/dashboard';
   static const String tasks = '$manager/tasks';
-  static const String staffPushToken = '/staffs/push-token';      // FCM 토큰 등록 (담당자)
-  static const String managerPushToken = '/managers/push-token';  // FCM 토큰 등록 (관리자)
-  static const String managerDashboardAlerts = '/managers/dashboard/alerts';  // 출퇴근/민원 알림 조회
+  static const String staffPushToken = '/staffs/push-token'; // FCM 토큰 등록 (담당자)
+  static const String managerPushToken =
+      '/managers/push-token'; // FCM 토큰 등록 (관리자)
+  static const String managerDashboardAlerts =
+      '/managers/dashboard/alerts'; // 출퇴근/민원 알림 조회
 
   // Headquarters endpoints - 본사 관련
   static const String headquarters = '/headquarters';
   static const String headquartersDashboard = '$headquarters/dashboard';
-  static const String headquartersMe = '$headquarters/me';  // 본사 정보 조회/수정
-  static const String headquartersPushToken = '$headquarters/push-token';  // FCM 토큰 등록 (본사)
+  static const String headquartersMe = '$headquarters/me'; // 본사 정보 조회/수정
+  static const String headquartersPushToken =
+      '$headquarters/push-token'; // FCM 토큰 등록 (본사)
 
   // Common endpoints - 공통
   static const String common = '/common';
@@ -55,6 +58,7 @@ class ApiEndpoints {
   static const String notifications = '/notifications';
   static const String announcements = '/announcements';
   static const String facilities = '/facilities';
+  static const String lifeServices = '/life-services';
 
   // Headquarters buildings endpoints
   static const String headquartersBuildings = '$headquarters/buildings';
@@ -75,21 +79,25 @@ class ApiEndpoints {
 
   // Staff Complaints - 담당자 민원
   static const String staffComplaints = '/staffs/complaints';
-  static const String staffComplaintsPendingHighlight = '$staffComplaints/pending/highlight';
+  static const String staffComplaintsPendingHighlight =
+      '$staffComplaints/pending/highlight';
   static const String staffComplaintsPending = '$staffComplaints/pending';
   static const String staffComplaintsResolved = '$staffComplaints/resolved';
   static const String staffComplaintDetail = '$staffComplaints/{complaintId}';
-  static const String staffComplaintResolve = '$staffComplaints/{complaintId}/resolve';
+  static const String staffComplaintResolve =
+      '$staffComplaints/{complaintId}/resolve';
 
   // Staff Notices - 담당자 공지사항
   static const String staffNotices = '/staffs/notices';
   static const String staffNoticeDetail = '$staffNotices/{noticeId}';
 
   // Manager Staff Attendance - 관리자 직원 출퇴근 조회
-  static const String managerStaffAttendanceMonthly = '/managers/staffs/attendance/monthly';
-  static const String managerStaffAttendanceDaily = '/managers/staffs/attendance/daily';
+  static const String managerStaffAttendanceMonthly =
+      '/managers/staffs/attendance/monthly';
+  static const String managerStaffAttendanceDaily =
+      '/managers/staffs/attendance/daily';
 
   // Upload - 파일 업로드
   static const String uploadPresignedUrl = '/upload/presigned-url';
-  static const String uploadPresignedUrls = '/upload/presigned-urls';  // 다중 파일용
+  static const String uploadPresignedUrls = '/upload/presigned-urls'; // 다중 파일용
 }

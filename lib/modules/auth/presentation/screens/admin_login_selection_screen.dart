@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:building_manage_front/shared/widgets/full_screen_image_background.dart';
-import 'package:building_manage_front/shared/widgets/page_header_text.dart';
 import 'package:building_manage_front/shared/widgets/primary_action_button.dart';
 
 class AdminLoginSelectionScreen extends StatelessWidget {
@@ -38,9 +37,9 @@ class AdminLoginSelectionScreen extends StatelessWidget {
                       Text(
                         '관리자님 어서오세요',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: Colors.white,
-                            fontSize: 36,
-                            fontWeight: FontWeight.w700
+                          color: Colors.white,
+                          fontSize: 36,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],

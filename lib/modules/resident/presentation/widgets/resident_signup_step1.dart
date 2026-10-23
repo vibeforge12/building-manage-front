@@ -6,13 +6,11 @@ import 'package:building_manage_front/shared/widgets/sign_up.dart';
 class ResidentSignupStep1 extends ConsumerStatefulWidget {
   final VoidCallback onNext;
 
-  const ResidentSignupStep1({
-    super.key,
-    required this.onNext,
-  });
+  const ResidentSignupStep1({super.key, required this.onNext});
 
   @override
-  ConsumerState<ResidentSignupStep1> createState() => _ResidentSignupStep1State();
+  ConsumerState<ResidentSignupStep1> createState() =>
+      _ResidentSignupStep1State();
 }
 
 class _ResidentSignupStep1State extends ConsumerState<ResidentSignupStep1> {
@@ -67,17 +65,19 @@ class _ResidentSignupStep1State extends ConsumerState<ResidentSignupStep1> {
     super.dispose();
   }
 
-// ResidentSignupStep1.dart
+  // ResidentSignupStep1.dart
   void _handleNext() {
     if (_formKey.currentState?.validate() ?? false) {
       // ✅ username 포함하여 1단계 데이터 저장
-      ref.read(signupFormProvider.notifier).updateStep1Data(
-        username: _usernameController.text,
-        dong: _dongController.text,
-        hosu: _hosuController.text,
-        password: _passwordController.text,
-        passwordConfirm: _passwordConfirmController.text,
-      );
+      ref
+          .read(signupFormProvider.notifier)
+          .updateStep1Data(
+            username: _usernameController.text,
+            dong: _dongController.text,
+            hosu: _hosuController.text,
+            password: _passwordController.text,
+            passwordConfirm: _passwordConfirmController.text,
+          );
 
       // ✅ 여기서 username을 다시 updateStep2Data로 넣지 않습니다 (중복/충돌 방지)
       // ref.read(signupFormProvider.notifier).updateStep2Data(...);  // 제거
@@ -86,12 +86,8 @@ class _ResidentSignupStep1State extends ConsumerState<ResidentSignupStep1> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
     return SingleChildScrollView(
       child: Container(
         color: Colors.white,
@@ -101,137 +97,142 @@ class _ResidentSignupStep1State extends ConsumerState<ResidentSignupStep1> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-            // 동 입력
-            CommonInputField(
-              label: '동',
-              hint: '예: 101동',
-              controller: _dongController,
-              keyboardType: TextInputType.text,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return '동을 입력해주세요';
-                }
-                return null;
-              },
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 16),
-
-            // 호수 입력
-            CommonInputField(
-              label: '호수',
-              hint: '예: 1001호, B001호',
-              controller: _hosuController,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return '호수를 입력해주세요';
-                }
-                return null;
-              },
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 16),
-
-            // 아이디 입력
-            CommonInputField(
-              label: '아이디',
-              hint: '아이디를 입력 해주세요 (영문/숫자 4~20자)',
-              controller: _usernameController,
-              keyboardType: TextInputType.text,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return '아이디를 입력해주세요';
-                }
-                final v = value.trim();
-                if (!RegExp(r'^[a-zA-Z0-9_]{4,20}$').hasMatch(v)) {
-                  return '영문/숫자/언더스코어 4~20자로 입력해주세요';
-                }
-                return null;
-              },
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 16),
-
-            // 비밀번호 입력
-            CommonInputField(
-              label: '비밀번호',
-              hint: '8자 이상 입력해주세요',
-              controller: _passwordController,
-              obscureText: !_isPasswordVisible,
-              showVisibilityToggle: true,
-              onToggleVisibility: () {
-                setState(() {
-                  _isPasswordVisible = !_isPasswordVisible;
-                });
-              },
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return '비밀번호를 입력해주세요';
-                }
-                if (value.length < 8) {
-                  return '비밀번호는 8자 이상이어야 합니다';
-                }
-                if (!RegExp(r'^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])')
-                    .hasMatch(value)) {
-                  return '영문, 숫자, 특수문자를 포함해야 합니다';
-                }
-                return null;
-              },
-              onChanged: (value) {
-                setState(() {
-                  _formKey.currentState?.validate();
-                });
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // 비밀번호 재확인 입력
-            CommonInputField(
-              label: '비밀번호 재확인',
-              hint: '비밀번호를 다시 입력해주세요',
-              controller: _passwordConfirmController,
-              obscureText: !_isPasswordConfirmVisible,
-              showVisibilityToggle: true,
-              onToggleVisibility: () {
-                setState(() {
-                  _isPasswordConfirmVisible = !_isPasswordConfirmVisible;
-                });
-              },
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return '비밀번호 확인을 입력해주세요';
-                }
-                if (value != _passwordController.text) {
-                  return '비밀번호가 일치하지 않습니다';
-                }
-                return null;
-              },
-              onChanged: (_) => setState(() {}),
-              onFieldSubmitted: (_) => _isFormValid ? _handleNext() : null,
-            ),
-            const SizedBox(height: 32),
-
-            // 다음 단계 버튼
-            ElevatedButton(
-              onPressed: _isFormValid ? _handleNext : null,
-              style: ElevatedButton.styleFrom(
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                backgroundColor: _isFormValid ? const Color(0xFF006FFF) : const Color(0xFFE8EEF2),
-                disabledBackgroundColor: const Color(0xFFE8EEF2),
+              // 동 입력
+              CommonInputField(
+                label: '동',
+                hint: '예: 101동',
+                controller: _dongController,
+                keyboardType: TextInputType.text,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return '동을 입력해주세요';
+                  }
+                  return null;
+                },
+                onChanged: (_) => setState(() {}),
               ),
-              child: Text(
-                '다음',
-                style: TextStyle(
-                  color: _isFormValid ? Colors.white : const Color(0xFFA4ADB2),
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+              const SizedBox(height: 16),
+
+              // 호수 입력
+              CommonInputField(
+                label: '호수',
+                hint: '예: 1001호, B001호',
+                controller: _hosuController,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return '호수를 입력해주세요';
+                  }
+                  return null;
+                },
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 16),
+
+              // 아이디 입력
+              CommonInputField(
+                label: '아이디',
+                hint: '아이디를 입력 해주세요 (영문/숫자 4~20자)',
+                controller: _usernameController,
+                keyboardType: TextInputType.text,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return '아이디를 입력해주세요';
+                  }
+                  final v = value.trim();
+                  if (!RegExp(r'^[a-zA-Z0-9_]{4,20}$').hasMatch(v)) {
+                    return '영문/숫자/언더스코어 4~20자로 입력해주세요';
+                  }
+                  return null;
+                },
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 16),
+
+              // 비밀번호 입력
+              CommonInputField(
+                label: '비밀번호',
+                hint: '8자 이상 입력해주세요',
+                controller: _passwordController,
+                obscureText: !_isPasswordVisible,
+                showVisibilityToggle: true,
+                onToggleVisibility: () {
+                  setState(() {
+                    _isPasswordVisible = !_isPasswordVisible;
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return '비밀번호를 입력해주세요';
+                  }
+                  if (value.length < 8) {
+                    return '비밀번호는 8자 이상이어야 합니다';
+                  }
+                  if (!RegExp(
+                    r'^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])',
+                  ).hasMatch(value)) {
+                    return '영문, 숫자, 특수문자를 포함해야 합니다';
+                  }
+                  return null;
+                },
+                onChanged: (value) {
+                  setState(() {
+                    _formKey.currentState?.validate();
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+
+              // 비밀번호 재확인 입력
+              CommonInputField(
+                label: '비밀번호 재확인',
+                hint: '비밀번호를 다시 입력해주세요',
+                controller: _passwordConfirmController,
+                obscureText: !_isPasswordConfirmVisible,
+                showVisibilityToggle: true,
+                onToggleVisibility: () {
+                  setState(() {
+                    _isPasswordConfirmVisible = !_isPasswordConfirmVisible;
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return '비밀번호 확인을 입력해주세요';
+                  }
+                  if (value != _passwordController.text) {
+                    return '비밀번호가 일치하지 않습니다';
+                  }
+                  return null;
+                },
+                onChanged: (_) => setState(() {}),
+                onFieldSubmitted: (_) => _isFormValid ? _handleNext() : null,
+              ),
+              const SizedBox(height: 32),
+
+              // 다음 단계 버튼
+              ElevatedButton(
+                onPressed: _isFormValid ? _handleNext : null,
+                style: ElevatedButton.styleFrom(
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  backgroundColor: _isFormValid
+                      ? const Color(0xFF006FFF)
+                      : const Color(0xFFE8EEF2),
+                  disabledBackgroundColor: const Color(0xFFE8EEF2),
+                ),
+                child: Text(
+                  '다음',
+                  style: TextStyle(
+                    color: _isFormValid
+                        ? Colors.white
+                        : const Color(0xFFA4ADB2),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            ),
             ],
           ),
         ),

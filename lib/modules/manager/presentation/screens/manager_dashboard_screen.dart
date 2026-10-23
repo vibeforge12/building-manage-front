@@ -13,7 +13,8 @@ class ManagerDashboardScreen extends ConsumerStatefulWidget {
   const ManagerDashboardScreen({super.key});
 
   @override
-  ConsumerState<ManagerDashboardScreen> createState() => _ManagerDashboardScreenState();
+  ConsumerState<ManagerDashboardScreen> createState() =>
+      _ManagerDashboardScreenState();
 }
 
 class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
@@ -88,7 +89,9 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
 
       if (response['success'] == true && response['data'] != null) {
         setState(() {
-          _pendingComplaints = List<Map<String, dynamic>>.from(response['data'] ?? []);
+          _pendingComplaints = List<Map<String, dynamic>>.from(
+            response['data'] ?? [],
+          );
           _isLoadingComplaints = false;
         });
       } else {
@@ -121,7 +124,8 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
         final data = response['data'] as Map<String, dynamic>;
         final items = data['items'] as List<dynamic>?;
         setState(() {
-          _notices = items?.map((item) => item as Map<String, dynamic>).toList() ?? [];
+          _notices =
+              items?.map((item) => item as Map<String, dynamic>).toList() ?? [];
           _isLoadingNotices = false;
         });
       } else {
@@ -141,8 +145,6 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.white,
@@ -156,7 +158,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
             onPressed: () {
               _scaffoldKey.currentState?.openEndDrawer();
             },
-          )
+          ),
         ],
       ),
       endDrawer: _buildMenuDrawer(context),
@@ -164,269 +166,328 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
         onRefresh: _refresh,
         color: const Color(0xFF006FFF),
         child: CustomScrollView(
-        // 내용이 화면보다 짧아도 당길 수 있어야 새로고침이 걸린다.
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          SliverToBoxAdapter(
-            child: Builder(
-              builder: (context) {
-                final currentUser = ref.watch(currentUserProvider);
-                final buildingImageUrl = currentUser?.buildingImageUrl;
+          // 내용이 화면보다 짧아도 당길 수 있어야 새로고침이 걸린다.
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Builder(
+                builder: (context) {
+                  final currentUser = ref.watch(currentUserProvider);
+                  final buildingImageUrl = currentUser?.buildingImageUrl;
 
-                return buildingImageUrl != null && buildingImageUrl.isNotEmpty
-                    ? Image.network(
-                        buildingImageUrl,
-                        width: double.infinity,
-                        height: 220,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Image.asset(
-                            'assets/home.png',
-                            width: double.infinity,
-                            height: 220,
-                            fit: BoxFit.cover,
-                          );
-                        },
-                      )
-                    : Image.asset(
-                        'assets/home.png',
-                        width: double.infinity,
-                        height: 220,
-                        fit: BoxFit.cover,
-                      );
-              },
+                  return buildingImageUrl != null && buildingImageUrl.isNotEmpty
+                      ? Image.network(
+                          buildingImageUrl,
+                          width: double.infinity,
+                          height: 220,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Image.asset(
+                              'assets/home.png',
+                              width: double.infinity,
+                              height: 220,
+                              fit: BoxFit.cover,
+                            );
+                          },
+                        )
+                      : Image.asset(
+                          'assets/home.png',
+                          width: double.infinity,
+                          height: 220,
+                          fit: BoxFit.cover,
+                        );
+                },
+              ),
             ),
-          ),
-          SliverToBoxAdapter(
-            child: Builder(
-              builder: (context) {
-                final attendanceState = ref.watch(attendanceProvider);
-                final isButtonDisabled = attendanceState.isLoading || attendanceState.isInitFailed || _isAttendanceCooldown;
+            SliverToBoxAdapter(
+              child: Builder(
+                builder: (context) {
+                  final attendanceState = ref.watch(attendanceProvider);
+                  final isButtonDisabled =
+                      attendanceState.isLoading ||
+                      attendanceState.isInitFailed ||
+                      _isAttendanceCooldown;
 
-                return Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-                  child: Column(
-                    children: [
-                      if (attendanceState.isInitFailed)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.warning_amber_rounded, color: Color(0xFFFF6B00), size: 16),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  attendanceState.error ?? '출퇴근 상태를 확인할 수 없습니다.',
-                                  style: const TextStyle(fontSize: 12, color: Color(0xFFFF6B00)),
+                  return Container(
+                    color: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 30,
+                    ),
+                    child: Column(
+                      children: [
+                        if (attendanceState.isInitFailed)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.warning_amber_rounded,
+                                  color: Color(0xFFFF6B00),
+                                  size: 16,
                                 ),
-                              ),
-                              TextButton(
-                                onPressed: () => ref.read(attendanceProvider.notifier).initialize(),
-                                child: const Text('재시도', style: TextStyle(fontSize: 12, color: Color(0xFF006FFF))),
-                              ),
-                            ],
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    attendanceState.error ??
+                                        '출퇴근 상태를 확인할 수 없습니다.',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFFFF6B00),
+                                    ),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () => ref
+                                      .read(attendanceProvider.notifier)
+                                      .initialize(),
+                                  child: const Text(
+                                    '재시도',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF006FFF),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: isButtonDisabled
+                                    ? null
+                                    : () => _handleCheckIn(context),
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  backgroundColor: const Color(0xFF006FFF),
+                                  foregroundColor: Colors.white,
+                                  disabledBackgroundColor: const Color(
+                                    0xFFCCCCCC,
+                                  ),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                                child:
+                                    (attendanceState.isLoading ||
+                                        _isAttendanceCooldown)
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : const Text(
+                                        '출근',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: isButtonDisabled
+                                    ? null
+                                    : () => _handleCheckOut(context),
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  backgroundColor: const Color(0xFFEAF2FF),
+                                  foregroundColor: const Color(0xFF0A66FF),
+                                  disabledBackgroundColor: const Color(
+                                    0xFFEEEEEE,
+                                  ),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                                child:
+                                    (attendanceState.isLoading ||
+                                        _isAttendanceCooldown)
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Color(0xFF0A66FF),
+                                        ),
+                                      )
+                                    : const Text(
+                                        '퇴근',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                          ],
                         ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: isButtonDisabled ? null : () => _handleCheckIn(context),
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                backgroundColor: const Color(0xFF006FFF),
-                                foregroundColor: Colors.white,
-                                disabledBackgroundColor: const Color(0xFFCCCCCC),
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              ),
-                              child: (attendanceState.isLoading || _isAttendanceCooldown)
-                                  ? const SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                    )
-                                  : const Text(
-                                      '출근',
-                                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
-                                    ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: isButtonDisabled ? null : () => _handleCheckOut(context),
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                backgroundColor: const Color(0xFFEAF2FF),
-                                foregroundColor: const Color(0xFF0A66FF),
-                                disabledBackgroundColor: const Color(0xFFEEEEEE),
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              ),
-                              child: (attendanceState.isLoading || _isAttendanceCooldown)
-                                  ? const SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0A66FF)),
-                                    )
-                                  : const Text(
-                                      '퇴근',
-                                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                                    ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              },
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-          const SliverToBoxAdapter(child: Divider(height: 10)),
-          SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  child: _DashboardTabs(
-                    index: _tabIndex,
-                    onChanged: (i) {
-                      setState(() => _tabIndex = i);
-                      // 탭 변경 시 데이터 새로고침
-                      if (i == 0) {
-                        _loadPendingComplaints();
-                      } else {
-                        _loadNotices();
-                      }
-                    },
-                  ),
-                ),
-                if (_tabIndex == 0) ...[
-                  if (_isLoadingComplaints)
-                    const Padding(
-                      padding: EdgeInsets.all(32.0),
-                      child: Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                    )
-                  else if (_complaintsError != null)
-                    Padding(
-                      padding: const EdgeInsets.all(32.0),
-                      child: Center(
-                        child: Text(
-                          _complaintsError!,
-                          style: const TextStyle(
-                            fontFamily: 'Pretendard',
-                            fontWeight: FontWeight.w400,
-                            fontSize: 14,
-                            color: Color(0xFF757B80),
-                          ),
-                        ),
-                      ),
-                    )
-                  else if (_pendingComplaints.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.all(32.0),
-                      child: Center(
-                        child: Text(
-                          '미완료 민원이 없습니다.',
-                          style: TextStyle(
-                            fontFamily: 'Pretendard',
-                            fontWeight: FontWeight.w400,
-                            fontSize: 14,
-                            color: Color(0xFF757B80),
-                          ),
-                        ),
-                      ),
-                    )
-                  else
-                    ..._pendingComplaints.map((complaint) {
-                      final complaintId = complaint['id'] as String?;
-                      final title = complaint['title'] as String? ?? '제목없음';
-                      final resident = complaint['resident'] as Map<String, dynamic>?;
-                      final residentName = resident?['name'] as String? ?? '거주자명';
-                      final dong = resident?['dong'] as String? ?? '';
-                      final hosu = resident?['hosu'] as String? ?? '';
-                      final subtitle = '$dong $hosu $residentName'.trim();
-
-                      return _ComplaintTile(
-                        complaintId: complaintId,
-                        title: title,
-                        subtitle: subtitle,
-                      );
-                    }),
-                ] else ...[
-                  if (_isLoadingNotices)
-                    const Padding(
-                      padding: EdgeInsets.all(32.0),
-                      child: Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                    )
-                  else if (_noticesError != null)
-                    Padding(
-                      padding: const EdgeInsets.all(32.0),
-                      child: Center(
-                        child: Text(
-                          _noticesError!,
-                          style: const TextStyle(
-                            fontFamily: 'Pretendard',
-                            fontWeight: FontWeight.w400,
-                            fontSize: 14,
-                            color: Color(0xFF757B80),
-                          ),
-                        ),
-                      ),
-                    )
-                  else if (_notices.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.all(32.0),
-                      child: Center(
-                        child: Text(
-                          '공지사항이 없습니다.',
-                          style: TextStyle(
-                            fontFamily: 'Pretendard',
-                            fontWeight: FontWeight.w400,
-                            fontSize: 14,
-                            color: Color(0xFF757B80),
-                          ),
-                        ),
-                      ),
-                    )
-                  else
-                    ..._notices.map((notice) {
-                      final noticeId = notice['id'] as String?;
-                      final title = notice['title'] as String? ?? '제목없음';
-                      final createdAt = notice['createdAt'] as String?;
-
-                      // Format date: extract just the date part from ISO string
-                      String formattedDate = '';
-                      if (createdAt != null) {
-                        try {
-                          final dateTime = DateTime.parse(createdAt).toLocal();
-                          formattedDate = '${dateTime.year.toString().padLeft(4, '0')}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}';
-                        } catch (e) {
-                          formattedDate = '';
+            const SliverToBoxAdapter(child: Divider(height: 10)),
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 8,
+                    ),
+                    child: _DashboardTabs(
+                      index: _tabIndex,
+                      onChanged: (i) {
+                        setState(() => _tabIndex = i);
+                        // 탭 변경 시 데이터 새로고침
+                        if (i == 0) {
+                          _loadPendingComplaints();
+                        } else {
+                          _loadNotices();
                         }
-                      }
+                      },
+                    ),
+                  ),
+                  if (_tabIndex == 0) ...[
+                    if (_isLoadingComplaints)
+                      const Padding(
+                        padding: EdgeInsets.all(32.0),
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else if (_complaintsError != null)
+                      Padding(
+                        padding: const EdgeInsets.all(32.0),
+                        child: Center(
+                          child: Text(
+                            _complaintsError!,
+                            style: const TextStyle(
+                              fontFamily: 'Pretendard',
+                              fontWeight: FontWeight.w400,
+                              fontSize: 14,
+                              color: Color(0xFF757B80),
+                            ),
+                          ),
+                        ),
+                      )
+                    else if (_pendingComplaints.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.all(32.0),
+                        child: Center(
+                          child: Text(
+                            '미완료 민원이 없습니다.',
+                            style: TextStyle(
+                              fontFamily: 'Pretendard',
+                              fontWeight: FontWeight.w400,
+                              fontSize: 14,
+                              color: Color(0xFF757B80),
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      ..._pendingComplaints.map((complaint) {
+                        final complaintId = complaint['id'] as String?;
+                        final title = complaint['title'] as String? ?? '제목없음';
+                        final resident =
+                            complaint['resident'] as Map<String, dynamic>?;
+                        final residentName =
+                            resident?['name'] as String? ?? '거주자명';
+                        final dong = resident?['dong'] as String? ?? '';
+                        final hosu = resident?['hosu'] as String? ?? '';
+                        final subtitle = '$dong $hosu $residentName'.trim();
 
-                      return _NoticeTile(
-                        noticeId: noticeId,
-                        title: title,
-                        subtitle: formattedDate,
-                      );
-                    }),
+                        return _ComplaintTile(
+                          complaintId: complaintId,
+                          title: title,
+                          subtitle: subtitle,
+                        );
+                      }),
+                  ] else ...[
+                    if (_isLoadingNotices)
+                      const Padding(
+                        padding: EdgeInsets.all(32.0),
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else if (_noticesError != null)
+                      Padding(
+                        padding: const EdgeInsets.all(32.0),
+                        child: Center(
+                          child: Text(
+                            _noticesError!,
+                            style: const TextStyle(
+                              fontFamily: 'Pretendard',
+                              fontWeight: FontWeight.w400,
+                              fontSize: 14,
+                              color: Color(0xFF757B80),
+                            ),
+                          ),
+                        ),
+                      )
+                    else if (_notices.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.all(32.0),
+                        child: Center(
+                          child: Text(
+                            '공지사항이 없습니다.',
+                            style: TextStyle(
+                              fontFamily: 'Pretendard',
+                              fontWeight: FontWeight.w400,
+                              fontSize: 14,
+                              color: Color(0xFF757B80),
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      ..._notices.map((notice) {
+                        final noticeId = notice['id'] as String?;
+                        final title = notice['title'] as String? ?? '제목없음';
+                        final createdAt = notice['createdAt'] as String?;
+
+                        // Format date: extract just the date part from ISO string
+                        String formattedDate = '';
+                        if (createdAt != null) {
+                          try {
+                            final dateTime = DateTime.parse(
+                              createdAt,
+                            ).toLocal();
+                            formattedDate =
+                                '${dateTime.year.toString().padLeft(4, '0')}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}';
+                          } catch (e) {
+                            formattedDate = '';
+                          }
+                        }
+
+                        return _NoticeTile(
+                          noticeId: noticeId,
+                          title: title,
+                          subtitle: formattedDate,
+                        );
+                      }),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-        ],
-      ),
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+          ],
+        ),
       ),
     );
   }
@@ -445,7 +506,10 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
     final confirmed = await showCustomConfirmationDialog(
       context: context,
       title: '출근 등록 하시겠습니까?',
-      content: const Text('(한번 등록하면 재출근 처리가 불가 합니다)', style: TextStyle(color: Colors.red),),
+      content: const Text(
+        '(한번 등록하면 재출근 처리가 불가 합니다)',
+        style: TextStyle(color: Colors.red),
+      ),
       confirmText: '예',
       cancelText: '아니오',
       barrierDismissible: false,
@@ -465,10 +529,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
       await showCustomConfirmationDialog(
         context: context,
         title: '출근 처리 완료',
-        content: const Text(
-          '출근 처리되었습니다.',
-          style: TextStyle(fontSize: 16),
-        ),
+        content: const Text('출근 처리되었습니다.', style: TextStyle(fontSize: 16)),
         confirmText: '확인',
         cancelText: '',
         barrierDismissible: false,
@@ -479,7 +540,10 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
         await showCustomConfirmationDialog(
           context: context,
           title: '출근 처리 실패',
-          content: Text(updatedState.error!, style: const TextStyle(fontSize: 16)),
+          content: Text(
+            updatedState.error!,
+            style: const TextStyle(fontSize: 16),
+          ),
           confirmText: '확인',
           cancelText: '',
           barrierDismissible: false,
@@ -493,7 +557,10 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
     final confirmed = await showCustomConfirmationDialog(
       context: context,
       title: '퇴근 하시겠습니까?',
-      content: const Text('(퇴근 처리하면 더이상 처리가 안됩니다)', style: TextStyle(color: Colors.red),),
+      content: const Text(
+        '(퇴근 처리하면 더이상 처리가 안됩니다)',
+        style: TextStyle(color: Colors.red),
+      ),
       confirmText: '예',
       cancelText: '아니오',
       barrierDismissible: false,
@@ -513,10 +580,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
       await showCustomConfirmationDialog(
         context: context,
         title: '퇴근 처리 완료',
-        content: const Text(
-          '퇴근 처리되었습니다.',
-          style: TextStyle(fontSize: 16),
-        ),
+        content: const Text('퇴근 처리되었습니다.', style: TextStyle(fontSize: 16)),
         confirmText: '확인',
         cancelText: '',
         barrierDismissible: false,
@@ -527,7 +591,10 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
         await showCustomConfirmationDialog(
           context: context,
           title: '퇴근 처리 실패',
-          content: Text(updatedState.error!, style: const TextStyle(fontSize: 16)),
+          content: Text(
+            updatedState.error!,
+            style: const TextStyle(fontSize: 16),
+          ),
           confirmText: '확인',
           cancelText: '',
           barrierDismissible: false,
@@ -549,10 +616,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
               decoration: const BoxDecoration(
                 color: Colors.white,
                 border: Border(
-                  bottom: BorderSide(
-                    color: Color(0xFFE8EEF2),
-                    width: 1,
-                  ),
+                  bottom: BorderSide(color: Color(0xFFE8EEF2), width: 1),
                 ),
               ),
               child: Stack(
@@ -646,10 +710,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
             ),
 
             // Spacer
-            Container(
-              height: 8,
-              color: const Color(0xFFF2F8FC),
-            ),
+            Container(height: 8, color: const Color(0xFFF2F8FC)),
 
             // Menu List
             Column(
@@ -670,6 +731,13 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
                   title: '공고문 관리',
                   onTap: () {
                     context.pushNamed('bulletinManage');
+                  },
+                ),
+                _buildMenuItem(
+                  title: '서비스 신청 관리',
+                  showNewDot: true,
+                  onTap: () {
+                    context.pushNamed('lifeServiceManage');
                   },
                 ),
                 const Divider(
@@ -754,6 +822,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
   Widget _buildMenuItem({
     required String title,
     required VoidCallback onTap,
+    bool showNewDot = false,
   }) {
     return InkWell(
       onTap: onTap,
@@ -762,22 +831,33 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
         child: Row(
           children: [
             Expanded(
-              child: Text(
-                title,
-                style: const TextStyle(
-                  fontFamily: 'Pretendard',
-                  fontWeight: FontWeight.w400,
-                  fontSize: 16,
-                  height: 1.5,
-                  color: Color(0xFF17191A),
-                ),
+              child: Row(
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontFamily: 'Pretendard',
+                      fontWeight: FontWeight.w400,
+                      fontSize: 16,
+                      height: 1.5,
+                      color: Color(0xFF17191A),
+                    ),
+                  ),
+                  if (showNewDot) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF006FFF),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
-            const Icon(
-              Icons.chevron_right,
-              size: 24,
-              color: Color(0xFF464A4D),
-            ),
+            const Icon(Icons.chevron_right, size: 24, color: Color(0xFF464A4D)),
           ],
         ),
       ),
@@ -800,7 +880,9 @@ class _TabChip extends StatelessWidget {
           Text(
             text,
             style: theme.textTheme.titleMedium?.copyWith(
-              color: selected ? Colors.black : theme.colorScheme.onSurface.withOpacity(0.5),
+              color: selected
+                  ? Colors.black
+                  : theme.colorScheme.onSurface.withValues(alpha: 0.5),
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -838,8 +920,16 @@ class _ComplaintTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       child: ListTile(
-        title: Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-        subtitle: Text(subtitle, style: theme.textTheme.bodySmall?.copyWith(color: Colors.black54)),
+        title: Text(
+          title,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: theme.textTheme.bodySmall?.copyWith(color: Colors.black54),
+        ),
         trailing: const Icon(Icons.chevron_right),
         onTap: () {
           if (complaintId != null) {
@@ -871,8 +961,16 @@ class _NoticeTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       child: ListTile(
-        title: Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-        subtitle: Text(subtitle, style: theme.textTheme.bodySmall?.copyWith(color: Colors.black54)),
+        title: Text(
+          title,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: theme.textTheme.bodySmall?.copyWith(color: Colors.black54),
+        ),
         trailing: const Icon(Icons.chevron_right),
         onTap: () {
           if (noticeId != null) {

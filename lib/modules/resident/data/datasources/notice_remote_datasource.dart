@@ -40,14 +40,15 @@ class NoticeRemoteDataSource {
   }
 
   /// 공지사항 상세 조회
-  Future<Map<String, dynamic>> getNoticeDetail({required String noticeId}) async {
+  Future<Map<String, dynamic>> getNoticeDetail({
+    required String noticeId,
+  }) async {
     final response = await _apiClient.get('/notices/$noticeId');
     return response.data;
   }
 
-  /// 공지사항 상세 조회 (구 메서드)
-  @deprecated
-  Future<Map<String, dynamic>> getNoticeById(String id) async {
+  /// 입주민 공지사항 상세 조회
+  Future<Map<String, dynamic>> getUserNoticeById(String id) async {
     final response = await _apiClient.get('/users/notices/$id');
     return response.data;
   }

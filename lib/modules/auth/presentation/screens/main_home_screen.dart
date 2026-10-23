@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:building_manage_front/shared/widgets/full_screen_image_background.dart';
-import 'package:building_manage_front/shared/widgets/page_header_text.dart';
 import 'package:building_manage_front/shared/widgets/primary_action_button.dart';
 
 class MainHomeScreen extends StatelessWidget {
@@ -14,10 +13,6 @@ class MainHomeScreen extends StatelessWidget {
 
   void _openAdminSelection(BuildContext context) {
     context.pushNamed('adminLoginSelection');
-  }
-
-  void _openSignUp(BuildContext context) {
-    context.pushNamed('residentSignup');
   }
 
   @override
@@ -33,10 +28,16 @@ class MainHomeScreen extends StatelessWidget {
             child: SingleChildScrollView(
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  minHeight: screenHeight - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
+                  minHeight:
+                      screenHeight -
+                      MediaQuery.of(context).padding.top -
+                      MediaQuery.of(context).padding.bottom,
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 32,
+                  ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.end,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,10 +133,7 @@ class _LandingHeader extends StatelessWidget {
       children: [
         Transform.translate(
           offset: const Offset(-40, 0),
-          child: Image.asset(
-            'assets/splash/whiteLogo.png',
-            height: 200,
-          ),
+          child: Image.asset('assets/splash/whiteLogo.png', height: 200),
         ),
         Text(
           '안녕하세요 \n엄지 입니다.',
@@ -150,4 +148,3 @@ class _LandingHeader extends StatelessWidget {
     );
   }
 }
-

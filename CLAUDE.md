@@ -59,6 +59,7 @@ flutter build linux                       # Linux 앱 빌드
 
 ### 테스트 및 품질 관리
 ```bash
+make quality                              # 프론트·백엔드·실제 빌드·기기 성능 통합 품질 게이트
 flutter test                              # 모든 테스트 실행
 flutter test test/widget_test.dart        # 특정 테스트 파일 실행
 flutter analyze                           # 정적 분석 (Lint 검사)
@@ -66,6 +67,14 @@ flutter clean                             # 빌드 캐시 정리
 flutter doctor                            # Flutter 환경 점검
 flutter pub outdated                      # 오래된 패키지 확인
 ```
+
+#### 통합 품질 게이트 운영 규칙
+
+- 사용자가 앱·코드·성능·빌드를 "검사해 달라"고 요청하면 별도 범위 제한이 없는 한 `make quality`를 실행한다.
+- 새 핵심 화면, API, 플랫폼, 성능 지표 또는 검사 도구가 추가되면 해당 검사를 `tool/quality_gate.sh`에 편입해 `make quality` 한 번으로 계속 재현되게 한다.
+- 검사 구성 변경 시 `docs/품질게이트.md`와 `tool/quality_thresholds.env`도 함께 갱신한다.
+- 연결된 기기나 테스트 API가 없어 실행할 수 없는 항목은 성공으로 가장하지 않고 보고서에 `SKIP`과 이유를 기록한다.
+- 최신 결과는 `build/quality-gate/latest/report.md`에서 확인한다.
 
 ## 아키텍처
 

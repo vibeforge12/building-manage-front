@@ -25,30 +25,21 @@ class CommonNavigationBar extends StatelessWidget {
       height: 48,
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: Color(0xFFE8EEF2),
-            width: 1,
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: Color(0xFFE8EEF2), width: 1)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
           const Spacer(),
 
-          // Notification bell with badge
-          // _buildNotificationIcon(),
-
-          // const SizedBox(width: 20),
+          if (showNotification) ...[
+            _buildNotificationIcon(),
+            const SizedBox(width: 20),
+          ],
 
           // Menu icon
           IconButton(
-            icon: const Icon(
-              Icons.menu,
-              size: 24,
-              color: Color(0xFF464A4D),
-            ),
+            icon: const Icon(Icons.menu, size: 24, color: Color(0xFF464A4D)),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
             onPressed: onMenuTap,

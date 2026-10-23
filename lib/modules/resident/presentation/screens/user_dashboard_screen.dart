@@ -9,6 +9,9 @@ import 'package:building_manage_front/modules/resident/data/datasources/bulletin
 import 'package:building_manage_front/modules/resident/data/datasources/department_remote_datasource.dart';
 import 'package:building_manage_front/modules/headquarters/data/datasources/department_remote_datasource.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
+import 'package:building_manage_front/modules/life_service/domain/entities/life_service.dart';
+import 'package:building_manage_front/modules/life_service/presentation/providers/life_service_providers.dart';
+import 'package:building_manage_front/modules/life_service/presentation/widgets/resident_life_service_section.dart';
 
 import '../../../../shared/widgets/custom_confirmation_dialog.dart';
 import '../../../../shared/widgets/error_alert.dart';
@@ -19,7 +22,8 @@ class UserDashboardScreen extends ConsumerStatefulWidget {
   const UserDashboardScreen({super.key});
 
   @override
-  ConsumerState<UserDashboardScreen> createState() => _UserDashboardScreenState();
+  ConsumerState<UserDashboardScreen> createState() =>
+      _UserDashboardScreenState();
 }
 
 /// 대시보드 하단 탭.
@@ -46,6 +50,9 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
   List<Map<String, dynamic>> _bulletins = [];
   List<Map<String, dynamic>> _notices = [];
   List<Map<String, dynamic>> _events = [];
+  List<LifeService> _lifeServices = [];
+  bool _isLoadingLifeServices = true;
+  String? _lifeServicesError;
   bool _isLoadingDepartments = true;
   bool _isLoadingContent = true;
   String? _departmentsError;
@@ -65,17 +72,24 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
   /// 당겨서 새로고침. 화면에 보이는 것(부서 목록 + 지금 열려 있는 탭)을 다시 읽는다.
   /// 완료를 기다려야 인디케이터가 제때 사라진다.
   Future<void> _refresh() async {
-    await Future.wait([_loadDepartments(), _loadCurrentTab()]);
+    await Future.wait([
+      _loadDepartments(),
+      _loadCurrentTab(),
+      _loadLifeServices(),
+    ]);
   }
 
   @override
   void initState() {
     super.initState();
-    _tabController =
-        TabController(length: _DashboardTab.values.length, vsync: this);
+    _tabController = TabController(
+      length: _DashboardTab.values.length,
+      vsync: this,
+    );
     _tabController.addListener(_onTabChanged);
     _loadDepartments();
     _loadCurrentTab();
+    _loadLifeServices();
   }
 
   @override
@@ -134,10 +148,7 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _departmentsError = userMessageOf(
-          e,
-          fallback: '민원 부서를 불러오지 못했습니다.',
-        );
+        _departmentsError = userMessageOf(e, fallback: '민원 부서를 불러오지 못했습니다.');
       });
     } finally {
       if (mounted) {
@@ -146,6 +157,44 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
         });
       }
     }
+  }
+
+  Future<void> _loadLifeServices() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoadingLifeServices = true;
+      _lifeServicesError = null;
+    });
+    try {
+      final items = await ref
+          .read(lifeServiceUseCasesProvider)
+          .availableForHome();
+      if (!mounted) return;
+      setState(() {
+        // The full list remains accessible even when no home card is eligible.
+        _lifeServices = items;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _lifeServicesError = userMessageOf(e, fallback: '신청 항목을 불러오지 못했습니다.');
+      });
+    } finally {
+      if (mounted) setState(() => _isLoadingLifeServices = false);
+    }
+  }
+
+  Future<void> _openLifeServiceList() async {
+    await context.pushNamed('residentLifeServices');
+    if (mounted) await _loadLifeServices();
+  }
+
+  Future<void> _openLifeService(String id) async {
+    await context.pushNamed(
+      'lifeServiceDetail',
+      pathParameters: {'lifeServiceId': id},
+    );
+    if (mounted) await _loadLifeServices();
   }
 
   Future<void> _loadBulletins() async {
@@ -320,108 +369,129 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
                       // 배경 이미지 영역
                       _buildHeaderImage(),
 
-                    // 건물명 (위 패딩 추가)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 24, left: 16, right: 16),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        // 36pt 라 조금만 길어도 두 줄이 된다. 말줄임만 쓰면 긴 건물명이
-                        // 앞 아홉 자쯤만 남아 어느 건물인지 알 수 없으므로, 폭에 맞춰
-                        // 글자를 줄여 이름 전체가 보이게 한다.
-                        child: ShrinkToFitText(
-                          currentUser?.buildingName ?? '-',
-                          minFontSize: 20,
-                          style: const TextStyle(
-                            fontFamily: 'Pretendard',
-                            fontWeight: FontWeight.w700,
-                            fontSize: 36,
-                            color: Color(0xFF17191A),
+                      // 건물명 (위 패딩 추가)
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          top: 24,
+                          left: 16,
+                          right: 16,
+                        ),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          // 36pt 라 조금만 길어도 두 줄이 된다. 말줄임만 쓰면 긴 건물명이
+                          // 앞 아홉 자쯤만 남아 어느 건물인지 알 수 없으므로, 폭에 맞춰
+                          // 글자를 줄여 이름 전체가 보이게 한다.
+                          child: ShrinkToFitText(
+                            currentUser?.buildingName ?? '-',
+                            minFontSize: 20,
+                            style: const TextStyle(
+                              fontFamily: 'Pretendard',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 36,
+                              color: Color(0xFF17191A),
+                            ),
                           ),
                         ),
                       ),
-                    ),
 
-                    const SizedBox(height: 24),
+                      const SizedBox(height: 24),
 
-                    // 민원 등록 섹션
-                    _buildDepartmentSection(),
+                      // 민원 등록 섹션
+                      _buildDepartmentSection(),
 
-                    const SizedBox(height: 16),
-                    // 구분선 + 공지사항/이벤트 탭 + 전체보기 버튼
-                    _buildDividerAndTabSection(),
+                      const SizedBox(height: 24),
+                      ResidentLifeServiceSection(
+                        services: _lifeServices,
+                        isLoading: _isLoadingLifeServices,
+                        error: _lifeServicesError,
+                        onViewAll: _openLifeServiceList,
+                        onOpen: _openLifeService,
+                        onRetry: _loadLifeServices,
+                      ),
 
-                    // 공지사항/이벤트 리스트
-                    Stack(
-                      children: [
-                        // 데이터가 있으면 항상 표시 (로딩 중에도 유지)
-                        if (currentItems.isNotEmpty)
-                          ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: currentItems.length > 5 ? 5 : currentItems.length,
-                            itemBuilder: (context, index) {
-                              final item = currentItems[index];
-                              final tab = _currentTab;
-                              return _buildNoticeItem(
-                                item['title'] ?? '',
-                                _getTimeAgo(item['createdAt']),
-                                id: item['id'] as String?,
-                                routeName: switch (tab) {
-                                  _DashboardTab.bulletin =>
-                                    'userBulletinDetail',
-                                  _DashboardTab.notice => 'userNoticeDetail',
-                                  _DashboardTab.event => 'userEventDetail',
-                                },
-                                idParamName: switch (tab) {
-                                  _DashboardTab.bulletin => 'bulletinId',
-                                  _DashboardTab.notice => 'noticeId',
-                                  _DashboardTab.event => 'eventId',
-                                },
-                              );
-                            },
-                          ),
+                      const SizedBox(height: 16),
+                      // 구분선 + 공지사항/이벤트 탭 + 전체보기 버튼
+                      _buildDividerAndTabSection(),
 
-                        // 로딩 중 또는 비어있을 때만 표시
-                        if (_isLoadingContent || currentItems.isEmpty)
-                          Container(
-                            color: _isLoadingContent ? Colors.transparent : Colors.white,
-                            child: _isLoadingContent
-                                ? Padding(
-                                    padding: const EdgeInsets.all(32.0),
-                                    child: Center(
-                                      child: SizedBox(
-                                        width: 40,
-                                        height: 40,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2.5,
-                                          valueColor: AlwaysStoppedAnimation<Color>(
-                                            const Color(0xFF006FFF).withOpacity(0.7),
+                      // 공지사항/이벤트 리스트
+                      Stack(
+                        children: [
+                          // 데이터가 있으면 항상 표시 (로딩 중에도 유지)
+                          if (currentItems.isNotEmpty)
+                            ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: currentItems.length > 5
+                                  ? 5
+                                  : currentItems.length,
+                              itemBuilder: (context, index) {
+                                final item = currentItems[index];
+                                final tab = _currentTab;
+                                return _buildNoticeItem(
+                                  item['title'] ?? '',
+                                  _getTimeAgo(item['createdAt']),
+                                  id: item['id'] as String?,
+                                  routeName: switch (tab) {
+                                    _DashboardTab.bulletin =>
+                                      'userBulletinDetail',
+                                    _DashboardTab.notice => 'userNoticeDetail',
+                                    _DashboardTab.event => 'userEventDetail',
+                                  },
+                                  idParamName: switch (tab) {
+                                    _DashboardTab.bulletin => 'bulletinId',
+                                    _DashboardTab.notice => 'noticeId',
+                                    _DashboardTab.event => 'eventId',
+                                  },
+                                );
+                              },
+                            ),
+
+                          // 로딩 중 또는 비어있을 때만 표시
+                          if (_isLoadingContent || currentItems.isEmpty)
+                            Container(
+                              color: _isLoadingContent
+                                  ? Colors.transparent
+                                  : Colors.white,
+                              child: _isLoadingContent
+                                  ? Padding(
+                                      padding: const EdgeInsets.all(32.0),
+                                      child: Center(
+                                        child: SizedBox(
+                                          width: 40,
+                                          height: 40,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2.5,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                  const Color(
+                                                    0xFF006FFF,
+                                                  ).withValues(alpha: 0.7),
+                                                ),
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  : Padding(
+                                      padding: const EdgeInsets.all(32.0),
+                                      child: Center(
+                                        child: Text(
+                                          _currentTab.emptyMessage,
+                                          style: const TextStyle(
+                                            fontFamily: 'Pretendard',
+                                            fontWeight: FontWeight.w400,
+                                            fontSize: 14,
+                                            color: Color(0xFF757B80),
                                           ),
                                         ),
                                       ),
                                     ),
-                                  )
-                                : Padding(
-                                    padding: const EdgeInsets.all(32.0),
-                                    child: Center(
-                                      child: Text(
-                                        _currentTab.emptyMessage,
-                                        style: const TextStyle(
-                                          fontFamily: 'Pretendard',
-                                          fontWeight: FontWeight.w400,
-                                          fontSize: 14,
-                                          color: Color(0xFF757B80),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                          ),
-                      ],
-                    ),
-                  ],
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
             ),
           ],
         ),
@@ -435,12 +505,7 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: Color(0xFFE8EEF2),
-            width: 1,
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: Color(0xFFE8EEF2), width: 1)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
@@ -481,10 +546,7 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   border: Border(
-                    bottom: BorderSide(
-                      color: Color(0xFFE8EEF2),
-                      width: 1,
-                    ),
+                    bottom: BorderSide(color: Color(0xFFE8EEF2), width: 1),
                   ),
                 ),
                 child: Row(
@@ -512,185 +574,255 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
                   ],
                 ),
               ),
-            // 프로필 섹션 (위 패딩 추가)
-            Padding(
-              padding: const EdgeInsets.only(top: 24, left: 16, right: 16, bottom: 16),
-              child: Row(
-                children: [
-                  // 프로필 이미지 (placeholder)
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF2F8FC),
-                      borderRadius: BorderRadius.circular(12),
+              // 프로필 섹션 (위 패딩 추가)
+              Padding(
+                padding: const EdgeInsets.only(
+                  top: 24,
+                  left: 16,
+                  right: 16,
+                  bottom: 16,
+                ),
+                child: Row(
+                  children: [
+                    // 프로필 이미지 (placeholder)
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF2F8FC),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.person,
+                        size: 40,
+                        color: Color(0xFF006FFF),
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.person,
-                      size: 40,
-                      color: Color(0xFF006FFF),
+                    const SizedBox(width: 16),
+                    // 사용자 정보
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            currentUser?.name ?? '사용자명',
+                            style: const TextStyle(
+                              fontFamily: 'Pretendard',
+                              fontWeight: FontWeight.w400,
+                              fontSize: 16,
+                              color: Color(0xFF17191A),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _formatPhoneNumber(currentUser?.phoneNumber),
+                            style: const TextStyle(
+                              fontFamily: 'Pretendard',
+                              fontWeight: FontWeight.w400,
+                              fontSize: 12,
+                              color: Color(0xFF757B80),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  // 사용자 정보
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  ],
+                ),
+              ),
+              // 구분선 (8px 높이)
+              Container(height: 8, color: const Color(0xFFF2F8FC)),
+              // 구분선 (1px)
+              Container(height: 1, color: const Color(0xFFE8EEF2)),
+              // 메뉴 아이템 1: 내 정보
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    context.pushNamed('userProfile');
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          currentUser?.name ?? '사용자명',
-                          style: const TextStyle(
+                        const Text(
+                          '내 정보',
+                          style: TextStyle(
                             fontFamily: 'Pretendard',
                             fontWeight: FontWeight.w400,
                             fontSize: 16,
                             color: Color(0xFF17191A),
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _formatPhoneNumber(currentUser?.phoneNumber),
-                          style: const TextStyle(
-                            fontFamily: 'Pretendard',
-                            fontWeight: FontWeight.w400,
-                            fontSize: 12,
-                            color: Color(0xFF757B80),
-                          ),
-                          overflow: TextOverflow.ellipsis,
+                        const Icon(
+                          Icons.arrow_forward_ios,
+                          size: 16,
+                          color: Color(0xFF757B80),
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-            // 구분선 (8px 높이)
-            Container(
-              height: 8,
-              color: const Color(0xFFF2F8FC),
-            ),
-            // 구분선 (1px)
-            Container(
-              height: 1,
-              color: const Color(0xFFE8EEF2),
-            ),
-            // 메뉴 아이템 1: 내 정보
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  context.pushNamed('userProfile');
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        '내 정보',
-                        style: TextStyle(
-                          fontFamily: 'Pretendard',
-                          fontWeight: FontWeight.w400,
-                          fontSize: 16,
-                          color: Color(0xFF17191A),
-                        ),
-                      ),
-                      const Icon(
-                        Icons.arrow_forward_ios,
-                        size: 16,
-                        color: Color(0xFF757B80),
-                      ),
-                    ],
-                  ),
                 ),
               ),
-            ),
-            // 메뉴 아이템 2: 내 민원 보기
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  context.pushNamed('myComplaints');
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        '내 민원 보기',
-                        style: TextStyle(
-                          fontFamily: 'Pretendard',
-                          fontWeight: FontWeight.w400,
-                          fontSize: 16,
-                          color: Color(0xFF17191A),
+              // 메뉴 아이템 2: 내 민원 보기
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    context.pushNamed('myComplaints');
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          '내 민원 보기',
+                          style: TextStyle(
+                            fontFamily: 'Pretendard',
+                            fontWeight: FontWeight.w400,
+                            fontSize: 16,
+                            color: Color(0xFF17191A),
+                          ),
                         ),
-                      ),
-                      const Icon(
-                        Icons.arrow_forward_ios,
-                        size: 16,
-                        color: Color(0xFF757B80),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            // 메뉴 아이템 3: 로그아웃
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () async {
-                  // 로그아웃 처리
-                  final authStateNotifier = ref.read(authStateProvider.notifier);
-                  await authStateNotifier.logout();
-                  if (mounted) {
-                    context.go('/');
-                  }
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        '로그아웃',
-                        style: TextStyle(
-                          fontFamily: 'Pretendard',
-                          fontWeight: FontWeight.w400,
-                          fontSize: 16,
-                          color: Color(0xFF17191A),
+                        const Icon(
+                          Icons.arrow_forward_ios,
+                          size: 16,
+                          color: Color(0xFF757B80),
                         ),
-                      ),
-                      const Icon(
-                        Icons.logout,
-                        size: 16,
-                        color: Color(0xFF757B80),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const Spacer(),
-            FutureBuilder<PackageInfo>(
-              future: PackageInfo.fromPlatform(),
-              builder: (context, snapshot) {
-                final version = snapshot.data?.version ?? '';
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Center(
-                    child: Text(
-                      'v$version',
-                      style: const TextStyle(
-                        color: Color(0xFFA4ADB2),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                      ),
+                      ],
                     ),
                   ),
-                );
-              },
-            ),
+                ),
+              ),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    _scaffoldKey.currentState?.closeEndDrawer();
+                    _openLifeServiceList();
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '서비스 신청',
+                          style: TextStyle(
+                            fontFamily: 'Pretendard',
+                            fontSize: 16,
+                            color: Color(0xFF17191A),
+                          ),
+                        ),
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          size: 16,
+                          color: Color(0xFF757B80),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    context.pushNamed('lifeServiceHistory');
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '서비스 신청 내역',
+                          style: TextStyle(
+                            fontFamily: 'Pretendard',
+                            fontWeight: FontWeight.w400,
+                            fontSize: 16,
+                            color: Color(0xFF17191A),
+                          ),
+                        ),
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          size: 16,
+                          color: Color(0xFF757B80),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              // 메뉴 아이템 4: 로그아웃
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () async {
+                    // 로그아웃 처리
+                    final authStateNotifier = ref.read(
+                      authStateProvider.notifier,
+                    );
+                    await authStateNotifier.logout();
+                    if (mounted) {
+                      context.go('/');
+                    }
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          '로그아웃',
+                          style: TextStyle(
+                            fontFamily: 'Pretendard',
+                            fontWeight: FontWeight.w400,
+                            fontSize: 16,
+                            color: Color(0xFF17191A),
+                          ),
+                        ),
+                        const Icon(
+                          Icons.logout,
+                          size: 16,
+                          color: Color(0xFF757B80),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const Spacer(),
+              FutureBuilder<PackageInfo>(
+                future: PackageInfo.fromPlatform(),
+                builder: (context, snapshot) {
+                  final version = snapshot.data?.version ?? '';
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Center(
+                      child: Text(
+                        'v$version',
+                        style: const TextStyle(
+                          color: Color(0xFFA4ADB2),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
             ],
           ),
         ),
@@ -702,7 +834,7 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
     final currentUser = ref.watch(currentUserProvider);
     final buildingImageUrl = currentUser?.buildingImageUrl;
 
-    return Container(
+    return SizedBox(
       width: double.infinity,
       height: 338,
       child: buildingImageUrl != null && buildingImageUrl.isNotEmpty
@@ -723,7 +855,9 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
                 child: const Center(
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF006FFF)),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Color(0xFF006FFF),
+                    ),
                   ),
                 ),
               ),
@@ -786,7 +920,9 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
       // 두 번째 부서 (있으면)
       if (i + 1 < _departments.length) {
         rowChildren.add(const SizedBox(width: 8));
-        rowChildren.add(Expanded(child: _buildDepartmentCard(_departments[i + 1])));
+        rowChildren.add(
+          Expanded(child: _buildDepartmentCard(_departments[i + 1])),
+        );
       } else {
         rowChildren.add(const SizedBox(width: 8));
         rowChildren.add(const Expanded(child: SizedBox()));
@@ -795,15 +931,15 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
       // 세 번째 부서 (있으면)
       if (i + 2 < _departments.length) {
         rowChildren.add(const SizedBox(width: 8));
-        rowChildren.add(Expanded(child: _buildDepartmentCard(_departments[i + 2])));
+        rowChildren.add(
+          Expanded(child: _buildDepartmentCard(_departments[i + 2])),
+        );
       } else {
         rowChildren.add(const SizedBox(width: 8));
         rowChildren.add(const Expanded(child: SizedBox()));
       }
 
-      rows.add(
-        Row(children: rowChildren),
-      );
+      rows.add(Row(children: rowChildren));
 
       // 다음 행과의 간격
       if (i + 3 < _departments.length) {
@@ -878,11 +1014,15 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
           }
 
           try {
-            final residentDeptDataSource = ref.read(residentDepartmentRemoteDataSourceProvider);
+            final residentDeptDataSource = ref.read(
+              residentDepartmentRemoteDataSourceProvider,
+            );
             final response = await residentDeptDataSource.getDepartments();
 
             if (response['success'] == true) {
-              final userDepartments = List<Map<String, dynamic>>.from(response['data'] ?? []);
+              final userDepartments = List<Map<String, dynamic>>.from(
+                response['data'] ?? [],
+              );
 
               // 현재 부서의 isActive 찾기
               final matchedDept = userDepartments.firstWhere(
@@ -949,21 +1089,14 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Colors.white,
-          border: Border.all(
-            color: const Color(0xFFE8EEF2),
-            width: 1,
-          ),
+          border: Border.all(color: const Color(0xFFE8EEF2), width: 1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (iconPath != null)
-              SvgPicture.asset(
-                iconPath,
-                width: 24,
-                height: 24,
-              )
+              SvgPicture.asset(iconPath, width: 24, height: 24)
             else
               Container(
                 width: 24,
@@ -1001,10 +1134,7 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
     return Column(
       children: [
         // 구분선
-        Container(
-          height: 8,
-          color: const Color(0xFFF2F8FC),
-        ),
+        Container(height: 8, color: const Color(0xFFF2F8FC)),
         // 공지사항/이벤트 탭 + 전체보기 버튼
         _buildTabAndViewAllSection(),
       ],
@@ -1047,17 +1177,14 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
                   fontSize: 16,
                 ),
                 labelColor: const Color(0xFF17191A),
-                unselectedLabelColor: Color(0xFF17191A).withOpacity(0.5),
+                unselectedLabelColor: Color(0xFF17191A).withValues(alpha: 0.5),
 
                 // TabBar 기본 divider 제거(회색선 중복 제거)
                 dividerColor: Colors.transparent,
 
                 // 검정 인디케이터 = 라운드 없음
                 indicator: const UnderlineTabIndicator(
-                  borderSide: BorderSide(
-                    width: 3,
-                    color: Color(0xFF17191A),
-                  ),
+                  borderSide: BorderSide(width: 3, color: Color(0xFF17191A)),
                   insets: EdgeInsets.zero,
                 ),
 
@@ -1101,8 +1228,6 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
     );
   }
 
-
-
   /// 대시보드의 목록 한 줄.
   ///
   /// 경로 파라미터 이름을 [idParamName] 으로 받는다. 예전에는 noticeId 가 채워졌는지로
@@ -1120,10 +1245,7 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
       onTap: id == null || id.isEmpty
           ? null
           : () {
-              context.pushNamed(
-                routeName,
-                pathParameters: {idParamName: id},
-              );
+              context.pushNamed(routeName, pathParameters: {idParamName: id});
             },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -1159,15 +1281,11 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
       ),
     );
   }
-
 }
 
 /// 민원 부서 목록 로드 실패 안내 + 재시도.
 class _DepartmentLoadError extends StatelessWidget {
-  const _DepartmentLoadError({
-    required this.message,
-    required this.onRetry,
-  });
+  const _DepartmentLoadError({required this.message, required this.onRetry});
 
   final String message;
   final VoidCallback onRetry;
@@ -1186,10 +1304,7 @@ class _DepartmentLoadError extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        TextButton(
-          onPressed: onRetry,
-          child: const Text('다시 시도'),
-        ),
+        TextButton(onPressed: onRetry, child: const Text('다시 시도')),
       ],
     );
   }

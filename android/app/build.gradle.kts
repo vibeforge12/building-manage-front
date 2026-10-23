@@ -17,6 +17,16 @@ val keyProperties = Properties().apply {
         load(FileInputStream(keyPropertiesFile))
     }
 }
+val appIdOverride = providers.gradleProperty("appIdOverride").orNull
+val appLabelOverride = providers.gradleProperty("appLabelOverride").orNull
+val cleartextOverride = providers.gradleProperty("cleartextOverride").orNull
+
+if (appIdOverride == "com.example.building_manage_front") {
+    tasks.withType<com.google.gms.googleservices.GoogleServicesTask>().configureEach {
+        (googleServicesJsonFiles as org.gradle.api.file.ConfigurableFileCollection)
+            .setFrom(file("../../config/firebase/dev/google-services.json"))
+    }
+}
 
 android {
     namespace = "com.j2partners.buildingManageFront"
@@ -37,12 +47,14 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.j2partners.buildingManageFront"
+        applicationId = appIdOverride ?: "com.j2partners.buildingManageFront"
         minSdk = 23
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true
+        manifestPlaceholders["appLabel"] = appLabelOverride ?: "엄지"
+        manifestPlaceholders["usesCleartextTraffic"] = cleartextOverride ?: "false"
     }
 
     signingConfigs {

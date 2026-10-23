@@ -7,10 +7,12 @@ class StaffComplaintsListScreen extends ConsumerStatefulWidget {
   const StaffComplaintsListScreen({super.key});
 
   @override
-  ConsumerState<StaffComplaintsListScreen> createState() => _StaffComplaintsListScreenState();
+  ConsumerState<StaffComplaintsListScreen> createState() =>
+      _StaffComplaintsListScreenState();
 }
 
-class _StaffComplaintsListScreenState extends ConsumerState<StaffComplaintsListScreen> {
+class _StaffComplaintsListScreenState
+    extends ConsumerState<StaffComplaintsListScreen> {
   bool _isLoading = false;
   List<Map<String, dynamic>> _allComplaints = [];
   String? _error;
@@ -37,7 +39,10 @@ class _StaffComplaintsListScreenState extends ConsumerState<StaffComplaintsListS
       // 탭에 따라 다른 API 호출
       final response = _tabIndex == 0
           ? await dataSource.getPendingComplaints(page: page, limit: _pageSize)
-          : await dataSource.getResolvedComplaints(page: page, limit: _pageSize);
+          : await dataSource.getResolvedComplaints(
+              page: page,
+              limit: _pageSize,
+            );
 
       if (response['success'] == true && response['data'] != null) {
         final data = response['data'] as Map<String, dynamic>;
@@ -45,7 +50,8 @@ class _StaffComplaintsListScreenState extends ConsumerState<StaffComplaintsListS
         final meta = data['meta'] as Map<String, dynamic>?;
 
         setState(() {
-          _allComplaints = items?.map((item) => item as Map<String, dynamic>).toList() ?? [];
+          _allComplaints =
+              items?.map((item) => item as Map<String, dynamic>).toList() ?? [];
           _currentPage = page;
           _totalCount = meta?['total'] as int? ?? 0;
           _isLoading = false;
@@ -58,7 +64,6 @@ class _StaffComplaintsListScreenState extends ConsumerState<StaffComplaintsListS
       }
     } catch (e) {
       if (!mounted) return;
-      final tabName = _tabIndex == 0 ? '미완료' : '처리된';
       setState(() {
         _error = '민원 로드 중 오류가 발생했습니다.';
         _isLoading = false;
@@ -81,16 +86,6 @@ class _StaffComplaintsListScreenState extends ConsumerState<StaffComplaintsListS
     return _allComplaints;
   }
 
-  String _formatDate(String? dateString) {
-    if (dateString == null) return '';
-    try {
-      final dateTime = DateTime.parse(dateString).toLocal();
-      return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}';
-    } catch (e) {
-      return '';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -105,10 +100,7 @@ class _StaffComplaintsListScreenState extends ConsumerState<StaffComplaintsListS
               decoration: const BoxDecoration(
                 color: Colors.white,
                 border: Border(
-                  bottom: BorderSide(
-                    color: Color(0xFFE8EEF2),
-                    width: 1,
-                  ),
+                  bottom: BorderSide(color: Color(0xFFE8EEF2), width: 1),
                 ),
               ),
               child: Row(
@@ -139,17 +131,12 @@ class _StaffComplaintsListScreenState extends ConsumerState<StaffComplaintsListS
             // 탭 바 (Segmented Controls)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-              ),
+              decoration: const BoxDecoration(color: Colors.white),
               child: Container(
                 decoration: BoxDecoration(
                   color: const Color(0xFFF2F8FC),
                   borderRadius: BorderRadius.circular(9),
-                  border: Border.all(
-                    color: const Color(0xFFE8EEF2),
-                    width: 1,
-                  ),
+                  border: Border.all(color: const Color(0xFFE8EEF2), width: 1),
                 ),
                 child: Row(
                   children: [
@@ -157,19 +144,26 @@ class _StaffComplaintsListScreenState extends ConsumerState<StaffComplaintsListS
                       child: GestureDetector(
                         onTap: () => _changeTab(0),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
                           decoration: BoxDecoration(
-                            color: _tabIndex == 0 ? Colors.white : Colors.transparent,
+                            color: _tabIndex == 0
+                                ? Colors.white
+                                : Colors.transparent,
                             borderRadius: _tabIndex == 0
                                 ? BorderRadius.circular(8)
                                 : BorderRadius.zero,
                             boxShadow: _tabIndex == 0
                                 ? [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.1,
+                                      ),
                                       blurRadius: 4,
                                       offset: const Offset(0, 2),
-                                    )
+                                    ),
                                   ]
                                 : [],
                           ),
@@ -178,7 +172,9 @@ class _StaffComplaintsListScreenState extends ConsumerState<StaffComplaintsListS
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontFamily: 'Pretendard',
-                              fontWeight: _tabIndex == 0 ? FontWeight.w700 : FontWeight.w400,
+                              fontWeight: _tabIndex == 0
+                                  ? FontWeight.w700
+                                  : FontWeight.w400,
                               fontSize: 14,
                               color: const Color(0xFF17191A),
                             ),
@@ -190,19 +186,26 @@ class _StaffComplaintsListScreenState extends ConsumerState<StaffComplaintsListS
                       child: GestureDetector(
                         onTap: () => _changeTab(1),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
                           decoration: BoxDecoration(
-                            color: _tabIndex == 1 ? Colors.white : Colors.transparent,
+                            color: _tabIndex == 1
+                                ? Colors.white
+                                : Colors.transparent,
                             borderRadius: _tabIndex == 1
                                 ? BorderRadius.circular(8)
                                 : BorderRadius.zero,
                             boxShadow: _tabIndex == 1
                                 ? [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.1,
+                                      ),
                                       blurRadius: 4,
                                       offset: const Offset(0, 2),
-                                    )
+                                    ),
                                   ]
                                 : [],
                           ),
@@ -211,7 +214,9 @@ class _StaffComplaintsListScreenState extends ConsumerState<StaffComplaintsListS
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontFamily: 'Pretendard',
-                              fontWeight: _tabIndex == 1 ? FontWeight.w700 : FontWeight.w400,
+                              fontWeight: _tabIndex == 1
+                                  ? FontWeight.w700
+                                  : FontWeight.w400,
                               fontSize: 14,
                               color: const Color(0xFF17191A),
                             ),
@@ -235,138 +240,154 @@ class _StaffComplaintsListScreenState extends ConsumerState<StaffComplaintsListS
                       ),
                     )
                   : _error != null
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.error_outline,
-                                size: 48,
-                                color: Color(0xFF757B80),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                _error!,
-                                style: const TextStyle(
-                                  fontFamily: 'Pretendard',
-                                  fontWeight: FontWeight.w400,
-                                  fontSize: 14,
-                                  color: Color(0xFF757B80),
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              ElevatedButton(
-                                onPressed: _loadComplaints,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF006FFF),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                    vertical: 12,
-                                  ),
-                                ),
-                                child: const Text(
-                                  '다시 시도',
-                                  style: TextStyle(
-                                    fontFamily: 'Pretendard',
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 14,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            size: 48,
+                            color: Color(0xFF757B80),
                           ),
-                        )
-                      : _filteredComplaints.isEmpty
-                          ? const Center(
-                              child: Text(
-                                '민원이 없습니다.',
-                                style: TextStyle(
-                                  fontFamily: 'Pretendard',
-                                  fontWeight: FontWeight.w400,
-                                  fontSize: 14,
-                                  color: Color(0xFF757B80),
-                                ),
+                          const SizedBox(height: 16),
+                          Text(
+                            _error!,
+                            style: const TextStyle(
+                              fontFamily: 'Pretendard',
+                              fontWeight: FontWeight.w400,
+                              fontSize: 14,
+                              color: Color(0xFF757B80),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton(
+                            onPressed: _loadComplaints,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF006FFF),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
                               ),
-                            )
-                          : ListView.separated(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              itemCount: _filteredComplaints.length,
-                              separatorBuilder: (_, __) => const SizedBox(height: 8),
-                              itemBuilder: (context, index) {
-                                final complaint = _filteredComplaints[index];
-                                final complaintId = complaint['id'] as String?;
-                                final title = complaint['title'] as String? ?? '제목없음';
-                                final resident = complaint['resident'] as Map<String, dynamic>?;
-                                final residentName = resident?['name'] as String? ?? '거주자명';
-                                final dong = resident?['dong'] as String? ?? '';
-                                final hosu = resident?['hosu'] as String? ?? '';
+                            ),
+                            child: const Text(
+                              '다시 시도',
+                              style: TextStyle(
+                                fontFamily: 'Pretendard',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : _filteredComplaints.isEmpty
+                  ? const Center(
+                      child: Text(
+                        '민원이 없습니다.',
+                        style: TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontWeight: FontWeight.w400,
+                          fontSize: 14,
+                          color: Color(0xFF757B80),
+                        ),
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      itemCount: _filteredComplaints.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (context, index) {
+                        final complaint = _filteredComplaints[index];
+                        final complaintId = complaint['id'] as String?;
+                        final title = complaint['title'] as String? ?? '제목없음';
+                        final resident =
+                            complaint['resident'] as Map<String, dynamic>?;
+                        final residentName =
+                            resident?['name'] as String? ?? '거주자명';
+                        final dong = resident?['dong'] as String? ?? '';
+                        final hosu = resident?['hosu'] as String? ?? '';
 
-                                final isResolved = complaint['isResolved'] as bool? ?? false;
+                        final isResolved =
+                            complaint['isResolved'] as bool? ?? false;
 
-                                return InkWell(
-                                  onTap: () {
-                                    if (complaintId != null) {
-                                      context.push('/manager/complaint-detail/$complaintId');
-                                    }
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 8),
-                                    child: Row(
-                                      crossAxisAlignment: CrossAxisAlignment.center,
-                                      children: [
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Text(
-                                                title,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                  fontFamily: 'Pretendard',
-                                                  fontWeight: FontWeight.w700,
-                                                  fontSize: 14,
-                                                  color: Color(0xFF17191A),
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                '$dong $hosu $residentName'.trim(),
-                                                style: const TextStyle(
-                                                  fontFamily: 'Pretendard',
-                                                  fontWeight: FontWeight.w400,
-                                                  fontSize: 14,
-                                                  color: Color(0xFF464A4D),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
+                        return InkWell(
+                          onTap: () {
+                            if (complaintId != null) {
+                              context.push(
+                                '/manager/complaint-detail/$complaintId',
+                              );
+                            }
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        title,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontFamily: 'Pretendard',
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 14,
+                                          color: Color(0xFF17191A),
                                         ),
-                                        const SizedBox(width: 8),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: isResolved ? const Color(0xFFEEF5FF) : const Color(0xFFFEEEE6),
-                                            borderRadius: BorderRadius.circular(4),
-                                          ),
-                                          child: Text(
-                                            isResolved ? '처리완료' : '처리필요',
-                                            style: TextStyle(
-                                              fontFamily: 'Pretendard',
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 11,
-                                              color: isResolved ? const Color(0xFF006FFF) : const Color(0xFFFF6B35),
-                                            ),
-                                          ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '$dong $hosu $residentName'.trim(),
+                                        style: const TextStyle(
+                                          fontFamily: 'Pretendard',
+                                          fontWeight: FontWeight.w400,
+                                          fontSize: 14,
+                                          color: Color(0xFF464A4D),
                                         ),
-                                      ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isResolved
+                                        ? const Color(0xFFEEF5FF)
+                                        : const Color(0xFFFEEEE6),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    isResolved ? '처리완료' : '처리필요',
+                                    style: TextStyle(
+                                      fontFamily: 'Pretendard',
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 11,
+                                      color: isResolved
+                                          ? const Color(0xFF006FFF)
+                                          : const Color(0xFFFF6B35),
                                     ),
                                   ),
-                                );
-                              },
+                                ),
+                              ],
                             ),
+                          ),
+                        );
+                      },
+                    ),
             ),
             // 페이지네이션
             if (_filteredComplaints.isNotEmpty && _totalCount > _pageSize)
@@ -375,10 +396,7 @@ class _StaffComplaintsListScreenState extends ConsumerState<StaffComplaintsListS
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   border: Border(
-                    top: BorderSide(
-                      color: Color(0xFFE8EEF2),
-                      width: 1,
-                    ),
+                    top: BorderSide(color: Color(0xFFE8EEF2), width: 1),
                   ),
                 ),
                 child: Row(
@@ -386,7 +404,8 @@ class _StaffComplaintsListScreenState extends ConsumerState<StaffComplaintsListS
                   children: [
                     if (_currentPage > 1)
                       ElevatedButton.icon(
-                        onPressed: () => _loadComplaints(page: _currentPage - 1),
+                        onPressed: () =>
+                            _loadComplaints(page: _currentPage - 1),
                         icon: const Icon(Icons.chevron_left),
                         label: const Text('이전'),
                       ),
@@ -403,7 +422,8 @@ class _StaffComplaintsListScreenState extends ConsumerState<StaffComplaintsListS
                     const SizedBox(width: 8),
                     if (_currentPage < (_totalCount / _pageSize).ceil())
                       ElevatedButton.icon(
-                        onPressed: () => _loadComplaints(page: _currentPage + 1),
+                        onPressed: () =>
+                            _loadComplaints(page: _currentPage + 1),
                         icon: const Icon(Icons.chevron_right),
                         label: const Text('다음'),
                       ),

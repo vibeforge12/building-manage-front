@@ -12,10 +12,12 @@ class PushOptInCheckbox extends StatelessWidget {
     super.key,
     required this.value,
     required this.onChanged,
+    this.helperText = '올릴 때마다 알림을 보내면 입주민이 알림을 꺼버립니다. 긴급할 때만 사용해주세요.',
   });
 
   final bool value;
   final ValueChanged<bool> onChanged;
+  final String helperText;
 
   @override
   Widget build(BuildContext context) {
@@ -41,11 +43,11 @@ class PushOptInCheckbox extends StatelessWidget {
               activeColor: const Color(0xFF006FFF),
               onChanged: (next) => onChanged(next ?? false),
             ),
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     '입주민에게 알림 보내기',
                     style: TextStyle(
                       fontFamily: 'Pretendard',
@@ -54,10 +56,10 @@ class PushOptInCheckbox extends StatelessWidget {
                       color: Color(0xFF17191A),
                     ),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
-                    '올릴 때마다 알림을 보내면 입주민이 알림을 꺼버립니다. 긴급할 때만 사용해주세요.',
-                    style: TextStyle(
+                    helperText,
+                    style: const TextStyle(
                       fontFamily: 'Pretendard',
                       fontSize: 12,
                       color: Color(0xFF757B80),

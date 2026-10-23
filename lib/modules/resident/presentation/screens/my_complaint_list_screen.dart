@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/resident/data/datasources/complaint_remote_datasource.dart';
-import 'package:intl/intl.dart';
 
 class MyComplaintListScreen extends ConsumerStatefulWidget {
   const MyComplaintListScreen({super.key});
 
   @override
-  ConsumerState<MyComplaintListScreen> createState() => _MyComplaintListScreenState();
+  ConsumerState<MyComplaintListScreen> createState() =>
+      _MyComplaintListScreenState();
 }
 
 class _MyComplaintListScreenState extends ConsumerState<MyComplaintListScreen> {
   bool _isLoading = true;
   List<Map<String, dynamic>> _complaints = [];
   String? _error;
-  int _page = 1;
+  final int _page = 1;
   final int _limit = 20;
 
   @override
@@ -37,7 +37,9 @@ class _MyComplaintListScreenState extends ConsumerState<MyComplaintListScreen> {
       );
 
       if (response['success'] == true && response['data'] != null) {
-        final items = List<Map<String, dynamic>>.from(response['data']['items'] ?? []);
+        final items = List<Map<String, dynamic>>.from(
+          response['data']['items'] ?? [],
+        );
         setState(() {
           _complaints = items;
           _isLoading = false;
@@ -54,16 +56,6 @@ class _MyComplaintListScreenState extends ConsumerState<MyComplaintListScreen> {
         _error = '민원 로드 중 오류가 발생했습니다.';
         _isLoading = false;
       });
-    }
-  }
-
-  String _formatDate(String? dateString) {
-    if (dateString == null) return '';
-    try {
-      final dateTime = DateTime.parse(dateString).toLocal();
-      return DateFormat('yyyy.MM.dd').format(dateTime);
-    } catch (e) {
-      return '';
     }
   }
 
@@ -127,68 +119,69 @@ class _MyComplaintListScreenState extends ConsumerState<MyComplaintListScreen> {
                       ),
                     )
                   : _error != null
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.error_outline,
-                                size: 48,
-                                color: Color(0xFF757B80),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                _error!,
-                                style: const TextStyle(
-                                  fontFamily: 'Pretendard',
-                                  fontWeight: FontWeight.w400,
-                                  fontSize: 14,
-                                  color: Color(0xFF757B80),
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              ElevatedButton(
-                                onPressed: () => _loadComplaints(),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF006FFF),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                    vertical: 12,
-                                  ),
-                                ),
-                                child: const Text(
-                                  '다시 시도',
-                                  style: TextStyle(
-                                    fontFamily: 'Pretendard',
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 14,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            size: 48,
+                            color: Color(0xFF757B80),
                           ),
-                        )
-                      : _complaints.isEmpty
-                          ? Center(
-                              child: Text(
-                                '민원이 없습니다.',
-                                style: const TextStyle(
-                                  fontFamily: 'Pretendard',
-                                  fontWeight: FontWeight.w400,
-                                  fontSize: 14,
-                                  color: Color(0xFF757B80),
-                                ),
-                              ),
-                            )
-                          : ListView.builder(
-                              itemCount: _complaints.length,
-                              itemBuilder: (context, index) {
-                                final complaint = _complaints[index];
-                                final isResolved = complaint['isResolved'] as bool? ?? false;
-                                return _buildComplaintItem(complaint, isResolved);
-                              },
+                          const SizedBox(height: 16),
+                          Text(
+                            _error!,
+                            style: const TextStyle(
+                              fontFamily: 'Pretendard',
+                              fontWeight: FontWeight.w400,
+                              fontSize: 14,
+                              color: Color(0xFF757B80),
                             ),
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton(
+                            onPressed: () => _loadComplaints(),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF006FFF),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                            ),
+                            child: const Text(
+                              '다시 시도',
+                              style: TextStyle(
+                                fontFamily: 'Pretendard',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : _complaints.isEmpty
+                  ? Center(
+                      child: Text(
+                        '민원이 없습니다.',
+                        style: const TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontWeight: FontWeight.w400,
+                          fontSize: 14,
+                          color: Color(0xFF757B80),
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: _complaints.length,
+                      itemBuilder: (context, index) {
+                        final complaint = _complaints[index];
+                        final isResolved =
+                            complaint['isResolved'] as bool? ?? false;
+                        return _buildComplaintItem(complaint, isResolved);
+                      },
+                    ),
             ),
           ],
         ),
@@ -198,26 +191,17 @@ class _MyComplaintListScreenState extends ConsumerState<MyComplaintListScreen> {
 
   Widget _buildComplaintItem(Map<String, dynamic> complaint, bool isResolved) {
     final title = complaint['title'] as String? ?? '';
-    final createdAt = complaint['createdAt'] as String?;
 
     return Container(
       decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: Color(0xFFE8EEF2),
-            width: 1,
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: Color(0xFFE8EEF2), width: 1)),
       ),
       child: InkWell(
         onTap: () {
           // 민원 상세 조회 화면으로 이동 (전체 데이터 전달)
           final complaintId = complaint['id'] as String?;
           if (complaintId != null) {
-            context.push(
-              '/user/complaint/$complaintId',
-              extra: complaint,
-            );
+            context.push('/user/complaint/$complaintId', extra: complaint);
           }
         },
         child: Padding(
@@ -246,7 +230,10 @@ class _MyComplaintListScreenState extends ConsumerState<MyComplaintListScreen> {
               const SizedBox(width: 8),
               // 상태 배지
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: _getStatusColor(isResolved),
                   borderRadius: BorderRadius.circular(8),

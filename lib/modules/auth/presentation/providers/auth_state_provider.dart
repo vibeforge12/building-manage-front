@@ -14,7 +14,8 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
 
   User? get currentUser => _currentUser;
   String? get accessToken => _accessToken;
-  bool get isAuthenticated => state == AuthState.authenticated && _currentUser != null;
+  bool get isAuthenticated =>
+      state == AuthState.authenticated && _currentUser != null;
 
   void setLoading() {
     state = AuthState.loading;
@@ -52,7 +53,11 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> loginSuccess(Map<String, dynamic> userData, String accessToken, [String? refreshToken]) async {
+  Future<void> loginSuccess(
+    Map<String, dynamic> userData,
+    String accessToken, [
+    String? refreshToken,
+  ]) async {
     try {
       final user = User.fromJson(userData);
       _currentUser = user;
@@ -106,7 +111,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       final validRefreshToken = refreshToken;
 
       // Refresh 시도: 실패 시 1회 재시도 후 포기
-      Future<Map<String, dynamic>> _attemptRefresh() async {
+      Future<Map<String, dynamic>> attemptRefresh() async {
         return await authDataSource.refreshToken(validRefreshToken);
       }
 
@@ -117,14 +122,14 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       Map<String, dynamic>? response;
       Object? failure;
       try {
-        response = await _attemptRefresh();
+        response = await attemptRefresh();
       } catch (e) {
         // 1차 실패: 잠깐 쉬었다가 1회 재시도.
         // 지연 없이 즉시 재시도하면 연결 거부 시 두 번 다 즉시 실패해
         // 순간적인 단절을 넘기지 못한다.
         await Future.delayed(const Duration(milliseconds: 800));
         try {
-          response = await _attemptRefresh();
+          response = await attemptRefresh();
         } catch (e2) {
           failure = e2;
         }
@@ -186,7 +191,9 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
   }
 }
 
-final authStateProvider = StateNotifierProvider<AuthStateNotifier, AuthState>((ref) {
+final authStateProvider = StateNotifierProvider<AuthStateNotifier, AuthState>((
+  ref,
+) {
   return AuthStateNotifier();
 });
 

@@ -47,6 +47,7 @@
 ## 2. 개발 명령어
 
 ```bash
+make quality                          # 프론트·백엔드·실제 빌드·기기 성능 통합 검사
 flutter pub get                       # 의존성 설치
 flutter run                           # 실행 (기기/에뮬레이터)
 flutter run -d chrome                 # Web
@@ -54,6 +55,11 @@ flutter analyze                       # 정적 분석 (커밋 전 필수)
 flutter test                          # 테스트
 flutter test test/router_notifier_test.dart
 ```
+
+- 사용자가 앱·코드·성능·빌드를 "검사해 달라"고 요청하면 별도 범위 제한이 없는 한 `make quality`를 기본 검사로 실행합니다.
+- 새 핵심 화면, API, 플랫폼, 성능 지표 또는 검사 도구가 추가되면 개별 명령으로만 남기지 말고 `make quality` 한 번에 포함되도록 `tool/quality_gate.sh`와 `docs/품질게이트.md`를 함께 갱신합니다.
+- 기기나 테스트 API가 없어서 실행하지 못한 항목은 성공으로 처리하지 않고 생성 보고서에 `SKIP`과 이유를 남깁니다.
+- 수치 기준과 실행 방법은 [`docs/품질게이트.md`](docs/품질게이트.md)를 따릅니다.
 
 - `.env` 가 루트에 없으면 앱이 API 를 못 붙습니다 (`AppConfig` 가 dotenv 로 읽음).
 - 코드 생성(`build_runner`)은 **현재 실사용되지 않습니다** — `lib/` 에 `.g.dart` 0개.

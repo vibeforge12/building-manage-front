@@ -24,10 +24,7 @@ class ResidentApprovalCompletedScreen extends ConsumerWidget {
         child: Column(
           children: [
             // Status Bar 영역 (높이 48)
-            Container(
-              height: 48,
-              color: Colors.white,
-            ),
+            Container(height: 48, color: Colors.white),
 
             // Content
             Expanded(
@@ -46,7 +43,9 @@ class ResidentApprovalCompletedScreen extends ConsumerWidget {
                           height: 96,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: const Color(0xFF006FFF).withValues(alpha: 0.1),
+                            color: const Color(
+                              0xFF006FFF,
+                            ).withValues(alpha: 0.1),
                           ),
                         ),
                         // 내부 파란 원
@@ -109,11 +108,15 @@ class ResidentApprovalCompletedScreen extends ConsumerWidget {
             SafeArea(
               top: false,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
                 child: FilledButton(
                   onPressed: () async {
                     // 승인 완료 화면을 봤다는 플래그 저장
                     await _markApprovalAsShown(ref);
+                    if (!context.mounted) return;
                     context.goNamed('userDashboard');
                   },
                   style: FilledButton.styleFrom(

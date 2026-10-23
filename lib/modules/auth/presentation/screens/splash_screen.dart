@@ -80,6 +80,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           } else if (approvalStatus == 'APPROVED') {
             // 승인 완료 - 최초 1회만 승인 완료 화면 표시
             final prefs = await SharedPreferences.getInstance();
+            if (!mounted) return;
             final approvalShownKey = 'approval_shown_${currentUser.id}';
             final hasShownApproval = prefs.getBool(approvalShownKey) ?? false;
 
@@ -147,7 +148,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               },
             ),
             const SizedBox(height: 32),
-            if (_connectionFailed) _buildConnectionFailed() else _buildLoading(),
+            if (_connectionFailed)
+              _buildConnectionFailed()
+            else
+              _buildLoading(),
           ],
         ),
       ),
@@ -182,7 +186,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           const SizedBox(height: 12),
           const Text(
             '인터넷 연결을 확인한 뒤 다시 시도해 주세요.\n로그인 상태는 그대로 유지됩니다.',
-            style: TextStyle(fontSize: 14, color: Color(0xFF6B7280), height: 1.5),
+            style: TextStyle(
+              fontSize: 14,
+              color: Color(0xFF6B7280),
+              height: 1.5,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 28),
@@ -211,7 +219,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                     )
                   : const Text(
                       '다시 시도',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
             ),
           ),

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -20,10 +21,14 @@ class BulletinImageStrip extends StatelessWidget {
     required this.onRemoveExisting,
     required this.onRemovePicked,
     this.readOnly = false,
+    this.pickedBytes,
   });
 
   final List<String> existingUrls;
   final List<XFile> pickedImages;
+
+  /// 임시 파일 수명에 의존하지 않는 미리보기. 기존 공고 화면은 파일 경로를 유지한다.
+  final Map<String, Uint8List>? pickedBytes;
   final int maxImages;
   final ValueChanged<int> onRemoveExisting;
   final ValueChanged<int> onRemovePicked;
@@ -64,8 +69,9 @@ class BulletinImageStrip extends StatelessWidget {
                     imageUrl: existingUrls[i],
                     fit: BoxFit.cover,
                     errorWidget: (_, __, ___) => const Icon(
-                        Icons.broken_image_outlined,
-                        color: Color(0xFF757B80)),
+                      Icons.broken_image_outlined,
+                      color: Color(0xFF757B80),
+                    ),
                   ),
                 ),
               for (int i = 0; i < pickedImages.length; i++)
@@ -74,15 +80,27 @@ class BulletinImageStrip extends StatelessWidget {
                   // 방금 고른 사진은 아직 서버에 없다. XFile.path 는 기기 안의 파일 경로라
                   // 네트워크 이미지로 그리면 반드시 실패한다. 등록 화면에서만 안 보이고
                   // 올린 뒤 상세에서는 보였던 이유가 이것이다(상세는 서명 URL 을 받는다).
-                  child: Image.file(
-                    File(pickedImages[i].path),
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: const Color(0xFFF2F8FC),
-                      child: const Icon(Icons.image_outlined,
-                          color: Color(0xFF757B80)),
-                    ),
-                  ),
+                  child: pickedBytes?[pickedImages[i].path] != null
+                      ? Image.memory(
+                          pickedBytes![pickedImages[i].path]!,
+                          cacheWidth: 288,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Icon(
+                            Icons.broken_image_outlined,
+                            color: Color(0xFF757B80),
+                          ),
+                        )
+                      : Image.file(
+                          File(pickedImages[i].path),
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: const Color(0xFFF2F8FC),
+                            child: const Icon(
+                              Icons.image_outlined,
+                              color: Color(0xFF757B80),
+                            ),
+                          ),
+                        ),
                 ),
             ],
           ),

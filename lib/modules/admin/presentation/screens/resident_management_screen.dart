@@ -10,10 +10,12 @@ class ResidentManagementScreen extends ConsumerStatefulWidget {
   const ResidentManagementScreen({super.key});
 
   @override
-  ConsumerState<ResidentManagementScreen> createState() => _ResidentManagementScreenState();
+  ConsumerState<ResidentManagementScreen> createState() =>
+      _ResidentManagementScreenState();
 }
 
-class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScreen>
+class _ResidentManagementScreenState
+    extends ConsumerState<ResidentManagementScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
@@ -115,7 +117,10 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessageVerified = userMessageOf(e, fallback: '입주민 목록을 불러오지 못했습니다.');
+        _errorMessageVerified = userMessageOf(
+          e,
+          fallback: '입주민 목록을 불러오지 못했습니다.',
+        );
       });
     } finally {
       if (mounted) {
@@ -125,7 +130,9 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
   }
 
   Future<void> _loadMoreVerified() async {
-    if (_isLoadingMoreVerified || _isLoadingVerified || !_verifiedHasMore) return;
+    if (_isLoadingMoreVerified || _isLoadingVerified || !_verifiedHasMore) {
+      return;
+    }
     setState(() => _isLoadingMoreVerified = true);
     try {
       final next = _verifiedPage + 1;
@@ -160,7 +167,10 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessagePending = userMessageOf(e, fallback: '입주민 목록을 불러오지 못했습니다.');
+        _errorMessagePending = userMessageOf(
+          e,
+          fallback: '입주민 목록을 불러오지 못했습니다.',
+        );
       });
     } finally {
       if (mounted) {
@@ -188,7 +198,6 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
   }
 
   Future<void> _verifyResident(String residentId, String residentName) async {
-
     final confirmed = await showCustomConfirmationDialog(
       context: context,
       title: '',
@@ -290,49 +299,6 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
     }
   }
 
-  Future<void> _deleteVerifiedResident(String residentId, String residentName) async {
-
-    final confirmed = await showCustomConfirmationDialog(
-      context: context,
-      title: '',
-      content: const Text(
-        '입주민을 삭제하시겠습니까?',
-        style: TextStyle(
-          fontFamily: 'Pretendard',
-          fontWeight: FontWeight.w700,
-          fontSize: 20,
-          color: Colors.black,
-        ),
-        textAlign: TextAlign.center,
-      ),
-      confirmText: '예',
-      cancelText: '아니오',
-      isDestructive: true,
-    );
-
-    if (confirmed != true) {
-      return;
-    }
-
-    try {
-      // UseCase를 통한 입주민 삭제 (비즈니스 로직 포함)
-      final rejectResidentUseCase = ref.read(rejectResidentUseCaseProvider);
-      await rejectResidentUseCase.execute(residentId: residentId);
-
-      if (mounted) {
-        await _loadVerifiedResidents();
-      }
-    } catch (e) {
-      if (!mounted) return;
-      await showErrorAlert(
-        context,
-        title: '삭제 실패',
-        error: e,
-        fallback: '입주민을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -359,19 +325,12 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
           preferredSize: const Size.fromHeight(54),
           child: Column(
             children: [
-              Container(
-                height: 1,
-                color: const Color(0xFFE8EEF2),
-              ),
+              Container(height: 1, color: const Color(0xFFE8EEF2)),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 height: 53,
                 child: Row(
-                  children: [
-                    Expanded(
-                      child: _buildSegmentedTabBar(),
-                    ),
-                  ],
+                  children: [Expanded(child: _buildSegmentedTabBar())],
                 ),
               ),
             ],
@@ -471,7 +430,9 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
 
   /// 탭1: 기존 입주민(건물) — 호수별 그룹화
   Widget _buildVerifiedResidentsTab() {
-    if (_isLoadingVerified) return const Center(child: CircularProgressIndicator());
+    if (_isLoadingVerified) {
+      return const Center(child: CircularProgressIndicator());
+    }
     if (_errorMessageVerified != null) {
       return _errorBox(_errorMessageVerified!, _loadVerifiedResidents);
     }
@@ -577,10 +538,7 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
             if (index < groupedByHosu.length - 1)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
-                child: Container(
-                  height: 8,
-                  color: const Color(0xFFF2F8FC),
-                ),
+                child: Container(height: 8, color: const Color(0xFFF2F8FC)),
               ),
           ],
         );
@@ -590,7 +548,9 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
 
   /// 탭2: 신규 입주민(승인 대기) — 섹션 타이틀 + Pill 버튼
   Widget _buildPendingResidentsTab() {
-    if (_isLoadingPending) return const Center(child: CircularProgressIndicator());
+    if (_isLoadingPending) {
+      return const Center(child: CircularProgressIndicator());
+    }
     if (_errorMessagePending != null) {
       return _errorBox(_errorMessagePending!, _loadPendingResidents);
     }
@@ -622,13 +582,16 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
           child: ListView.separated(
             controller: _pendingScroll,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            itemCount: _pendingResidents.length + (_isLoadingMorePending ? 1 : 0),
+            itemCount:
+                _pendingResidents.length + (_isLoadingMorePending ? 1 : 0),
             separatorBuilder: (_, __) => const SizedBox(height: 20),
             itemBuilder: (context, index) {
               if (index >= _pendingResidents.length) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                  child: Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
                 );
               }
               final r = _pendingResidents[index];
@@ -638,9 +601,7 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
               final hosu = r['hosu'] ?? '';
 
               // 시안은 "105호"만 보이지만, 필요하면 '$dong동 $hosu호'로 바꿔도 됨
-              final subText = (dong.isEmpty)
-                  ? hosu
-                  : '$dong $hosu';
+              final subText = (dong.isEmpty) ? hosu : '$dong $hosu';
 
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -691,16 +652,17 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
   }
 
   /// 작은 Outlined Pill 버튼
-  Widget _smallOutlinedButton({required String label, required VoidCallback onPressed}) {
+  Widget _smallOutlinedButton({
+    required String label,
+    required VoidCallback onPressed,
+  }) {
     return OutlinedButton(
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
         minimumSize: const Size(0, 32),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        side: const BorderSide(color: Color(0xFFE8EEF2),),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        side: const BorderSide(color: Color(0xFFE8EEF2)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         textStyle: const TextStyle(
           fontFamily: 'Pretendard',
           fontWeight: FontWeight.w700,
@@ -713,14 +675,18 @@ class _ResidentManagementScreenState extends ConsumerState<ResidentManagementScr
   }
 
   /// 작은 Filled Pill 버튼
-  Widget _smallFilledButton({required String label, required VoidCallback onPressed}) {
+  Widget _smallFilledButton({
+    required String label,
+    required VoidCallback onPressed,
+  }) {
     return FilledButton(
       onPressed: onPressed,
       style: FilledButton.styleFrom(
         minimumSize: const Size(0, 32),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         backgroundColor: const Color(0xFF006FFF),
-        shape: RoundedRectangleBorder(      // ← 여기 변경
+        shape: RoundedRectangleBorder(
+          // ← 여기 변경
           borderRadius: BorderRadius.circular(8),
         ),
         textStyle: const TextStyle(

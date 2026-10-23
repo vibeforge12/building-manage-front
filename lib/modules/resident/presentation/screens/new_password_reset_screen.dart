@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/resident/data/datasources/resident_auth_remote_datasource.dart';
 import 'package:building_manage_front/shared/widgets/custom_confirmation_dialog.dart';
+import 'package:building_manage_front/shared/widgets/error_alert.dart';
 
 class NewPasswordResetScreen extends ConsumerStatefulWidget {
   final String phoneNumber;
@@ -15,10 +16,12 @@ class NewPasswordResetScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<NewPasswordResetScreen> createState() => _NewPasswordResetScreenState();
+  ConsumerState<NewPasswordResetScreen> createState() =>
+      _NewPasswordResetScreenState();
 }
 
-class _NewPasswordResetScreenState extends ConsumerState<NewPasswordResetScreen> {
+class _NewPasswordResetScreenState
+    extends ConsumerState<NewPasswordResetScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
@@ -59,7 +62,8 @@ class _NewPasswordResetScreenState extends ConsumerState<NewPasswordResetScreen>
       isValid = false;
     }
 
-    if (isValid && _passwordController.text != _confirmPasswordController.text) {
+    if (isValid &&
+        _passwordController.text != _confirmPasswordController.text) {
       setState(() {
         _confirmPasswordError = '비밀번호가 일치하지 않습니다.';
       });
@@ -105,7 +109,13 @@ class _NewPasswordResetScreenState extends ConsumerState<NewPasswordResetScreen>
         }
       }
     } catch (e) {
-      final errorMessage = e.toString();
+      if (!mounted) return;
+      await showErrorAlert(
+        context,
+        title: '비밀번호 재설정 실패',
+        error: e,
+        fallback: '비밀번호를 재설정하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -172,7 +182,8 @@ class _NewPasswordResetScreenState extends ConsumerState<NewPasswordResetScreen>
                         isObscured: _isObscuredConfirmPassword,
                         onToggle: () {
                           setState(() {
-                            _isObscuredConfirmPassword = !_isObscuredConfirmPassword;
+                            _isObscuredConfirmPassword =
+                                !_isObscuredConfirmPassword;
                           });
                         },
                       ),
@@ -184,7 +195,9 @@ class _NewPasswordResetScreenState extends ConsumerState<NewPasswordResetScreen>
                         width: double.infinity,
                         height: 56,
                         child: FilledButton(
-                          onPressed: _isResettingPassword ? null : _resetPassword,
+                          onPressed: _isResettingPassword
+                              ? null
+                              : _resetPassword,
                           style: FilledButton.styleFrom(
                             backgroundColor: const Color(0xFF006FFF),
                             shape: RoundedRectangleBorder(
@@ -198,7 +211,9 @@ class _NewPasswordResetScreenState extends ConsumerState<NewPasswordResetScreen>
                                   height: 24,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
                                   ),
                                 )
                               : const Text(
@@ -229,12 +244,7 @@ class _NewPasswordResetScreenState extends ConsumerState<NewPasswordResetScreen>
       height: 48,
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: Color(0xFFE8EEF2),
-            width: 1,
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: Color(0xFFE8EEF2), width: 1)),
       ),
       child: Row(
         children: [

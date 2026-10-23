@@ -14,7 +14,8 @@ class ResidentSignupStep2 extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ResidentSignupStep2> createState() => _ResidentSignupStep2State();
+  ConsumerState<ResidentSignupStep2> createState() =>
+      _ResidentSignupStep2State();
 }
 
 class _ResidentSignupStep2State extends ConsumerState<ResidentSignupStep2> {
@@ -67,7 +68,9 @@ class _ResidentSignupStep2State extends ConsumerState<ResidentSignupStep2> {
 
       if (response['success'] == true) {
         final data = response['data'];
-        final buildingsList = List<Map<String, dynamic>>.from(data['items'] ?? []);
+        final buildingsList = List<Map<String, dynamic>>.from(
+          data['items'] ?? [],
+        );
         setState(() {
           _buildings = buildingsList;
           _filteredBuildings = buildingsList;
@@ -117,20 +120,19 @@ class _ResidentSignupStep2State extends ConsumerState<ResidentSignupStep2> {
 
     // 선택된 건물 ID만 저장 (name, phoneNumber는 Step3에서 입력)
     final formData = ref.read(signupFormProvider);
-    ref.read(signupFormProvider.notifier).updateStep2Data(
-      name: formData.name ?? '', // 기존 값 유지 또는 빈 문자열
-      phoneNumber: formData.phoneNumber ?? '', // 기존 값 유지 또는 빈 문자열
-      buildingId: _selectedBuilding!['id'].toString(),
-    );
+    ref
+        .read(signupFormProvider.notifier)
+        .updateStep2Data(
+          name: formData.name ?? '', // 기존 값 유지 또는 빈 문자열
+          phoneNumber: formData.phoneNumber ?? '', // 기존 값 유지 또는 빈 문자열
+          buildingId: _selectedBuilding!['id'].toString(),
+        );
 
     widget.onComplete();
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.all(24.0),
@@ -154,7 +156,10 @@ class _ResidentSignupStep2State extends ConsumerState<ResidentSignupStep2> {
                   borderRadius: BorderRadius.all(Radius.circular(12)),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
               ),
             ),
           ),
@@ -163,9 +168,7 @@ class _ResidentSignupStep2State extends ConsumerState<ResidentSignupStep2> {
 
           // 건물 목록 표시
           if (_isLoadingBuildings)
-            const Center(
-              child: CircularProgressIndicator(),
-            )
+            const Center(child: CircularProgressIndicator())
           else if (_errorMessage != null)
             Container(
               padding: const EdgeInsets.all(16),
@@ -194,7 +197,8 @@ class _ResidentSignupStep2State extends ConsumerState<ResidentSignupStep2> {
                 itemCount: _filteredBuildings.length,
                 itemBuilder: (context, index) {
                   final building = _filteredBuildings[index];
-                  final isSelected = _selectedBuilding != null &&
+                  final isSelected =
+                      _selectedBuilding != null &&
                       _selectedBuilding!['id'] == building['id'];
 
                   return Container(
@@ -204,7 +208,9 @@ class _ResidentSignupStep2State extends ConsumerState<ResidentSignupStep2> {
                       color: isSelected ? Colors.blue[50] : Colors.white,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isSelected ? Colors.blue[200]! : Colors.grey[200]!,
+                        color: isSelected
+                            ? Colors.blue[200]!
+                            : Colors.grey[200]!,
                       ),
                     ),
                     child: InkWell(
@@ -277,7 +283,9 @@ class _ResidentSignupStep2State extends ConsumerState<ResidentSignupStep2> {
             width: double.infinity,
             height: 60,
             decoration: BoxDecoration(
-              color: _selectedBuilding != null ? const Color(0xFF006FFF) : const Color(0xFFE8EEF2),
+              color: _selectedBuilding != null
+                  ? const Color(0xFF006FFF)
+                  : const Color(0xFFE8EEF2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: TextButton(
@@ -285,7 +293,9 @@ class _ResidentSignupStep2State extends ConsumerState<ResidentSignupStep2> {
               child: Text(
                 '다음',
                 style: TextStyle(
-                  color: _selectedBuilding != null ? Colors.white : const Color(0xFFA4ADB2),
+                  color: _selectedBuilding != null
+                      ? Colors.white
+                      : const Color(0xFFA4ADB2),
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -293,7 +303,7 @@ class _ResidentSignupStep2State extends ConsumerState<ResidentSignupStep2> {
             ),
           ),
         ],
-        ),
-      );
+      ),
+    );
   }
 }

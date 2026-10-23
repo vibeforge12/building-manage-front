@@ -14,7 +14,8 @@ class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
 
   @override
-  ConsumerState<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+  ConsumerState<AdminDashboardScreen> createState() =>
+      _AdminDashboardScreenState();
 }
 
 class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
@@ -69,7 +70,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                       // 말줄임만 쓰면 긴 건물명이 앞부분만 남아 건물을 구분할 수 없으므로
                       // 폭에 맞춰 글자를 줄여 이름 전체가 보이게 한다.
                       Padding(
-                        padding: const EdgeInsets.only(top: 24, left: 16, right: 16),
+                        padding: const EdgeInsets.only(
+                          top: 24,
+                          left: 16,
+                          right: 16,
+                        ),
                         child: Align(
                           alignment: Alignment.centerLeft,
                           child: ShrinkToFitText(
@@ -141,7 +146,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 child: const Center(
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF006FFF)),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Color(0xFF006FFF),
+                    ),
                   ),
                 ),
               ),
@@ -160,7 +167,6 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             ),
     );
   }
-
 
   Widget _buildMenuGrid(BuildContext context) {
     // 신규 입주민 존재 여부 확인
@@ -247,9 +253,15 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              // 한 줄에 카드가 하나만 있으면 폭이 두 배가 되어 다른 줄과 어긋난다.
-              // 빈 자리를 같은 비율로 채워 격자를 유지한다.
-              const Expanded(child: SizedBox()),
+              Expanded(
+                child: _buildMenuCard(
+                  icon: 'assets/icons/calendar_check_filled.svg',
+                  title: '서비스 신청 관리',
+                  onTap: () {
+                    context.pushNamed('lifeServiceManage');
+                  },
+                ),
+              ),
             ],
           ),
         ],
@@ -269,10 +281,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Colors.white,
-          border: Border.all(
-            color: const Color(0xFFE8EEF2),
-            width: 1,
-          ),
+          border: Border.all(color: const Color(0xFFE8EEF2), width: 1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -455,10 +464,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               decoration: const BoxDecoration(
                 color: Colors.white,
                 border: Border(
-                  bottom: BorderSide(
-                    color: Color(0xFFE8EEF2),
-                    width: 1,
-                  ),
+                  bottom: BorderSide(color: Color(0xFFE8EEF2), width: 1),
                 ),
               ),
               child: Stack(
@@ -537,7 +543,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                                 ),
                                 if (currentUser?.managerType != null) ...[
                                   const SizedBox(width: 8),
-                                  _buildManagerTypeBadge(currentUser!.managerType!),
+                                  _buildManagerTypeBadge(
+                                    currentUser!.managerType!,
+                                  ),
                                 ],
                               ],
                             ),
@@ -562,10 +570,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             ),
 
             // Spacer
-            Container(
-              height: 8,
-              color: const Color(0xFFF2F8FC),
-            ),
+            Container(height: 8, color: const Color(0xFFF2F8FC)),
 
             // Menu List
             Column(
@@ -663,10 +668,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildMenuItem({
-    required String title,
-    required VoidCallback onTap,
-  }) {
+  Widget _buildMenuItem({required String title, required VoidCallback onTap}) {
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -685,11 +687,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 ),
               ),
             ),
-            const Icon(
-              Icons.chevron_right,
-              size: 24,
-              color: Color(0xFF464A4D),
-            ),
+            const Icon(Icons.chevron_right, size: 24, color: Color(0xFF464A4D)),
           ],
         ),
       ),

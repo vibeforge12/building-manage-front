@@ -28,10 +28,11 @@
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
 
     <application
-        android:label="엄지"
+        android:label="${appLabel}"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"
+        android:usesCleartextTraffic="${usesCleartextTraffic}"
         android:fullBackupContent="false">
         <activity
             android:name="com.j2partners.buildingManageFront.MainActivity"

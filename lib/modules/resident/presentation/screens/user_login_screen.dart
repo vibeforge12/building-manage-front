@@ -9,6 +9,7 @@ import 'package:building_manage_front/modules/resident/presentation/providers/re
 import 'package:building_manage_front/shared/widgets/page_header_text.dart';
 import 'package:building_manage_front/shared/widgets/field_label.dart';
 import '../../../../core/utils/error_message.dart';
+
 class UserLoginScreen extends ConsumerStatefulWidget {
   const UserLoginScreen({super.key});
 
@@ -41,7 +42,11 @@ class _UserLoginScreenState extends ConsumerState<UserLoginScreen> {
       return;
     }
     FocusScope.of(context).unfocus();
-    setState(() { _loading = true; _loginFailed = false; _loginErrorMessage = null; });
+    setState(() {
+      _loading = true;
+      _loginFailed = false;
+      _loginErrorMessage = null;
+    });
 
     try {
       // UseCase를 통한 로그인 (비즈니스 로직 포함)
@@ -59,11 +64,9 @@ class _UserLoginScreenState extends ConsumerState<UserLoginScreen> {
         throw Exception('토큰이 응답에 없습니다.');
       }
 
-      await ref.read(authStateProvider.notifier).loginSuccess(
-        user ?? <String, dynamic>{},
-        accessToken,
-        refreshToken,
-      );
+      await ref
+          .read(authStateProvider.notifier)
+          .loginSuccess(user ?? <String, dynamic>{}, accessToken, refreshToken);
 
       // approvalStatus에 따른 조건부 라우팅
       final approvalStatus = user?['approvalStatus'] as String?;
@@ -82,12 +85,14 @@ class _UserLoginScreenState extends ConsumerState<UserLoginScreen> {
           final userId = user?['id'] as String?;
           if (userId != null) {
             final prefs = await SharedPreferences.getInstance();
+            if (!mounted) return;
             final approvalShownKey = 'approval_shown_$userId';
             final hasShownApproval = prefs.getBool(approvalShownKey) ?? false;
 
             if (!hasShownApproval) {
               // 첫 로그인: 승인 완료 화면 표시 전에 플래그 저장 (재방문 방지)
               await prefs.setBool(approvalShownKey, true);
+              if (!mounted) return;
               context.goNamed('residentApprovalCompleted');
               return;
             }
@@ -103,7 +108,10 @@ class _UserLoginScreenState extends ConsumerState<UserLoginScreen> {
       if (mounted) {
         setState(() {
           _loginFailed = true;
-          _loginErrorMessage = userMessageOf(e, fallback: '아이디 또는 비밀번호가 잘못 되었습니다. 아이디와 비밀번호를 정확히 입력해 주세요.');
+          _loginErrorMessage = userMessageOf(
+            e,
+            fallback: '아이디 또는 비밀번호가 잘못 되었습니다. 아이디와 비밀번호를 정확히 입력해 주세요.',
+          );
         });
       }
     } finally {
@@ -255,7 +263,11 @@ class _UserLoginScreenState extends ConsumerState<UserLoginScreen> {
                     backgroundColor: Color(0xFFE8EEF2),
                   ),
                   child: _loading
-                      ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 2))
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
                       : const Text('로그인'),
                 ),
                 const SizedBox(height: 12),
@@ -268,7 +280,13 @@ class _UserLoginScreenState extends ConsumerState<UserLoginScreen> {
                     ),
                     backgroundColor: Color(0xFF006FFF),
                   ),
-                  child: const Text('회원가입', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),),
+                  child: const Text(
+                    '회원가입',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
               ],
             ),

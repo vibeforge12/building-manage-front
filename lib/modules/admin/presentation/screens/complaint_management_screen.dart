@@ -2,17 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/admin/presentation/providers/admin_providers.dart';
-import 'package:building_manage_front/modules/admin/domain/entities/complaint.dart';
 import 'package:building_manage_front/modules/admin/domain/entities/pagination.dart';
 
 class ComplaintManagementScreen extends ConsumerStatefulWidget {
   const ComplaintManagementScreen({super.key});
 
   @override
-  ConsumerState<ComplaintManagementScreen> createState() => _ComplaintManagementScreenState();
+  ConsumerState<ComplaintManagementScreen> createState() =>
+      _ComplaintManagementScreenState();
 }
 
-class _ComplaintManagementScreenState extends ConsumerState<ComplaintManagementScreen> {
+class _ComplaintManagementScreenState
+    extends ConsumerState<ComplaintManagementScreen> {
   int _tabIndex = 0; // 0: 받은 민원, 1: 처리된 민원
   int _currentPage = 1;
   final int _pageSize = 20;
@@ -44,9 +45,9 @@ class _ComplaintManagementScreenState extends ConsumerState<ComplaintManagementS
 
   void _refreshComplaintData() {
     if (_tabIndex == 0) {
-      ref.refresh(getPendingComplaintsUseCaseProvider);
+      ref.invalidate(getPendingComplaintsUseCaseProvider);
     } else {
-      ref.refresh(getResolvedComplaintsUseCaseProvider);
+      ref.invalidate(getResolvedComplaintsUseCaseProvider);
     }
   }
 
@@ -126,14 +127,16 @@ class _ComplaintManagementScreenState extends ConsumerState<ComplaintManagementS
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected ? Colors.white : Colors.transparent,
-          borderRadius: isSelected ? BorderRadius.circular(8) : BorderRadius.zero,
+          borderRadius: isSelected
+              ? BorderRadius.circular(8)
+              : BorderRadius.zero,
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
-                  )
+                  ),
                 ]
               : [],
         ),
@@ -153,8 +156,12 @@ class _ComplaintManagementScreenState extends ConsumerState<ComplaintManagementS
 
   Widget _buildContent() {
     final Future<PaginatedComplaintResponse> future = _tabIndex == 0
-        ? ref.watch(getPendingComplaintsUseCaseProvider).execute(page: _currentPage, limit: _pageSize)
-        : ref.watch(getResolvedComplaintsUseCaseProvider).execute(page: _currentPage, limit: _pageSize);
+        ? ref
+              .watch(getPendingComplaintsUseCaseProvider)
+              .execute(page: _currentPage, limit: _pageSize)
+        : ref
+              .watch(getResolvedComplaintsUseCaseProvider)
+              .execute(page: _currentPage, limit: _pageSize);
 
     return FutureBuilder<PaginatedComplaintResponse>(
       future: future,
@@ -173,7 +180,11 @@ class _ComplaintManagementScreenState extends ConsumerState<ComplaintManagementS
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.error_outline, size: 48, color: Color(0xFF757B80)),
+                const Icon(
+                  Icons.error_outline,
+                  size: 48,
+                  color: Color(0xFF757B80),
+                ),
                 const SizedBox(height: 16),
                 const Text(
                   '민원을 불러올 수 없습니다.',
@@ -189,7 +200,10 @@ class _ComplaintManagementScreenState extends ConsumerState<ComplaintManagementS
                   onPressed: _refreshComplaintData,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF006FFF),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
                   ),
                   child: const Text(
                     '다시 시도',
@@ -228,15 +242,20 @@ class _ComplaintManagementScreenState extends ConsumerState<ComplaintManagementS
           children: [
             Expanded(
               child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 itemCount: items.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 8),
                 itemBuilder: (context, index) {
                   final complaint = items[index];
-                  final isResolved = complaint.status.toUpperCase() == 'COMPLETED';
+                  final isResolved =
+                      complaint.status.toUpperCase() == 'COMPLETED';
 
                   return InkWell(
-                    onTap: () => context.push('/admin/complaint-detail/${complaint.id}'),
+                    onTap: () =>
+                        context.push('/admin/complaint-detail/${complaint.id}'),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Row(
@@ -261,7 +280,8 @@ class _ComplaintManagementScreenState extends ConsumerState<ComplaintManagementS
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  '${complaint.residentUnit} ${complaint.residentName}'.trim(),
+                                  '${complaint.residentUnit} ${complaint.residentName}'
+                                      .trim(),
                                   style: const TextStyle(
                                     fontFamily: 'Pretendard',
                                     fontWeight: FontWeight.w400,
@@ -274,9 +294,14 @@ class _ComplaintManagementScreenState extends ConsumerState<ComplaintManagementS
                           ),
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
-                              color: isResolved ? const Color(0xFFEEF5FF) : const Color(0xFFFEEEE6),
+                              color: isResolved
+                                  ? const Color(0xFFEEF5FF)
+                                  : const Color(0xFFFEEEE6),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -285,7 +310,9 @@ class _ComplaintManagementScreenState extends ConsumerState<ComplaintManagementS
                                 fontFamily: 'Pretendard',
                                 fontWeight: FontWeight.w600,
                                 fontSize: 11,
-                                color: isResolved ? const Color(0xFF006FFF) : const Color(0xFFFF6B35),
+                                color: isResolved
+                                    ? const Color(0xFF006FFF)
+                                    : const Color(0xFFFF6B35),
                               ),
                             ),
                           ),

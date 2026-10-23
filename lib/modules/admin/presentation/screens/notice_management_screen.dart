@@ -11,7 +11,8 @@ class NoticeManagementScreen extends ConsumerStatefulWidget {
   const NoticeManagementScreen({super.key});
 
   @override
-  ConsumerState<NoticeManagementScreen> createState() => _NoticeManagementScreenState();
+  ConsumerState<NoticeManagementScreen> createState() =>
+      _NoticeManagementScreenState();
 }
 
 class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
@@ -74,17 +75,18 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
       );
 
       if (mounted) {
-        final noticeList = List<Map<String, dynamic>>.from(response['data']['data'] ?? []);
+        final noticeList = List<Map<String, dynamic>>.from(
+          response['data']['data'] ?? [],
+        );
         setState(() {
           _notices = noticeList;
         });
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _loadError = userMessageOf(
-              e,
-              fallback: '공지사항을 불러오지 못했습니다.',
-            ));
+        setState(
+          () => _loadError = userMessageOf(e, fallback: '공지사항을 불러오지 못했습니다.'),
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -104,17 +106,18 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
 
       if (mounted) {
         // 이벤트 API 응답 구조: response["data"]["items"]
-        final eventList = List<Map<String, dynamic>>.from(response['data']['items'] ?? []);
+        final eventList = List<Map<String, dynamic>>.from(
+          response['data']['items'] ?? [],
+        );
         setState(() {
           _events = eventList;
         });
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _loadError = userMessageOf(
-              e,
-              fallback: '이벤트를 불러오지 못했습니다.',
-            ));
+        setState(
+          () => _loadError = userMessageOf(e, fallback: '이벤트를 불러오지 못했습니다.'),
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -164,10 +167,7 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
           preferredSize: const Size.fromHeight(55),
           child: Column(
             children: [
-              Container(
-                height: 1,
-                color: const Color(0xFFE8EEF2),
-              ),
+              Container(height: 1, color: const Color(0xFFE8EEF2)),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 height: 60,
@@ -185,7 +185,9 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
                             indicatorWeight: 2,
                             indicatorSize: TabBarIndicatorSize.label,
                             labelColor: const Color(0xFF17191A),
-                            unselectedLabelColor: const Color(0xFF17191A).withOpacity(0.5),
+                            unselectedLabelColor: const Color(
+                              0xFF17191A,
+                            ).withValues(alpha: 0.5),
                             labelStyle: const TextStyle(
                               fontFamily: 'Pretendard',
                               fontWeight: FontWeight.w700,
@@ -196,7 +198,11 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
                               fontWeight: FontWeight.w700,
                               fontSize: 16,
                             ),
-                            labelPadding: const EdgeInsets.only(right: 32, top: 12, bottom: 12),
+                            labelPadding: const EdgeInsets.only(
+                              right: 32,
+                              top: 12,
+                              bottom: 12,
+                            ),
                             padding: EdgeInsets.zero,
                             dividerColor: Colors.transparent,
                             onTap: (index) {
@@ -244,7 +250,10 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
                       ),
                       style: TextButton.styleFrom(
                         backgroundColor: const Color(0xFF006FFF),
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 8,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -260,116 +269,110 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
       // 하단 고정 버튼·마지막 목록 항목이 시스템 내비게이션 바에 가리지 않도록 감싼다.
       body: SafeArea(
         child: Column(
-        children: [
-          // 정렬 필터
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            decoration: const BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: Color(0xFFE8EEF2),
-                  width: 1,
+          children: [
+            // 정렬 필터
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              decoration: const BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: Color(0xFFE8EEF2), width: 1),
                 ),
               ),
-            ),
-            // 정렬 토글.
-            //
-            // 예전에는 Expanded 로 줄 전체를 차지하는 16px/w700 텍스트 하나였다.
-            // 그 크기는 위쪽 탭 라벨과 같아서 정렬 값이 제목처럼 보였고, 누를 수 있다는
-            // 신호가 전혀 없었다(테두리도 아이콘도 없음). 아래 칩 필터와 같은 형태로 줄여
-            // '누르는 것' 으로 보이게 하고, 폭도 글자만큼만 차지하게 한다.
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    // 최신순 <-> 오래된순 토글
-                    setState(() {
-                      _selectedFilter =
-                          _selectedFilter == '최신순' ? '오래된순' : '최신순';
-                    });
-                    // 정렬 변경 시 데이터 새로고침
-                    if (_tabController.index == 0) {
-                      _loadNotices();
-                    } else {
-                      _loadEvents();
-                    }
-                  },
-                  // 정렬은 아래 필터 칩보다 한 단계 아래의 보조 조작이므로 더 작게 둔다.
-                  // 다만 보이는 알약만 작게 하고, 바깥 여백으로 실제 터치 영역은 넉넉히 남긴다.
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: const Color(0xFFE8EEF2),
-                          width: 1,
+              // 정렬 토글.
+              //
+              // 예전에는 Expanded 로 줄 전체를 차지하는 16px/w700 텍스트 하나였다.
+              // 그 크기는 위쪽 탭 라벨과 같아서 정렬 값이 제목처럼 보였고, 누를 수 있다는
+              // 신호가 전혀 없었다(테두리도 아이콘도 없음). 아래 칩 필터와 같은 형태로 줄여
+              // '누르는 것' 으로 보이게 하고, 폭도 글자만큼만 차지하게 한다.
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      // 최신순 <-> 오래된순 토글
+                      setState(() {
+                        _selectedFilter = _selectedFilter == '최신순'
+                            ? '오래된순'
+                            : '최신순';
+                      });
+                      // 정렬 변경 시 데이터 새로고침
+                      if (_tabController.index == 0) {
+                        _loadNotices();
+                      } else {
+                        _loadEvents();
+                      }
+                    },
+                    // 정렬은 아래 필터 칩보다 한 단계 아래의 보조 조작이므로 더 작게 둔다.
+                    // 다만 보이는 알약만 작게 하고, 바깥 여백으로 실제 터치 영역은 넉넉히 남긴다.
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
                         ),
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            _selectedFilter,
-                            style: const TextStyle(
-                              fontFamily: 'Pretendard',
-                              fontWeight: FontWeight.w500,
-                              fontSize: 12,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: const Color(0xFFE8EEF2),
+                            width: 1,
+                          ),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _selectedFilter,
+                              style: const TextStyle(
+                                fontFamily: 'Pretendard',
+                                fontWeight: FontWeight.w500,
+                                fontSize: 12,
+                                color: Color(0xFF757B80),
+                              ),
+                            ),
+                            const SizedBox(width: 2),
+                            // 눌러서 바뀌는 값임을 알리는 표시.
+                            const Icon(
+                              Icons.swap_vert,
+                              size: 13,
                               color: Color(0xFF757B80),
                             ),
-                          ),
-                          const SizedBox(width: 2),
-                          // 눌러서 바뀌는 값임을 알리는 표시.
-                          const Icon(
-                            Icons.swap_vert,
-                            size: 13,
-                            color: Color(0xFF757B80),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-
-          // 칩스 필터 (공지사항 탭에서만 표시)
-          if (_tabController.index == 0)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: Color(0xFFE8EEF2),
-                    width: 1,
-                  ),
-                ),
-              ),
-              child: Row(
-                children: [
-                  _buildChip('전체', isActive: _selectedChip == '전체'),
-                  const SizedBox(width: 8),
-                  _buildChip('유저', isActive: _selectedChip == '유저'),
-                  const SizedBox(width: 8),
-                  _buildChip('담당자', isActive: _selectedChip == '담당자'),
                 ],
               ),
             ),
 
-          // 공지사항/이벤트 리스트
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildNoticeList(),
-                _buildEventList(),
-              ],
+            // 칩스 필터 (공지사항 탭에서만 표시)
+            if (_tabController.index == 0)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: Color(0xFFE8EEF2), width: 1),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    _buildChip('전체', isActive: _selectedChip == '전체'),
+                    const SizedBox(width: 8),
+                    _buildChip('유저', isActive: _selectedChip == '유저'),
+                    const SizedBox(width: 8),
+                    _buildChip('담당자', isActive: _selectedChip == '담당자'),
+                  ],
+                ),
+              ),
+
+            // 공지사항/이벤트 리스트
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [_buildNoticeList(), _buildEventList()],
+              ),
             ),
-          ),
-        ],
+          ],
         ),
       ),
     );
@@ -407,9 +410,7 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
 
   Widget _buildNoticeList() {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_loadError != null) {
@@ -418,10 +419,7 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
 
     if (_notices.isEmpty) {
       return Center(
-        child: Text(
-          '공지사항이 없습니다',
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
+        child: Text('공지사항이 없습니다', style: Theme.of(context).textTheme.bodyLarge),
       );
     }
 
@@ -468,9 +466,7 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
 
   Widget _buildEventList() {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_loadError != null) {
@@ -479,10 +475,7 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
 
     if (_events.isEmpty) {
       return Center(
-        child: Text(
-          '이벤트가 없습니다',
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
+        child: Text('이벤트가 없습니다', style: Theme.of(context).textTheme.bodyLarge),
       );
     }
 
@@ -527,7 +520,11 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
     );
   }
 
-  void _showDeleteConfirmation(String noticeId, String noticeTitle, bool isEvent) async {
+  void _showDeleteConfirmation(
+    String noticeId,
+    String noticeTitle,
+    bool isEvent,
+  ) async {
     final result = await showCustomConfirmationDialog(
       context: context,
       title: '${isEvent ? '이벤트' : '공지사항'}을 삭제하시겠습니까?',
@@ -614,10 +611,7 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          border: Border.all(
-            color: const Color(0xFFE8EEF2),
-            width: 1,
-          ),
+          border: Border.all(color: const Color(0xFFE8EEF2), width: 1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -675,7 +669,10 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
                     _showDeleteConfirmation(id, title, isEvent);
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       border: Border.all(
@@ -712,7 +709,10 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
                     }
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFEDF9FF),
                       borderRadius: BorderRadius.circular(8),
@@ -735,7 +735,6 @@ class _NoticeManagementScreenState extends ConsumerState<NoticeManagementScreen>
       ),
     );
   }
-
 }
 
 /// 목록 조회 실패 안내 + 재시도.
@@ -757,10 +756,7 @@ class _ListLoadError extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           const SizedBox(height: 12),
-          TextButton(
-            onPressed: onRetry,
-            child: const Text('다시 시도'),
-          ),
+          TextButton(onPressed: onRetry, child: const Text('다시 시도')),
         ],
       ),
     );

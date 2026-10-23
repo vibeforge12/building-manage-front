@@ -6,10 +6,12 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/network/exceptions/api_exception.dart';
 import '../../../core/utils/device_info_helper.dart';
 import '../../../core/constants/user_types.dart';
 import '../../../core/providers/router_provider.dart';
+import '../../../core/routing/notification_navigation.dart';
 import '../../auth/presentation/providers/auth_state_provider.dart';
 import '../data/datasources/push_token_remote_datasource.dart';
 
@@ -21,7 +23,7 @@ class NotificationService {
 
   NotificationService._internal();
 
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  FirebaseMessaging get _messaging => FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
 
@@ -37,12 +39,15 @@ class NotificationService {
   // 알림을 눌렀을 때 화면을 옮기려면 라우터와 '지금 로그인한 사람' 이 필요하다.
   // 이 서비스는 싱글톤이라 provider 가 만들어질 때 한 번 붙여 준다.
   Ref? _ref;
+  final _navigation = NotificationNavigation();
 
   void attachRef(Ref ref) => _ref = ref;
 
   /// 서비스 초기화
   /// 매번 호출되어도 안전 - 메시지 리스너만 한 번 등록
   Future<void> initialize(ApiClient apiClient) async {
+    if (!AppConfig.fcmEnabled) return;
+
     // 항상 새로운 apiClient로 데이터소스 갱신 (로그인 시 토큰 변경 반영)
     _pushTokenDataSource = PushTokenRemoteDataSource(apiClient);
 
@@ -121,6 +126,8 @@ class NotificationService {
   /// FCM 토큰 획득 및 서버 등록
   /// [userType]: 사용자 유형 (user, manager, staff, headquarters)
   Future<void> registerPushToken({required String userType}) async {
+    if (!AppConfig.fcmEnabled) return;
+
     try {
       // 현재 사용자 타입 저장 (토큰 리프레시 시 사용)
       _currentUserType = userType;
@@ -157,7 +164,11 @@ class NotificationService {
   }
 
   /// 서버에 FCM 토큰 등록 (401 에러 시 최대 2회 재시도)
-  Future<void> _registerTokenToServer(String token, String userType, {int retryCount = 0}) async {
+  Future<void> _registerTokenToServer(
+    String token,
+    String userType, {
+    int retryCount = 0,
+  }) async {
     const int maxRetries = 2;
 
     try {
@@ -216,7 +227,11 @@ class NotificationService {
       // 401 Unauthorized 에러 시 재시도
       if (statusCode == 401 && retryCount < maxRetries) {
         await Future.delayed(const Duration(milliseconds: 500));
-        await _registerTokenToServer(token, userType, retryCount: retryCount + 1);
+        await _registerTokenToServer(
+          token,
+          userType,
+          retryCount: retryCount + 1,
+        );
       }
     } catch (e) {
       // Token registration to server failed
@@ -253,20 +268,25 @@ class NotificationService {
     final ref = _ref;
     if (ref == null) return;
 
-    final path = _routeFor(data);
-    if (path == null) return;
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       try {
-        // go 가 아니라 push 다. go 는 경로를 '갈아끼워' 스택을 지우기 때문에,
-        // 알림으로 연 화면이 최상위가 되어 뒤로가기가 갈 곳을 잃는다.
-        // push 는 지금 화면(대개 대시보드) 위에 얹으므로 뒤로가면 거기로 돌아온다.
-        ref.read(routerNotifierProvider).router.push(path);
+        final user = ref.read(currentUserProvider);
+        if (user == null) return;
+        final path = _routeFor(data);
+        if (path == null) return;
+        _navigation.open(
+          router: ref.read(routerNotifierProvider).router,
+          userType: user.userType,
+          destination: path,
+          isCurrentSession: () => ref.read(currentUserProvider) == user,
+        );
       } catch (_) {
-        // 라우터가 아직 없거나 경로가 막힌 경우. 알림을 눌러 앱이 열린 것만으로도
-        // 최소한의 목적은 이뤄졌으므로 여기서 조용히 멈춘다.
+        // 라우터가 아직 없거나 경로가 막힌 경우.
+        // 개인정보나 알림 페이로드 없이 진단 정보만 남긴다.
+        debugPrint('Notification navigation could not be started.');
       }
     });
+    WidgetsBinding.instance.scheduleFrame();
   }
 
   /// 알림 종류 + 지금 로그인한 사람 → 갈 경로.
@@ -298,6 +318,12 @@ class NotificationService {
       case 'EVENT_PUBLISHED':
         final id = idOf('eventId');
         return id == null ? '/user/events' : '/user/event/$id';
+      case 'LIFE_SERVICE_PUBLISHED':
+      case 'LIFE_SERVICE_UPDATED':
+      case 'LIFE_SERVICE_CLOSED':
+        if (userType != UserType.user) return null;
+        final id = idOf('lifeServiceId');
+        return id == null ? '/user/life-services' : '/life-services/$id';
 
       // 처리 결과 알림에는 민원 id 가 실리지 않아 목록으로 보낸다.
       case 'COMPLAINT_RESOLVED':
@@ -343,13 +369,13 @@ class NotificationService {
   }) async {
     const AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
-      'building_manage_channel',
-      '건물 관리 알림',
-      channelDescription: '건물 관리 시스템 알림',
-      importance: Importance.max,
-      priority: Priority.high,
-      showWhen: true,
-    );
+          'building_manage_channel',
+          '건물 관리 알림',
+          channelDescription: '건물 관리 시스템 알림',
+          importance: Importance.max,
+          priority: Priority.high,
+          showWhen: true,
+        );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
       presentAlert: true,
@@ -375,6 +401,8 @@ class NotificationService {
   /// 로그아웃 시 호출 - FCM 토큰 무효화 (선택사항)
   /// 서버에서 토큰을 삭제하거나 비활성화
   Future<void> clearPushToken() async {
+    if (!AppConfig.fcmEnabled) return;
+
     try {
       // 로컬에서 FCM 토큰 삭제
       await _messaging.deleteToken();
@@ -385,19 +413,22 @@ class NotificationService {
 
   /// FCM 권한 요청 (iOS 13+, Android 13+)
   Future<bool> requestPermissions() async {
+    if (!AppConfig.fcmEnabled) return false;
+
     try {
       // Android 13+ 에서는 flutter_local_notifications를 통해 권한 요청
       // (firebase_messaging.requestPermission()이 Android에서 불안정할 수 있음)
-      final androidPlugin = _localNotifications.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+      final androidPlugin = _localNotifications
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
 
       if (androidPlugin != null) {
         await androidPlugin.requestNotificationsPermission();
       }
 
       // Firebase Messaging 권한 요청 (iOS 필수, Android 보조)
-      final NotificationSettings settings =
-          await _messaging.requestPermission(
+      final NotificationSettings settings = await _messaging.requestPermission(
         alert: true,
         announcement: true,
         badge: true,
@@ -431,16 +462,19 @@ final notificationServiceProvider = Provider((ref) {
 /// 현재 사용자 정보를 기반으로 FCM 토큰 등록
 /// 로그인 후 호출
 final pushTokenRegistrationProvider =
-    FutureProvider.family<void, (String userType, ApiClient)>((ref, args) async {
-  final (userType, apiClient) = args;
-  final notificationService = ref.read(notificationServiceProvider);
+    FutureProvider.family<void, (String userType, ApiClient)>((
+      ref,
+      args,
+    ) async {
+      final (userType, apiClient) = args;
+      final notificationService = ref.read(notificationServiceProvider);
 
-  // 서비스 초기화 (처음 한 번만)
-  await notificationService.initialize(apiClient);
+      // 서비스 초기화 (처음 한 번만)
+      await notificationService.initialize(apiClient);
 
-  // 권한 요청
-  await notificationService.requestPermissions();
+      // 권한 요청
+      await notificationService.requestPermissions();
 
-  // 토큰 등록
-  await notificationService.registerPushToken(userType: userType);
-});
+      // 토큰 등록
+      await notificationService.registerPushToken(userType: userType);
+    });
