@@ -219,6 +219,9 @@ echo "보고서: $REPORT_FILE"
 run_step "Dev 환경 안전 설정" dev-environment "$FRONT_DIR" \
   bash "$FRONT_DIR/tool/check_dev_environment.sh"
 
+run_step "iOS 배포 타깃 정합성" ios-release-config "$FRONT_DIR" \
+  python3 "$FRONT_DIR/tool/check_ios_release_config.py"
+
 FLUTTER_BIN="$(find_flutter || true)"
 if [[ -z "$FLUTTER_BIN" ]]; then
   add_result FAIL "Flutter 도구" "Flutter SDK를 찾지 못했습니다."
