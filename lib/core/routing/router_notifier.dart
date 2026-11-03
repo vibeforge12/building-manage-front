@@ -5,6 +5,7 @@ import 'package:building_manage_front/core/constants/auth_states.dart';
 import 'package:building_manage_front/core/constants/user_types.dart';
 import 'package:building_manage_front/domain/entities/user.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
+import 'notification_navigation.dart';
 import 'package:building_manage_front/modules/auth/presentation/screens/main_home_screen.dart';
 import 'package:building_manage_front/modules/auth/presentation/screens/admin_login_selection_screen.dart';
 import 'package:building_manage_front/modules/resident/presentation/screens/resident_signup_screen.dart';
@@ -40,6 +41,7 @@ import 'package:building_manage_front/modules/admin/presentation/screens/bulleti
 import 'package:building_manage_front/modules/admin/presentation/screens/bulletin_create_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/complaint_management_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/complaint_detail_screen.dart';
+import 'package:building_manage_front/modules/complaint_actions/domain/entities/complaint_actions.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/staff_attendance_list_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/staff_attendance_calendar_screen.dart';
 import 'package:building_manage_front/modules/admin/presentation/screens/staff_attendance_current_screen.dart';
@@ -214,7 +216,8 @@ class RouterNotifier extends ChangeNotifier {
     GoRoute(
       path: '/user/dashboard',
       name: 'userDashboard',
-      builder: (context, state) => const UserDashboardScreen(),
+      builder: (context, state) =>
+          UserDashboardScreen(key: notificationHomeKey(state.extra)),
     ),
 
     // 내 정보 (보호된 경로)
@@ -528,6 +531,20 @@ class RouterNotifier extends ChangeNotifier {
       },
     ),
 
+    GoRoute(
+      path: '/admin/complaint-resolve/:complaintId',
+      name: 'adminComplaintResolve',
+      builder: (context, state) {
+        final extra = state.extra is Map ? state.extra as Map : const {};
+        return ComplaintResolveScreen(
+          complaintId: state.pathParameters['complaintId']!,
+          complaintTitle: extra['title'] as String? ?? '민원',
+          complaintData: const {},
+          reply: extra['reply'] as ComplaintReply?,
+        );
+      },
+    ),
+
     // 담당자 대시보드 (보호된 경로)
     GoRoute(
       path: '/manager/dashboard',
@@ -589,12 +606,16 @@ class RouterNotifier extends ChangeNotifier {
       name: 'complaintResolve',
       builder: (context, state) {
         final complaintId = state.pathParameters['complaintId']!;
-        final complaintTitle = state.extra as String? ?? '민원';
+        final extra = state.extra is Map ? state.extra as Map : const {};
+        final complaintTitle = state.extra is String
+            ? state.extra as String
+            : extra['title'] as String? ?? '민원';
         final complaintData = <String, dynamic>{};
         return ComplaintResolveScreen(
           complaintId: complaintId,
           complaintTitle: complaintTitle,
           complaintData: complaintData,
+          reply: extra['reply'] as ComplaintReply?,
         );
       },
     ),

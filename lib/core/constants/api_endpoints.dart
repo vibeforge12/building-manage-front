@@ -1,4 +1,5 @@
 class ApiEndpoints {
+  static const String appUpdate = '/app-update';
   // Auth endpoints - 인증 관련
   static const String auth = '/auth';
 
@@ -74,6 +75,7 @@ class ApiEndpoints {
 
   // Manager/Staff Complaints - 담당자 민원 관리
   static const String managerComplaints = '/managers/complaints';
+  static const String complaintActions = '/complaint-actions';
   static const String managerComplaintsPending = '$managerComplaints/pending';
   static const String managerComplaintsResolved = '$managerComplaints/resolved';
 

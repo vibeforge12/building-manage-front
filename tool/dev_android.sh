@@ -28,6 +28,7 @@ if [[ -z "$NODE_BIN" ]]; then
 fi
 [[ -n "${NODE_BIN:-}" && -x "$NODE_BIN" ]] || fail "실행 가능한 Node.js를 찾을 수 없습니다."
 NODE_DIR="$(dirname "$NODE_BIN")"
+"$NODE_BIN" "$BACK_DIR/scripts/check-node-version.cjs" || fail "보안 패치된 Node.js 22가 필요합니다."
 [[ -r "$BACK_DIR/.dev/secrets/firebase-admin.json" ]] || fail "Dev Firebase Admin 키가 필요합니다."
 
 DEVICE_ID="${ANDROID_DEVICE_ID:-$(adb devices | awk 'NR > 1 && $2 == "device" { print $1; exit }')}"
@@ -43,6 +44,8 @@ psql -h 127.0.0.1 -d "$DEV_DB" -v ON_ERROR_STOP=1 \
   -f "$BACK_DIR/scripts/1.0.14-01-life-services.sql" >/dev/null
 psql -h 127.0.0.1 -d "$DEV_DB" -v ON_ERROR_STOP=1 \
   -f "$BACK_DIR/scripts/1.0.14-02-life-service-images.sql" >/dev/null
+psql -h 127.0.0.1 -d "$DEV_DB" -v ON_ERROR_STOP=1 \
+  -f "$BACK_DIR/scripts/1.0.15-01-complaint-actions.sql" >/dev/null
 psql -h 127.0.0.1 -d "$DEV_DB" -v ON_ERROR_STOP=1 \
   -f "$BACK_DIR/tools/dev/seed.sql" >/dev/null
 

@@ -97,12 +97,16 @@ find_flutter() {
 
 find_node_bin_dir() {
   local candidate
+  if [[ -n "${QUALITY_NODE_BIN_DIR:-}" ]]; then
+    printf '%s\n' "$QUALITY_NODE_BIN_DIR"
+    return 0
+  fi
   for candidate in \
     "${QUALITY_NODE_BIN_DIR:-}" \
     "$HOME"/.nvm/versions/node/*/bin \
     "$HOME/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin" \
     "$(dirname "$(command -v node 2>/dev/null || printf '/missing/node')")"; do
-    if [[ -n "$candidate" && -x "$candidate/node" ]] && "$candidate/node" --version >/dev/null 2>&1; then
+    if [[ -n "$candidate" && -x "$candidate/node" ]] && "$candidate/node" "$BACKEND_DIR/scripts/check-node-version.cjs" >/dev/null 2>&1; then
       printf '%s\n' "$candidate"
       return 0
     fi
@@ -240,6 +244,10 @@ else
     "${FLUTTER[@]}" test test/life_service_close_test.dart
   run_step "서비스 사진·기존 디자인 회귀" life-service-images "$FRONT_DIR" \
     "${FLUTTER[@]}" test test/life_service_images_test.dart
+  run_step "총관리자 민원 처리·답변 수정 회귀" complaint-actions "$FRONT_DIR" \
+    "${FLUTTER[@]}" test test/complaint_actions_test.dart
+  run_step "강제 업데이트·오프라인·스토어 이동 회귀" app-update "$FRONT_DIR" \
+    "${FLUTTER[@]}" test test/app_update_test.dart
   run_step "Android 릴리스 APK·크기 분석" android-release-build "$FRONT_DIR" \
     env ORG_GRADLE_PROJECT_appIdOverride="$ANDROID_PACKAGE" \
     ORG_GRADLE_PROJECT_appLabelOverride='엄지 Dev' \
@@ -260,6 +268,10 @@ else
     add_result FAIL "Node/npm 도구" "실행 가능한 Node/npm 조합을 찾지 못했습니다. QUALITY_NODE_BIN_DIR로 지정할 수 있습니다."
   else
     NODE_VERSION="$("$NODE_BIN_DIR/node" --version)"
+    run_step "Node.js 22 보안 패치 버전 검사" node-security-version "$BACKEND_DIR" \
+      "$NODE_BIN_DIR/node" scripts/check-node-version.cjs
+    run_step "Node 버전 경계 회귀 검사" node-version-test "$BACKEND_DIR" \
+      "$NODE_BIN_DIR/node" --test scripts/check-node-version.test.cjs
     add_result PASS "Node 런타임" "$NODE_VERSION · $NODE_BIN_DIR"
     NPM=(env PATH="$NODE_BIN_DIR:$PATH" npm)
     if [[ "${QUALITY_INSTALL_DEPS:-0}" == "1" ]]; then
@@ -275,6 +287,9 @@ else
       apps/api/src/modules/life-services/life-services.service.spec.ts \
       apps/api/src/modules/life-services/life-service-images.service.spec.ts
     run_step "백엔드 단위 테스트" backend-test "$BACKEND_DIR" "${NPM[@]}" test -- --runInBand
+    run_step "민원 권한·동시 처리 PostgreSQL 검증" complaint-postgres "$FRONT_DIR" \
+      env PATH="$NODE_BIN_DIR:$PATH" QUALITY_BACKEND_DIR="$BACKEND_DIR" \
+      bash "$FRONT_DIR/tool/test_complaint_postgres.sh"
     run_step "백엔드 E2E 테스트" backend-e2e "$BACKEND_DIR" "${NPM[@]}" run test:e2e -- --runInBand
     run_step "로컬 API 성능 스모크" backend-api-performance "$BACKEND_DIR" \
       env QUALITY_API_P95_MS="$QUALITY_API_P95_MS" \
@@ -319,6 +334,9 @@ if command -v adb >/dev/null 2>&1 && [[ -n "$FLUTTER_BIN" ]]; then
     EMULATOR_BIN="${ANDROID_HOME:-$HOME/Library/Android/sdk}/emulator/emulator"
     if [[ -x "$EMULATOR_BIN" ]]; then
       AVD_NAME="${QUALITY_ANDROID_AVD:-$($EMULATOR_BIN -list-avds | head -n 1)}"
+      if [[ -z "${QUALITY_ANDROID_AVD:-}" ]] && "$EMULATOR_BIN" -list-avds | grep -qx 'BuildingManagerQuality'; then
+        AVD_NAME='BuildingManagerQuality'
+      fi
       if [[ -n "$AVD_NAME" ]]; then
         print_header RUN "Android 에뮬레이터 자동 시작 — $AVD_NAME"
         "$EMULATOR_BIN" -avd "$AVD_NAME" -no-window -no-audio -no-boot-anim \
@@ -336,6 +354,10 @@ if command -v adb >/dev/null 2>&1 && [[ -n "$FLUTTER_BIN" ]]; then
     fi
   fi
   if [[ -n "$DEVICE_ID" ]]; then
+    APP_PRESENT_BEFORE_GATE=0
+    if adb -s "$DEVICE_ID" shell pm path "$ANDROID_PACKAGE" 2>/dev/null | grep -q '^package:'; then
+      APP_PRESENT_BEFORE_GATE=1
+    fi
     APK_PATH="$FRONT_DIR/build/app/outputs/flutter-apk/app-release.apk"
     if [[ -f "$APK_PATH" ]]; then
       run_step "Android 릴리스 APK 설치" android-install "$FRONT_DIR" \
@@ -352,8 +374,9 @@ if command -v adb >/dev/null 2>&1 && [[ -n "$FLUTTER_BIN" ]]; then
       if [[ "$DEVICE_ID" == emulator-* ]]; then
         FRAME_MAX_SLOW_PERCENT="$QUALITY_EMULATOR_MAX_SLOW_FRAME_PERCENT"
       fi
-      if [[ "$STARTED_EMULATOR" == "1" ]]; then
+      if [[ "$STARTED_EMULATOR" == "1" || ( "$DEVICE_ID" == emulator-* && "$APP_PRESENT_BEFORE_GATE" == "0" ) ]]; then
         # release와 profile 빌드의 서명이 다를 수 있으므로 자동 테스트 AVD만 초기화한다.
+        # 이미 실행 중이던 AVD에서는 이번 검사로 처음 설치한 앱만 초기화할 수 있다.
         adb -s "$DEVICE_ID" uninstall "$ANDROID_PACKAGE" >/dev/null 2>&1 || true
       fi
       FLUTTER_TOOL_PATH="$PATH"

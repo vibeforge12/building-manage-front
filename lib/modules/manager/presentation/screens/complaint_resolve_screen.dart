@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:building_manage_front/modules/manager/presentation/providers/manager_providers.dart';
+import 'package:building_manage_front/modules/complaint_actions/domain/entities/complaint_actions.dart';
+import 'package:building_manage_front/modules/complaint_actions/presentation/complaint_actions_providers.dart';
+import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
+import 'package:building_manage_front/modules/admin/presentation/providers/admin_providers.dart';
 import 'package:building_manage_front/modules/common/services/image_upload_service.dart';
 import 'dart:io';
 import 'package:building_manage_front/shared/widgets/error_alert.dart';
@@ -12,29 +15,46 @@ class ComplaintResolveScreen extends ConsumerStatefulWidget {
   final String complaintId;
   final String complaintTitle;
   final Map<String, dynamic> complaintData;
+  final ComplaintReply? reply;
 
   const ComplaintResolveScreen({
     super.key,
     required this.complaintId,
     required this.complaintTitle,
     required this.complaintData,
+    this.reply,
   });
 
   @override
-  ConsumerState<ComplaintResolveScreen> createState() => _ComplaintResolveScreenState();
+  ConsumerState<ComplaintResolveScreen> createState() =>
+      _ComplaintResolveScreenState();
 }
 
-class _ComplaintResolveScreenState extends ConsumerState<ComplaintResolveScreen> {
+class _ComplaintResolveScreenState
+    extends ConsumerState<ComplaintResolveScreen> {
   final TextEditingController _contentController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   XFile? _selectedImage;
   String? _uploadedImageUrl;
+  String? _existingImageUrl;
+  bool _replaceImage = false;
   bool _isUploadingImage = false;
   bool _isSubmitting = false;
+  bool _isConfirming = false;
+  bool _hasConflict = false;
+
+  bool get _canSubmit =>
+      _isFormValid &&
+      !_isSubmitting &&
+      !_isUploadingImage &&
+      !_isConfirming &&
+      !_hasConflict;
 
   @override
   void initState() {
     super.initState();
+    _contentController.text = widget.reply?.content ?? '';
+    _existingImageUrl = widget.reply?.imageUrl;
     _contentController.addListener(_updateFormState);
   }
 
@@ -51,11 +71,12 @@ class _ComplaintResolveScreenState extends ConsumerState<ComplaintResolveScreen>
   }
 
   bool get _isFormValid {
-    return _contentController.text.trim().isNotEmpty;
+    final content = _contentController.text.trim();
+    return content.isNotEmpty && content.length <= 10000;
   }
 
   bool get _hasImage {
-    return _selectedImage != null || _uploadedImageUrl != null;
+    return _selectedImage != null || _existingImageUrl != null;
   }
 
   Future<void> _pickImage() async {
@@ -67,9 +88,11 @@ class _ComplaintResolveScreenState extends ConsumerState<ComplaintResolveScreen>
         imageQuality: 85,
       );
 
-      if (image != null) {
+      if (image != null && mounted) {
         setState(() {
           _selectedImage = image;
+          _uploadedImageUrl = null;
+          _replaceImage = true;
         });
         _updateFormState();
       }
@@ -85,7 +108,35 @@ class _ComplaintResolveScreenState extends ConsumerState<ComplaintResolveScreen>
   }
 
   Future<void> _submitResolve() async {
-    if (!_isFormValid) return;
+    if (!_canSubmit) return;
+    setState(() => _isConfirming = true);
+    bool? confirmed;
+    try {
+      confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(widget.reply == null ? '민원을 처리할까요?' : '답변을 수정할까요?'),
+          content: Text(
+            widget.reply == null
+                ? '등록한 처리 내용이 입주민에게 전달됩니다.'
+                : '수정한 내용이 입주민에게 전달되며 수정 이력이 남습니다.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('아니요'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('확인'),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isConfirming = false);
+    }
+    if (confirmed != true || !mounted || !_canSubmit) return;
 
     // 이미지가 선택되었지만 아직 업로드되지 않았으면 먼저 업로드
     if (_selectedImage != null && _uploadedImageUrl == null) {
@@ -145,17 +196,28 @@ class _ComplaintResolveScreenState extends ConsumerState<ComplaintResolveScreen>
       });
 
       // UseCase를 통한 민원 처리 등록
-      final resolveComplaintUseCase = ref.read(resolveComplaintUseCaseProvider);
+      final resolveComplaintUseCase = ref.read(complaintActionsUseCaseProvider);
 
-      await resolveComplaintUseCase.execute(
+      await resolveComplaintUseCase.save(
         complaintId: widget.complaintId,
         content: _contentController.text.trim(),
-        imageUrl: _uploadedImageUrl,
+        reply: widget.reply,
+        imageKey: _uploadedImageUrl,
+        replaceImage: _replaceImage,
       );
 
       // 처리 완료 화면으로 이동
       if (mounted) {
-        context.pushReplacementNamed('complaintResolveComplete');
+        ref.invalidate(complaintActionsProvider(widget.complaintId));
+        ref.invalidate(hasPendingComplaintsProvider);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              widget.reply == null ? '민원이 처리되었습니다.' : '답변이 수정되었습니다.',
+            ),
+          ),
+        );
+        context.pop(true);
       }
     } catch (e) {
       if (mounted) {
@@ -164,12 +226,37 @@ class _ComplaintResolveScreenState extends ConsumerState<ComplaintResolveScreen>
         });
         await showErrorAlert(
           context,
-          title: '민원 처리 실패',
+          title: widget.reply == null ? '민원 처리 실패' : '답변 수정 실패',
           error: e,
           fallback: '민원 처리를 등록하지 못했습니다. 잠시 후 다시 시도해 주세요.',
         );
+        if (mounted && e is ApiException && e.statusCode == 409) {
+          ref.invalidate(complaintActionsProvider(widget.complaintId));
+          setState(() => _hasConflict = true);
+        }
       }
     }
+  }
+
+  Future<void> _reviewLatestReply() async {
+    final leave = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('최신 답변을 확인할까요?'),
+        content: const Text('현재 입력한 내용은 저장되지 않습니다. 필요한 내용은 복사한 후 이동해 주세요.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('계속 작성'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('최신 답변 확인'),
+          ),
+        ],
+      ),
+    );
+    if (leave == true && mounted) context.pop(false);
   }
 
   Widget _buildImagePreview() {
@@ -183,10 +270,7 @@ class _ComplaintResolveScreenState extends ConsumerState<ComplaintResolveScreen>
             child: Stack(
               children: [
                 // 로컬 파일 이미지
-                Image.file(
-                  File(_selectedImage!.path),
-                  fit: BoxFit.cover,
-                ),
+                Image.file(File(_selectedImage!.path), fit: BoxFit.cover),
                 // 업로드 중 오버레이
                 if (_isUploadingImage)
                   Container(
@@ -233,16 +317,15 @@ class _ComplaintResolveScreenState extends ConsumerState<ComplaintResolveScreen>
                 icon: const Icon(Icons.close, color: Colors.white),
                 iconSize: 20,
                 padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(
-                  minWidth: 36,
-                  minHeight: 36,
-                ),
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                 onPressed: _isUploadingImage || _isSubmitting
                     ? null
                     : () {
                         setState(() {
                           _selectedImage = null;
                           _uploadedImageUrl = null;
+                          _existingImageUrl = null;
+                          _replaceImage = true;
                         });
                         _updateFormState();
                       },
@@ -254,14 +337,14 @@ class _ComplaintResolveScreenState extends ConsumerState<ComplaintResolveScreen>
     }
 
     // 업로드된 이미지가 있을 때 (로컬 파일 없음)
-    if (_uploadedImageUrl != null) {
+    if (_existingImageUrl != null) {
       return Stack(
         fit: StackFit.expand,
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: CachedNetworkImage(
-              imageUrl: _uploadedImageUrl!,
+              imageUrl: _existingImageUrl!,
               fit: BoxFit.cover,
               placeholder: (context, url) {
                 return Container(
@@ -327,17 +410,18 @@ class _ComplaintResolveScreenState extends ConsumerState<ComplaintResolveScreen>
                 icon: const Icon(Icons.close, color: Colors.white),
                 iconSize: 20,
                 padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(
-                  minWidth: 36,
-                  minHeight: 36,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _selectedImage = null;
-                    _uploadedImageUrl = null;
-                  });
-                  _updateFormState();
-                },
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                onPressed: _isUploadingImage || _isSubmitting
+                    ? null
+                    : () {
+                        setState(() {
+                          _selectedImage = null;
+                          _uploadedImageUrl = null;
+                          _existingImageUrl = null;
+                          _replaceImage = true;
+                        });
+                        _updateFormState();
+                      },
               ),
             ),
           ),
@@ -385,9 +469,9 @@ class _ComplaintResolveScreenState extends ConsumerState<ComplaintResolveScreen>
           icon: const Icon(Icons.arrow_back, color: Color(0xFF17191A)),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
-          '민원 처리 등록',
-          style: TextStyle(
+        title: Text(
+          widget.reply == null ? '민원 처리 등록' : '답변 수정',
+          style: const TextStyle(
             fontFamily: 'Pretendard',
             fontWeight: FontWeight.w700,
             fontSize: 16,
@@ -396,14 +480,14 @@ class _ComplaintResolveScreenState extends ConsumerState<ComplaintResolveScreen>
         ),
         actions: [
           TextButton(
-            onPressed: (_isFormValid && !_isSubmitting) ? _submitResolve : null,
+            onPressed: _canSubmit ? _submitResolve : null,
             child: Text(
-              '등록',
+              widget.reply == null ? '등록' : '저장',
               style: TextStyle(
                 fontFamily: 'Pretendard',
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
-                color: (_isFormValid && !_isSubmitting)
+                color: _canSubmit
                     ? const Color(0xFF006FFF)
                     : const Color(0xFFA4ADB2),
               ),
@@ -415,6 +499,27 @@ class _ComplaintResolveScreenState extends ConsumerState<ComplaintResolveScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (_hasConflict)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '답변이 변경되었습니다. 입력한 내용은 아직 저장되지 않았습니다.',
+                      style: TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontSize: 14,
+                        color: Color(0xFF757B80),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _reviewLatestReply,
+                      child: const Text('최신 답변 확인'),
+                    ),
+                  ],
+                ),
+              ),
             // 민원 정보 표시
             Container(
               width: double.infinity,
@@ -474,7 +579,9 @@ class _ComplaintResolveScreenState extends ConsumerState<ComplaintResolveScreen>
                       const SizedBox(width: 12),
                       // 사진 첨부 아이콘
                       GestureDetector(
-                        onTap: (_isUploadingImage || _isSubmitting) ? null : _pickImage,
+                        onTap: (_isUploadingImage || _isSubmitting)
+                            ? null
+                            : _pickImage,
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           child: Icon(
@@ -489,10 +596,7 @@ class _ComplaintResolveScreenState extends ConsumerState<ComplaintResolveScreen>
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Container(
-                    height: 1,
-                    color: const Color(0xFFE8EEF2),
-                  ),
+                  Container(height: 1, color: const Color(0xFFE8EEF2)),
                   const SizedBox(height: 8),
                   // 이미지 미리보기 (내용 필드 위)
                   if (_hasImage)
@@ -509,7 +613,8 @@ class _ComplaintResolveScreenState extends ConsumerState<ComplaintResolveScreen>
                   // 내용 입력
                   TextField(
                     controller: _contentController,
-                    enabled: !_isSubmitting,
+                    enabled: !_isSubmitting && !_isUploadingImage,
+                    maxLength: 10000,
                     maxLines: null,
                     minLines: 5,
                     style: const TextStyle(
@@ -542,17 +647,15 @@ class _ComplaintResolveScreenState extends ConsumerState<ComplaintResolveScreen>
         padding: const EdgeInsets.all(22),
         decoration: const BoxDecoration(
           color: Colors.white,
-          border: Border(
-            top: BorderSide(color: Color(0xFFE8EEF2), width: 1),
-          ),
+          border: Border(top: BorderSide(color: Color(0xFFE8EEF2), width: 1)),
         ),
         child: SafeArea(
           child: SizedBox(
             height: 56,
             child: FilledButton(
-              onPressed: (_isFormValid && !_isSubmitting) ? _submitResolve : null,
+              onPressed: _canSubmit ? _submitResolve : null,
               style: FilledButton.styleFrom(
-                backgroundColor: (_isFormValid && !_isSubmitting)
+                backgroundColor: _canSubmit
                     ? const Color(0xFF006FFF)
                     : const Color(0xFFE8EEF2),
                 disabledBackgroundColor: const Color(0xFFE8EEF2),
@@ -561,14 +664,16 @@ class _ComplaintResolveScreenState extends ConsumerState<ComplaintResolveScreen>
                 ),
               ),
               child: Text(
-                _isSubmitting ? '처리 중...' : '처리 등록',
+                _isSubmitting || _isUploadingImage
+                    ? '저장 중...'
+                    : widget.reply == null
+                    ? '처리 등록'
+                    : '수정 저장',
                 style: TextStyle(
                   fontFamily: 'Pretendard',
                   fontWeight: FontWeight.w700,
                   fontSize: 16,
-                  color: (_isFormValid && !_isSubmitting)
-                      ? Colors.white
-                      : const Color(0xFFA4ADB2),
+                  color: _canSubmit ? Colors.white : const Color(0xFFA4ADB2),
                 ),
               ),
             ),

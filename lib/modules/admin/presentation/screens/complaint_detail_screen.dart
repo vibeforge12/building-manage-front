@@ -8,21 +8,37 @@ import 'package:building_manage_front/modules/admin/data/datasources/complaint_r
 import 'package:building_manage_front/modules/admin/domain/entities/complaint.dart';
 import 'package:building_manage_front/shared/widgets/full_screen_image_viewer.dart';
 import '../../../../core/utils/error_message.dart';
+import '../../../complaint_actions/presentation/complaint_action_widgets.dart';
 
 class ComplaintDetailScreen extends ConsumerStatefulWidget {
   final String complaintId;
 
-  const ComplaintDetailScreen({
-    super.key,
-    required this.complaintId,
-  });
+  const ComplaintDetailScreen({super.key, required this.complaintId});
 
   @override
-  ConsumerState<ComplaintDetailScreen> createState() => _ComplaintDetailScreenState();
+  ConsumerState<ComplaintDetailScreen> createState() =>
+      _ComplaintDetailScreenState();
 }
 
 class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
   bool _isTransferring = false;
+  late Future<AdminComplaint> _detailFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _detailFuture = ref
+        .read(getComplaintDetailUseCaseProvider)
+        .execute(complaintId: widget.complaintId);
+  }
+
+  void _refresh() {
+    setState(() {
+      _detailFuture = ref
+          .read(getComplaintDetailUseCaseProvider)
+          .execute(complaintId: widget.complaintId);
+    });
+  }
 
   String _formatDate(DateTime? dateTime) {
     if (dateTime == null) return '';
@@ -48,8 +64,9 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
       return;
     }
     // 현재 담당 부서는 제외
-    final candidates =
-        departments.where((d) => d['id'] != complaint.departmentId).toList();
+    final candidates = departments
+        .where((d) => d['id'] != complaint.departmentId)
+        .toList();
     if (!mounted) return;
     if (candidates.isEmpty) {
       _toast('이관 가능한 다른 부서가 없습니다.');
@@ -91,8 +108,12 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
                       color: Color(0xFF17191A),
                     ),
                   ),
-                  trailing: const Icon(Icons.chevron_right, color: Color(0xFF757B80)),
-                  onTap: () => Navigator.of(sheetContext).pop(d['id']?.toString()),
+                  trailing: const Icon(
+                    Icons.chevron_right,
+                    color: Color(0xFF757B80),
+                  ),
+                  onTap: () =>
+                      Navigator.of(sheetContext).pop(d['id']?.toString()),
                 ),
               ),
               const SizedBox(height: 8),
@@ -112,7 +133,7 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
       );
       if (mounted) {
         _toast('민원이 이관되었습니다.');
-        setState(() {}); // FutureBuilder 재조회
+        _refresh();
       }
     } catch (e) {
       // 백엔드가 이관 거부 사유를 6가지로 구분해 던진다
@@ -125,13 +146,11 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final getComplaintDetailUseCase = ref.watch(getComplaintDetailUseCaseProvider);
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: FutureBuilder(
-          future: getComplaintDetailUseCase.execute(complaintId: widget.complaintId),
+          future: _detailFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(
@@ -147,18 +166,29 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, size: 48, color: Color(0xFF757B80)),
+                    const Icon(
+                      Icons.error_outline,
+                      size: 48,
+                      color: Color(0xFF757B80),
+                    ),
                     const SizedBox(height: 16),
                     const Text(
                       '민원 정보를 불러올 수 없습니다.',
-                      style: TextStyle(fontFamily: 'Pretendard', fontSize: 14, color: Color(0xFF757B80)),
+                      style: TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontSize: 14,
+                        color: Color(0xFF757B80),
+                      ),
                     ),
                     const SizedBox(height: 24),
                     ElevatedButton(
-                      onPressed: () => setState(() {}),
+                      onPressed: _refresh,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF006FFF),
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
                       ),
                       child: const Text(
                         '다시 시도',
@@ -235,9 +265,10 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
                                       height: 16,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2,
-                                        valueColor: AlwaysStoppedAnimation<Color>(
-                                          Color(0xFF006FFF),
-                                        ),
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Color(0xFF006FFF),
+                                            ),
                                       ),
                                     )
                                   : const Text(
@@ -257,9 +288,13 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
                     ),
                   ),
                   // 이미지
-                  if (complaint.imageUrl != null && complaint.imageUrl!.isNotEmpty)
+                  if (complaint.imageUrl != null &&
+                      complaint.imageUrl!.isNotEmpty)
                     GestureDetector(
-                      onTap: () => FullScreenImageViewer.show(context, complaint.imageUrl!),
+                      onTap: () => FullScreenImageViewer.show(
+                        context,
+                        complaint.imageUrl!,
+                      ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(0),
                         child: CachedNetworkImage(
@@ -267,29 +302,36 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
                           fit: BoxFit.cover,
                           width: double.infinity,
                           height: 240,
-                        progressIndicatorBuilder: (context, url, downloadProgress) => Container(
-                          color: const Color(0xFFF2F8FC),
-                          height: 240,
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              value: downloadProgress.progress,
-                              color: const Color(0xFF006FFF),
+                          progressIndicatorBuilder:
+                              (context, url, downloadProgress) => Container(
+                                color: const Color(0xFFF2F8FC),
+                                height: 240,
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    value: downloadProgress.progress,
+                                    color: const Color(0xFF006FFF),
+                                  ),
+                                ),
+                              ),
+                          errorWidget: (context, url, error) => Container(
+                            color: const Color(0xFFF2F8FC),
+                            height: 240,
+                            child: const Center(
+                              child: Icon(
+                                Icons.error,
+                                color: Color(0xFFA4ADB2),
+                              ),
                             ),
                           ),
-                        ),
-                        errorWidget: (context, url, error) => Container(
-                          color: const Color(0xFFF2F8FC),
-                          height: 240,
-                          child: const Center(
-                            child: Icon(Icons.error, color: Color(0xFFA4ADB2)),
-                          ),
-                        ),
                         ),
                       ),
                     ),
                   // 처리 상태
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -306,7 +348,10 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: isResolved
                                     ? const Color(0xFFECFDF5)
@@ -327,13 +372,18 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
                             ),
                             const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFEFF6FF),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
-                                complaint.departmentName.isEmpty ? '-' : complaint.departmentName,
+                                complaint.departmentName.isEmpty
+                                    ? '-'
+                                    : complaint.departmentName,
                                 style: const TextStyle(
                                   fontFamily: 'Pretendard',
                                   fontWeight: FontWeight.w700,
@@ -350,7 +400,10 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
                   Container(height: 1, color: const Color(0xFFE8EEF2)),
                   // 접수 시간
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -378,7 +431,10 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
                   Container(height: 1, color: const Color(0xFFE8EEF2)),
                   // 작성자
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -409,7 +465,10 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
                   Container(height: 1, color: const Color(0xFFE8EEF2)),
                   // 제목
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -438,7 +497,10 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
                   Container(height: 1, color: const Color(0xFFE8EEF2)),
                   // 내용
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -465,8 +527,16 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
                       ],
                     ),
                   ),
+                  ComplaintResolveBar(
+                    complaintId: widget.complaintId,
+                    title: complaint.title,
+                    isAdmin: true,
+                    onChanged: _refresh,
+                  ),
                   // 처리 내용 (완료된 경우)
-                  if (isResolved && complaint.response != null && complaint.response!.isNotEmpty) ...[
+                  if (isResolved &&
+                      complaint.response != null &&
+                      complaint.response!.isNotEmpty) ...[
                     Container(height: 8, color: const Color(0xFFF2F8FC)),
                     Padding(
                       padding: const EdgeInsets.all(16),
@@ -483,9 +553,18 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          if (complaint.completedAt != null || complaint.updatedAt != null)
+                          ComplaintReplyMetadata(
+                            complaintId: widget.complaintId,
+                            title: complaint.title,
+                            isAdmin: true,
+                            onChanged: _refresh,
+                          ),
+                          if (complaint.completedAt != null ||
+                              complaint.updatedAt != null)
                             Text(
-                              _formatDate(complaint.completedAt ?? complaint.updatedAt),
+                              _formatDate(
+                                complaint.completedAt ?? complaint.updatedAt,
+                              ),
                               style: const TextStyle(
                                 fontFamily: 'Pretendard',
                                 fontWeight: FontWeight.w400,

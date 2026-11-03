@@ -325,9 +325,10 @@ class NotificationService {
         final id = idOf('lifeServiceId');
         return id == null ? '/user/life-services' : '/life-services/$id';
 
-      // 처리 결과 알림에는 민원 id 가 실리지 않아 목록으로 보낸다.
+      // 신규 알림에는 complaintId가 있으며, 이전 알림은 각 역할의 목록으로 보낸다.
       case 'COMPLAINT_RESOLVED':
-        return '/user/my-complaints';
+      case 'COMPLAINT_RESULT_UPDATED':
+        return complaintResultDestination(userType, idOf('complaintId'));
 
       // ── 받는 사람에 따라 화면이 갈리는 알림 ──
       case 'COMPLAINT_REGISTERED':

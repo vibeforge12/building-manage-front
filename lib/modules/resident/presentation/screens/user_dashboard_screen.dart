@@ -399,15 +399,19 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
                       // 민원 등록 섹션
                       _buildDepartmentSection(),
 
-                      const SizedBox(height: 24),
-                      ResidentLifeServiceSection(
-                        services: _lifeServices,
-                        isLoading: _isLoadingLifeServices,
-                        error: _lifeServicesError,
-                        onViewAll: _openLifeServiceList,
-                        onOpen: _openLifeService,
-                        onRetry: _loadLifeServices,
-                      ),
+                      if (_isLoadingLifeServices ||
+                          _lifeServicesError != null ||
+                          _lifeServices.isNotEmpty) ...[
+                        const SizedBox(height: 24),
+                        ResidentLifeServiceSection(
+                          services: _lifeServices,
+                          isLoading: _isLoadingLifeServices,
+                          error: _lifeServicesError,
+                          onViewAll: _openLifeServiceList,
+                          onOpen: _openLifeService,
+                          onRetry: _loadLifeServices,
+                        ),
+                      ],
 
                       const SizedBox(height: 16),
                       // 구분선 + 공지사항/이벤트 탭 + 전체보기 버튼
@@ -511,6 +515,7 @@ class _UserDashboardScreenState extends ConsumerState<UserDashboardScreen>
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           IconButton(
+            tooltip: '더보기',
             icon: const Icon(Icons.menu, size: 24),
             onPressed: () {
               _showProfileMenu();

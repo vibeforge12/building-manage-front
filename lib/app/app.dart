@@ -8,6 +8,7 @@ import 'package:building_manage_front/core/network/api_client.dart';
 import 'package:building_manage_front/domain/entities/user.dart';
 
 import '../core/constants/auth_states.dart';
+import '../modules/app_update/presentation/update_gate.dart';
 
 class BuildingManageApp extends ConsumerWidget {
   final String? initError;
@@ -82,16 +83,15 @@ class BuildingManageApp extends ConsumerWidget {
       ),
       // 한국어 로케일 설정
       locale: const Locale('ko', 'KR'),
-      supportedLocales: const [
-        Locale('ko', 'KR'),
-        Locale('en', 'US'),
-      ],
+      supportedLocales: const [Locale('ko', 'KR'), Locale('en', 'US')],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
       routerConfig: router,
+      builder: (context, child) =>
+          AppUpdateGate(child: child ?? const SizedBox.shrink()),
     );
   }
 

@@ -5,6 +5,7 @@ FRONT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BACK_DIR="$(cd "$FRONT_DIR/../Building-Manager-BackEnd" && pwd)"
 
 bash -n "$FRONT_DIR/tool/dev_android.sh" "$FRONT_DIR/tool/dev_stop.sh"
+bash -n "$FRONT_DIR/tool/test_complaint_postgres.sh"
 bash -n "$FRONT_DIR/tool/dev_ios.sh" "$FRONT_DIR/tool/ios_firebase_config.sh"
 grep -q 'com.j2partners.buildingManageFront.dev' "$FRONT_DIR/tool/dev_ios.sh"
 grep -q 'building-management-dev-7ce57' "$FRONT_DIR/tool/ios_firebase_config.sh"

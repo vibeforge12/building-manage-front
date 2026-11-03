@@ -1,4 +1,6 @@
 import 'package:building_manage_front/core/constants/api_endpoints.dart';
+import 'package:building_manage_front/core/constants/user_types.dart';
+import 'package:building_manage_front/core/routing/notification_navigation.dart';
 import 'package:building_manage_front/core/network/api_client.dart';
 import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 import 'package:building_manage_front/modules/life_service/domain/entities/life_service.dart';
@@ -13,6 +15,49 @@ import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 void main() {
+  testWidgets('알림에서 상세를 연 뒤 홈으로 돌아오면 과거 신청 가능 카드가 남지 않는다', (tester) async {
+    final api = _DashboardApiClient(
+      lifeServices: [_response('notice-service', canApply: true)],
+    );
+    final router = GoRouter(
+      initialLocation: '/user/dashboard',
+      routes: [
+        GoRoute(
+          path: '/user/dashboard',
+          builder: (_, state) =>
+              UserDashboardScreen(key: notificationHomeKey(state.extra)),
+        ),
+        GoRoute(
+          path: '/life-services/:id',
+          builder: (_, __) => const Scaffold(body: Text('알림 상세')),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+    await _pumpDashboard(tester, api, router: router);
+    expect(find.byType(ResidentLifeServiceSection), findsOneWidget);
+    router.push('/life-services/notice-service');
+    await tester.pumpAndSettle();
+    api.lifeServices[0] = _response(
+      'notice-service',
+      canApply: false,
+      applicationStatus: 'APPLIED',
+    );
+    NotificationNavigation().open(
+      router: router,
+      userType: UserType.user,
+      destination: '/life-services/notice-service',
+      isCurrentSession: () => true,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('알림 상세'), findsOneWidget);
+    router.pop();
+    await tester.pumpAndSettle();
+    expect(find.byType(UserDashboardScreen), findsOneWidget);
+    expect(find.byType(ResidentLifeServiceSection), findsNothing);
+    expect(router.canPop(), isFalse);
+    expect(api.lifeServiceTabs.length, greaterThanOrEqualTo(2));
+  });
   testWidgets('신청 가능한 홈 카드에서 상세로 이동할 수 있다', (tester) async {
     String? openedId;
     await _pumpSection(
@@ -30,15 +75,15 @@ void main() {
     expect(openedId, 'available');
   });
 
-  testWidgets('신청 항목이 없어도 전체 목록 진입 경로를 유지한다', (tester) async {
+  testWidgets('신청 가능한 항목이 없으면 제목과 전체보기를 포함해 영역 전체를 숨긴다', (tester) async {
     var viewAllCount = 0;
     await _pumpSection(tester, onViewAll: () => viewAllCount++);
 
-    expect(find.text('서비스 신청'), findsOneWidget);
-    expect(find.text('현재 신청 가능한 항목이 없습니다.'), findsOneWidget);
-    expect(find.widgetWithText(TextButton, '전체보기'), findsOneWidget);
-    await tester.tap(find.text('전체보기'));
-    expect(viewAllCount, 1);
+    expect(find.text('서비스 신청'), findsNothing);
+    expect(find.text('현재 신청 가능한 항목이 없습니다.'), findsNothing);
+    expect(find.widgetWithText(TextButton, '전체보기'), findsNothing);
+    expect(tester.getSize(find.byType(ResidentLifeServiceSection)).height, 0);
+    expect(viewAllCount, 0);
   });
 
   testWidgets('불러오는 중에도 전체 목록으로 이동할 수 있다', (tester) async {
@@ -248,19 +293,8 @@ void main() {
     router.pop();
     await tester.pumpAndSettle();
     expect(apiClient.lifeServiceTabs, ['active', 'active']);
-    expect(find.byType(ResidentLifeServiceSection), findsOneWidget);
-    expect(
-      tester.widget<ResidentLifeServiceSection>(section).services,
-      isEmpty,
-    );
-
-    final viewAll = find.descendant(
-      of: section,
-      matching: find.widgetWithText(TextButton, '전체보기'),
-    );
-    await tester.ensureVisible(viewAll);
-    await tester.pumpAndSettle();
-    await tester.tap(viewAll);
+    expect(find.byType(ResidentLifeServiceSection), findsNothing);
+    await _openServicesFromMenu(tester);
     await tester.pumpAndSettle();
     expect(find.text('신청 전체 목록 화면'), findsOneWidget);
 
@@ -316,7 +350,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('마감 항목만 있으면 홈 카드는 숨기되 전체보기에서 상세로 진입한다', (tester) async {
+  testWidgets('마감 항목만 있으면 홈 영역을 숨기고 더보기 메뉴에서 상세로 진입한다', (tester) async {
     final api = _DashboardApiClient(
       lifeServices: [
         _response(
@@ -346,16 +380,9 @@ void main() {
     );
     addTearDown(router.dispose);
     await _pumpDashboard(tester, api, router: router);
-    final section = find.byType(ResidentLifeServiceSection);
-    expect(
-      tester.widget<ResidentLifeServiceSection>(section).services,
-      isEmpty,
-    );
+    expect(find.byType(ResidentLifeServiceSection), findsNothing);
     expect(find.text('closed-only'), findsNothing);
-    final viewAll = find.descendant(of: section, matching: find.text('전체보기'));
-    await tester.ensureVisible(viewAll);
-    await tester.pumpAndSettle();
-    await tester.tap(viewAll);
+    await _openServicesFromMenu(tester);
     await tester.pumpAndSettle();
     expect(find.text('closed-only'), findsOneWidget);
     await tester.tap(find.text('closed-only'));
@@ -365,36 +392,65 @@ void main() {
     await tester.pumpAndSettle();
     router.pop();
     await tester.pumpAndSettle();
-    expect(
-      tester.widget<ResidentLifeServiceSection>(section).services,
-      isEmpty,
-    );
-    expect(find.text('현재 신청 가능한 항목이 없습니다.'), findsOneWidget);
+    expect(find.byType(ResidentLifeServiceSection), findsNothing);
+    expect(find.text('현재 신청 가능한 항목이 없습니다.'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('대시보드는 빈 서버 응답에서도 서비스 신청과 전체보기를 유지한다', (tester) async {
+  testWidgets('원래 홈 디자인에서도 빈 신청 영역과 전용 여백을 숨긴다', (tester) async {
     await _pumpDashboard(tester, _DashboardApiClient(lifeServices: const []));
 
-    final section = find.byType(ResidentLifeServiceSection);
-    expect(section, findsOneWidget);
-    expect(
-      find.descendant(of: section, matching: find.text('서비스 신청')),
-      findsOneWidget,
+    expect(find.byType(ResidentLifeServiceSection), findsNothing);
+    expect(find.text('서비스 신청'), findsNothing);
+    expect(find.text('현재 신청 가능한 항목이 없습니다.'), findsNothing);
+    expect(find.byType(NavigationBar), findsNothing);
+    expect(find.byType(Image), findsOneWidget);
+    expect(find.text('민원등록'), findsOneWidget);
+    final content = tester.widget<Column>(
+      find
+          .descendant(
+            of: find.byType(SingleChildScrollView).first,
+            matching: find.byType(Column),
+          )
+          .first,
     );
     expect(
-      find.descendant(
-        of: section,
-        matching: find.widgetWithText(TextButton, '전체보기'),
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(of: section, matching: find.text('현재 신청 가능한 항목이 없습니다.')),
-      findsOneWidget,
+      content.children.whereType<SizedBox>().where((box) => box.height == 24),
+      hasLength(1),
     );
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('새로고침으로 신청 항목이 생기거나 사라지면 홈 영역도 표시·숨김된다', (tester) async {
+    final api = _DashboardApiClient(lifeServices: []);
+    await _pumpDashboard(tester, api);
+    expect(find.byType(ResidentLifeServiceSection), findsNothing);
+    api.lifeServices.add(_response('new-service', canApply: true));
+    await tester.drag(
+      find.byType(SingleChildScrollView).first,
+      const Offset(0, 500),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('new-service'), findsOneWidget);
+    api.lifeServices.clear();
+    await tester.drag(
+      find.byType(SingleChildScrollView).first,
+      const Offset(0, 500),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(ResidentLifeServiceSection), findsNothing);
+    expect(find.text('서비스 신청'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+}
+
+Future<void> _openServicesFromMenu(WidgetTester tester) async {
+  await tester.tap(find.byTooltip('더보기'));
+  await tester.pumpAndSettle();
+  await tester.tap(
+    find.descendant(of: find.byType(Drawer), matching: find.text('서비스 신청')),
+  );
+  await tester.pumpAndSettle();
 }
 
 Map<String, dynamic> _response(

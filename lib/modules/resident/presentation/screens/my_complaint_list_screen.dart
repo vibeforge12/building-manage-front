@@ -28,6 +28,7 @@ class _MyComplaintListScreenState extends ConsumerState<MyComplaintListScreen> {
     try {
       setState(() {
         _isLoading = true;
+        _error = null;
       });
 
       final complaintDataSource = ref.read(complaintRemoteDataSourceProvider);
@@ -36,6 +37,7 @@ class _MyComplaintListScreenState extends ConsumerState<MyComplaintListScreen> {
         limit: _limit,
       );
 
+      if (!mounted) return;
       if (response['success'] == true && response['data'] != null) {
         final items = List<Map<String, dynamic>>.from(
           response['data']['items'] ?? [],

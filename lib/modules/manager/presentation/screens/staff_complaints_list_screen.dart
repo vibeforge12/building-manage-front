@@ -44,6 +44,7 @@ class _StaffComplaintsListScreenState
               limit: _pageSize,
             );
 
+      if (!mounted) return;
       if (response['success'] == true && response['data'] != null) {
         final data = response['data'] as Map<String, dynamic>;
         final items = data['items'] as List<dynamic>?;
@@ -316,11 +317,13 @@ class _StaffComplaintsListScreenState
                             complaint['isResolved'] as bool? ?? false;
 
                         return InkWell(
-                          onTap: () {
+                          onTap: () async {
                             if (complaintId != null) {
-                              context.push(
+                              await context.push(
                                 '/manager/complaint-detail/$complaintId',
                               );
+                              if (!mounted) return;
+                              await _loadComplaints();
                             }
                           },
                           child: Padding(

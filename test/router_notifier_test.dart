@@ -50,6 +50,7 @@ void main() {
       await expectRedirect('/admin/resident-management', '/admin-login');
       await expectRedirect('/admin/notice-management', '/admin-login');
       await expectRedirect('/admin/staff-account-issuance', '/admin-login');
+      await expectRedirect('/admin/complaint-resolve/c1', '/admin-login');
       await expectRedirect('/manager/complaints', '/manager-login');
       await expectRedirect('/manager/notices', '/manager-login');
       await expectRedirect('/headquarters/manager-list', '/headquarters-login');

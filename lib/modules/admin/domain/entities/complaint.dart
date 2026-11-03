@@ -62,6 +62,19 @@ class AdminComplaint extends Equatable {
 
     // results 배열에서 처리 내용 추출 (가장 최신 것)
     final results = json['results'] as List<dynamic>? ?? [];
+    final resultDates =
+        results
+            .whereType<Map>()
+            .map(
+              (result) =>
+                  DateTime.tryParse(result['createdAt']?.toString() ?? ''),
+            )
+            .whereType<DateTime>()
+            .toList()
+          ..sort();
+    final completedAt =
+        DateTime.tryParse(json['completedAt']?.toString() ?? '') ??
+        (resultDates.isEmpty ? null : resultDates.first);
     String? response;
     String? responseImageUrl;
     if (results.isNotEmpty) {
@@ -90,9 +103,7 @@ class AdminComplaint extends Equatable {
       updatedAt: json['updatedAt'] != null
           ? DateTime.parse(json['updatedAt'] as String).toLocal()
           : null,
-      completedAt: isResolved && json['updatedAt'] != null
-          ? DateTime.parse(json['updatedAt'] as String).toLocal()
-          : null,
+      completedAt: isResolved ? completedAt?.toLocal() : null,
     );
   }
 
@@ -178,21 +189,21 @@ class AdminComplaint extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        title,
-        content,
-        imageUrl,
-        status,
-        departmentId,
-        departmentName,
-        residentId,
-        residentName,
-        residentUnit,
-        response,
-        responseImageUrl,
-        handledBy,
-        createdAt,
-        updatedAt,
-        completedAt,
-      ];
+    id,
+    title,
+    content,
+    imageUrl,
+    status,
+    departmentId,
+    departmentName,
+    residentId,
+    residentName,
+    residentUnit,
+    response,
+    responseImageUrl,
+    handledBy,
+    createdAt,
+    updatedAt,
+    completedAt,
+  ];
 }

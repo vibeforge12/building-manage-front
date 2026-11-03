@@ -254,8 +254,14 @@ class _ComplaintManagementScreenState
                       complaint.status.toUpperCase() == 'COMPLETED';
 
                   return InkWell(
-                    onTap: () =>
-                        context.push('/admin/complaint-detail/${complaint.id}'),
+                    onTap: () async {
+                      await context.push(
+                        '/admin/complaint-detail/${complaint.id}',
+                      );
+                      if (!mounted) return;
+                      _refreshComplaintData();
+                      setState(() {});
+                    },
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Row(

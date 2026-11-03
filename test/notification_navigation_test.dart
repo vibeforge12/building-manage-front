@@ -5,6 +5,31 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 void main() {
+  test('민원 처리·수정 알림은 수신자 역할에 맞는 화면을 연다', () {
+    expect(
+      complaintResultDestination(UserType.admin, 'c1'),
+      '/admin/complaint-detail/c1',
+    );
+    expect(
+      complaintResultDestination(UserType.manager, 'c1'),
+      '/manager/complaint-detail/c1',
+    );
+    expect(
+      complaintResultDestination(UserType.user, 'c1'),
+      '/user/my-complaints',
+    );
+    expect(
+      complaintResultDestination(UserType.admin, null),
+      '/admin/complaint-management',
+    );
+    expect(
+      complaintResultDestination(UserType.manager, ''),
+      '/manager/complaints',
+    );
+    expect(complaintResultDestination(UserType.headquarters, 'c1'), isNull);
+    expect(complaintResultDestination(null, 'c1'), isNull);
+  });
+
   for (final role in UserType.values) {
     testWidgets('$role 알림은 기존 스택을 정리하고 홈 위에 상세 하나만 연다', (tester) async {
       final home = '/${role.name}/dashboard';
