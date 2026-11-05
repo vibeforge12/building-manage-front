@@ -4,9 +4,15 @@ import 'package:building_manage_front/domain/entities/user.dart';
 import 'package:building_manage_front/core/network/interceptors/auth_interceptor.dart';
 import 'package:building_manage_front/core/network/exceptions/api_exception.dart';
 import 'package:building_manage_front/data/datasources/auth_remote_datasource.dart';
+import '../../domain/usecases/logout_usecase.dart';
+import '../../../common/services/notification_service.dart';
 
 class AuthStateNotifier extends StateNotifier<AuthState> {
-  AuthStateNotifier() : super(AuthState.initial);
+  AuthStateNotifier({required LogoutUseCase logoutUseCase})
+    : _logoutUseCase = logoutUseCase,
+      super(AuthState.initial);
+
+  final LogoutUseCase _logoutUseCase;
 
   User? _currentUser;
   String? _accessToken;
@@ -186,7 +192,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
-    await AuthInterceptor.clearToken();
+    await _logoutUseCase();
     setUnauthenticated();
   }
 }
@@ -194,7 +200,14 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
 final authStateProvider = StateNotifierProvider<AuthStateNotifier, AuthState>((
   ref,
 ) {
-  return AuthStateNotifier();
+  return AuthStateNotifier(
+    logoutUseCase: LogoutUseCase(
+      clearPushRegistration: () => ref
+          .read(notificationServiceProvider)
+          .clearPushToken(unregisterFromServer: true),
+      clearCredentials: AuthInterceptor.clearToken,
+    ),
+  );
 });
 
 final currentUserProvider = Provider<User?>((ref) {

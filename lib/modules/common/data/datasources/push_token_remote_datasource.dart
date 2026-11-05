@@ -7,6 +7,13 @@ class PushTokenRemoteDataSource {
 
   PushTokenRemoteDataSource(this._apiClient);
 
+  Future<void> unregisterCurrentToken(String? pushToken) async {
+    await _apiClient.post(
+      ApiEndpoints.logout,
+      data: {if (pushToken != null) 'pushToken': pushToken},
+    );
+  }
+
   /// 요청 바디 생성 (디바이스 정보가 있으면 포함)
   Map<String, dynamic> _buildRequestBody({
     required String pushToken,

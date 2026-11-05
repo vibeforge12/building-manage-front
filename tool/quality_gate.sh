@@ -222,6 +222,9 @@ run_step "Dev 환경 안전 설정" dev-environment "$FRONT_DIR" \
 run_step "iOS 배포 타깃 정합성" ios-release-config "$FRONT_DIR" \
   python3 "$FRONT_DIR/tool/check_ios_release_config.py"
 
+run_step "Android 자동 보호 최소 SDK" android-release-config "$FRONT_DIR" \
+  python3 "$FRONT_DIR/tool/check_android_release_config.py"
+
 FLUTTER_BIN="$(find_flutter || true)"
 if [[ -z "$FLUTTER_BIN" ]]; then
   add_result FAIL "Flutter 도구" "Flutter SDK를 찾지 못했습니다."
@@ -249,6 +252,8 @@ else
     "${FLUTTER[@]}" test test/life_service_images_test.dart
   run_step "총관리자 민원 처리·답변 수정 회귀" complaint-actions "$FRONT_DIR" \
     "${FLUTTER[@]}" test test/complaint_actions_test.dart
+  run_step "로그아웃 전 기기 푸시 해제·실패 재시도 회귀" logout-push "$FRONT_DIR" \
+    "${FLUTTER[@]}" test test/logout_usecase_test.dart
   run_step "강제 업데이트·오프라인·스토어 이동 회귀" app-update "$FRONT_DIR" \
     "${FLUTTER[@]}" test test/app_update_test.dart
   run_step "Android 릴리스 APK·크기 분석" android-release-build "$FRONT_DIR" \

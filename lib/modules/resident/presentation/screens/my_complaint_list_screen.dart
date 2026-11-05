@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:building_manage_front/modules/resident/data/datasources/complaint_remote_datasource.dart';
+import 'package:building_manage_front/core/constants/complaint_status_labels.dart';
 
 class MyComplaintListScreen extends ConsumerStatefulWidget {
   const MyComplaintListScreen({super.key});
@@ -62,7 +63,7 @@ class _MyComplaintListScreenState extends ConsumerState<MyComplaintListScreen> {
   }
 
   String _getStatusLabel(bool isResolved) {
-    return isResolved ? '처리완료' : '처리중';
+    return ComplaintStatusLabels.forResolved(isResolved);
   }
 
   Color _getStatusColor(bool isResolved) {

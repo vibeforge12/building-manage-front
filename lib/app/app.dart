@@ -39,6 +39,7 @@ class BuildingManageApp extends ConsumerWidget {
       // 사용자가 있고, 새로운 사용자이거나 아직 등록 안 한 경우
       if (current != null && _lastRegisteredUserId != current.id) {
         WidgetsBinding.instance.addPostFrameCallback((_) async {
+          if (ref.read(currentUserProvider)?.id != current.id) return;
           try {
             await _registerFcmToken(ref, current);
             _lastRegisteredUserId = current.id;
@@ -57,6 +58,7 @@ class BuildingManageApp extends ConsumerWidget {
           previous == AuthState.authenticated) {
         _lastRegisteredUserId = null; // 재로그인 시 다시 등록하도록
         WidgetsBinding.instance.addPostFrameCallback((_) async {
+          if (ref.read(authStateProvider) != AuthState.unauthenticated) return;
           try {
             await _clearFcmToken(ref);
           } catch (e) {

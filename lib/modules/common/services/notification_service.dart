@@ -35,6 +35,11 @@ class NotificationService {
   bool _isTokenListenerRegistered = false;
   // 현재 등록된 사용자 타입 (토큰 리프레시 시 사용)
   String? _currentUserType;
+  String? _lastRegisteredToken;
+  bool _isLoggingOut = false;
+  bool _pushTokenCleared = false;
+  Future<void>? _clearFuture;
+  final Set<Future<void>> _pendingRegistrations = {};
 
   // 알림을 눌렀을 때 화면을 옮기려면 라우터와 '지금 로그인한 사람' 이 필요하다.
   // 이 서비스는 싱글톤이라 provider 가 만들어질 때 한 번 붙여 준다.
@@ -126,9 +131,25 @@ class NotificationService {
   /// FCM 토큰 획득 및 서버 등록
   /// [userType]: 사용자 유형 (user, manager, staff, headquarters)
   Future<void> registerPushToken({required String userType}) async {
+    await _trackRegistration(() => _registerPushToken(userType));
+  }
+
+  Future<void> _trackRegistration(Future<void> Function() operation) async {
+    if (_isLoggingOut) return;
+    final task = operation();
+    _pendingRegistrations.add(task);
+    try {
+      await task;
+    } finally {
+      _pendingRegistrations.remove(task);
+    }
+  }
+
+  Future<void> _registerPushToken(String userType) async {
     if (!AppConfig.fcmEnabled) return;
 
     try {
+      _pushTokenCleared = false;
       // 현재 사용자 타입 저장 (토큰 리프레시 시 사용)
       _currentUserType = userType;
 
@@ -150,8 +171,11 @@ class NotificationService {
       if (!_isTokenListenerRegistered) {
         _messaging.onTokenRefresh.listen((newToken) {
           // _currentUserType 사용 (재로그인 시 업데이트된 값 사용)
-          final currentType = _currentUserType ?? 'user';
-          _registerTokenToServer(newToken, currentType);
+          final currentType = _currentUserType;
+          if (currentType == null || _isLoggingOut) return;
+          _trackRegistration(
+            () => _registerTokenToServer(newToken, currentType),
+          );
         });
         _isTokenListenerRegistered = true;
       }
@@ -169,6 +193,7 @@ class NotificationService {
     String userType, {
     int retryCount = 0,
   }) async {
+    if (_isLoggingOut) return;
     const int maxRetries = 2;
 
     try {
@@ -219,8 +244,9 @@ class NotificationService {
           );
           break;
         default:
-          break;
+          return;
       }
+      _lastRegisteredToken = token;
     } on ApiException catch (e) {
       final statusCode = e.statusCode;
 
@@ -399,16 +425,57 @@ class NotificationService {
     );
   }
 
-  /// 로그아웃 시 호출 - FCM 토큰 무효화 (선택사항)
-  /// 서버에서 토큰을 삭제하거나 비활성화
-  Future<void> clearPushToken() async {
-    if (!AppConfig.fcmEnabled) return;
-
+  /// Explicit logout removes the server registration before JWTs are cleared.
+  /// The app's unauthenticated-state listener may then call this again safely.
+  Future<void> clearPushToken({bool unregisterFromServer = false}) async {
+    if (!AppConfig.fcmEnabled || _pushTokenCleared) return;
+    final ongoing = _clearFuture;
+    if (ongoing != null) return ongoing;
+    final task = _clearPushToken(unregisterFromServer);
+    _clearFuture = task;
     try {
-      // 로컬에서 FCM 토큰 삭제
-      await _messaging.deleteToken();
-    } catch (e) {
-      // FCM token deletion failed
+      await task;
+    } finally {
+      _clearFuture = null;
+    }
+  }
+
+  Future<void> _clearPushToken(bool unregisterFromServer) async {
+    final previousType = _currentUserType;
+    _isLoggingOut = true;
+    _currentUserType = null;
+    try {
+      // Let any request already sent finish before deleting its server row.
+      await Future.wait(_pendingRegistrations.toList());
+      if (unregisterFromServer) {
+        final source = _pushTokenDataSource;
+        if (source == null) {
+          throw const ApiException(
+            message: '알림 등록 정보를 확인하지 못했습니다. 다시 시도해 주세요.',
+            errorCode: 'PUSH_REGISTRATION_UNAVAILABLE',
+          );
+        }
+        final token = _lastRegisteredToken ?? await _messaging.getToken();
+        await source.unregisterCurrentToken(token);
+      }
+      try {
+        await _messaging.deleteToken();
+      } catch (_) {
+        // Server cleanup has succeeded, so local SDK failure must not block logout.
+        debugPrint('로컬 알림 토큰 정리를 완료하지 못했습니다.');
+      }
+      try {
+        await _localNotifications.cancelAll();
+      } catch (_) {
+        debugPrint('표시된 알림 정리를 완료하지 못했습니다.');
+      }
+      _lastRegisteredToken = null;
+      _pushTokenCleared = true;
+    } catch (_) {
+      _currentUserType = previousType;
+      rethrow;
+    } finally {
+      _isLoggingOut = false;
     }
   }
 

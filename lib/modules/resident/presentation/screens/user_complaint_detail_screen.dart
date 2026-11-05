@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
+import 'package:building_manage_front/core/constants/complaint_status_labels.dart';
 import 'package:building_manage_front/shared/widgets/full_screen_image_viewer.dart';
 import '../../../complaint_actions/presentation/complaint_actions_providers.dart';
 import '../../../complaint_actions/presentation/complaint_action_widgets.dart';
@@ -175,7 +176,7 @@ class _UserComplaintDetailScreenState
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            isResolved ? '처리 완료' : '미처리',
+                            ComplaintStatusLabels.forResolved(isResolved),
                             style: TextStyle(
                               fontFamily: 'Pretendard',
                               fontWeight: FontWeight.w700,

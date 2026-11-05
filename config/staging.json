@@ -1,0 +1,5 @@
+{
+  "API_BASE_URL": "http://building-manager-staging-env.eba-bn9wmcht.ap-northeast-2.elasticbeanstalk.com",
+  "ENVIRONMENT": "staging",
+  "FCM_ENABLED": "true"
+}

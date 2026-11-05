@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:building_manage_front/modules/auth/presentation/widgets/logout_action.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -784,7 +785,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
                   title: '로그아웃',
                   onTap: () async {
                     // 로그아웃 처리
-                    await ref.read(authStateProvider.notifier).logout();
+                    if (!await logoutWithFeedback(context, ref)) return;
 
                     if (context.mounted) {
                       context.go('/');

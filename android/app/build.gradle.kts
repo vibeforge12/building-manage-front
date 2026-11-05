@@ -48,7 +48,8 @@ android {
 
     defaultConfig {
         applicationId = appIdOverride ?: "com.j2partners.buildingManageFront"
-        minSdk = 23
+        // Google Play automatic protection requires Android 7.0 (API 24)+.
+        minSdk = 24
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName

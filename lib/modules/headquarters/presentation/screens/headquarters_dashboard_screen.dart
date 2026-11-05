@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:building_manage_front/modules/auth/presentation/widgets/logout_action.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:building_manage_front/shared/widgets/full_screen_image_background.dart';
-import 'package:building_manage_front/modules/auth/presentation/providers/auth_state_provider.dart';
 
 class HeadquartersDashboardScreen extends ConsumerWidget {
   const HeadquartersDashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authNotifier = ref.read(authStateProvider.notifier);
-
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
         children: [
           // 배경 이미지
-          const FullScreenImageBackground(assetPath: 'assets/headQuartersHome.png'),
+          const FullScreenImageBackground(
+            assetPath: 'assets/headQuartersHome.png',
+          ),
 
           // 컨텐츠
           SafeArea(
@@ -44,7 +44,7 @@ class HeadquartersDashboardScreen extends ConsumerWidget {
                       // 로그아웃 버튼
                       IconButton(
                         onPressed: () async {
-                          await authNotifier.logout();
+                          if (!await logoutWithFeedback(context, ref)) return;
                           if (context.mounted) {
                             context.go('/');
                           }
