@@ -49,6 +49,20 @@ class ResidentManagementRepositoryImpl implements ResidentManagementRepository {
   }
 
   @override
+  Future<int> getPendingResidentCount() async {
+    final response = await _dataSource.getResidents(
+      limit: 1,
+      isVerified: false,
+      status: 'ACTIVE',
+    );
+    final count = response['data']?['meta']?['total'];
+    if (response['success'] != true || count is! int || count < 0) {
+      throw const FormatException('승인 대기 건수 누락');
+    }
+    return count;
+  }
+
+  @override
   Future<ResidentInfo> verifyResident({required String residentId}) async {
     try {
       final response = await _dataSource.verifyResident(residentId: residentId);

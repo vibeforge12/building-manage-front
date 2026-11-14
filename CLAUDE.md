@@ -326,10 +326,11 @@ lib/
   - 저장 키: `access_token`, `refresh_token` (`auth_interceptor.dart:6-7`)
   - `AuthInterceptor`에서 자동 토큰 첨부 및 갱신
   - `AuthStateNotifier.checkAutoLogin()`에서 앱 시작 시 토큰 유효성 검사
-  - ⚠️ **`SharedPreferences` 는 토큰 저장에 쓰이지 않습니다.** 앱에서 SharedPreferences 는 아래 2가지 용도 전용입니다:
+  - ⚠️ **`SharedPreferences` 는 토큰 저장에 쓰이지 않습니다.** 앱에서 SharedPreferences 는 아래 용도로 사용합니다:
     1. 앱 버전 플래그 — 재설치/버전 변경 감지 후 토큰 강제 삭제 (`main.dart:86-101`)
     2. 승인완료 화면 1회 노출 플래그 `approval_shown_<userId>`
        (`user_login_screen.dart:79-85`, `splash_screen.dart:64-66`, `resident_approval_completed_screen.dart:10-17`)
+    - 앱 설치 식별자(UUID), 환경·패키지별 저장. 앱 버전 접속 기록에서 여러 기기를 구분한다.
 
 ### 인증 시스템
 - **JWT 기반 인증**:
@@ -765,7 +766,7 @@ final timeString = timeFormatter.format(DateTime.now());
   (401 감지 → 갱신 1회 공유 → 원 요청 재시도 → 실패 시에만 토큰 삭제)
 - **민감한 정보 저장**:
   - 인증 토큰(`access_token`/`refresh_token`): **`flutter_secure_storage`** — `AuthInterceptor` 가 단독 소유
-  - 비민감 플래그(앱 버전, 승인완료 1회 노출): SharedPreferences
+  - 비민감 플래그(앱 버전, 승인완료 1회 노출)와 앱 설치 식별자(UUID): SharedPreferences
   - 새 저장 코드를 쓰기 전에 "이 값이 유출되면 계정이 털리는가?" 를 기준으로 고를 것
 - `.env` 파일은 절대 Git에 커밋하지 말 것
   (`.gitignore` 에는 추가되었으나 **아직 추적 중 → `git rm --cached .env` 예정**. 위 "환경 변수" 절 참조)

@@ -129,7 +129,7 @@ try {
 - **`print()` 금지.** 현재 `lib/` 에 0건입니다. 필요하면 `debugPrint`.
 - 개인정보(이름/전화번호/응답 전문)를 로그에 남기지 마세요.
 - 토큰은 `flutter_secure_storage` (`AuthInterceptor` 단독 소유).
-  `SharedPreferences` 는 앱 버전 플래그와 승인완료 1회 노출 플래그 전용입니다.
+  `SharedPreferences` 는 앱 버전·승인완료 플래그와 앱 설치 식별자(UUID)를 저장합니다.
 - 토큰 갱신 로직을 직접 구현하지 마세요. `AuthInterceptor` 가 401 → refresh → 원 요청 재시도까지 처리합니다.
 
 ### 3.6 라우팅

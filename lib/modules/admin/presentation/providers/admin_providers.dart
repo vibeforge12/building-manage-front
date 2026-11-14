@@ -145,44 +145,14 @@ final updateComplaintStatusUseCaseProvider = Provider<UpdateComplaintStatusUseCa
   return UpdateComplaintStatusUseCase(repository);
 });
 
-// ============================================================================
-// 신규 입주민 존재 여부 Provider (대시보드 NEW 배지용)
-// ============================================================================
-
-/// 신규 입주민(승인 대기) 존재 여부 Provider
-final hasPendingResidentsProvider = FutureProvider.autoDispose<bool>((ref) async {
-  try {
-    final dataSource = ref.read(residentRemoteDataSourceProvider);
-    // status: 'ACTIVE'로 DELETED 상태 입주민 제외, limit: 1로 존재 여부만 확인
-    final response = await dataSource.getResidents(
-      page: 1,
-      limit: 1,
-      isVerified: false,
-      status: 'ACTIVE',
-    );
-
-    if (response['success'] == true && response['data'] != null) {
-      final data = response['data'] as Map<String, dynamic>;
-      final meta = data['meta'] as Map<String, dynamic>?;
-      final total = meta?['total'] as int? ?? 0;
-      return total > 0;
-    }
-    return false;
-  } catch (e) {
-    return false;
-  }
+final pendingResidentCountProvider = FutureProvider.autoDispose<int>((ref) {
+  return ref.watch(getResidentsUseCaseProvider).pendingCount();
 });
 
-/// 신규 민원(PENDING 상태) 존재 여부 Provider
-final hasPendingComplaintsProvider = FutureProvider.autoDispose<bool>((ref) async {
-  try {
-    final getPendingComplaintsUseCase = ref.read(getPendingComplaintsUseCaseProvider);
-    final response = await getPendingComplaintsUseCase.execute(
-      page: 1,
-      limit: 1,  // 존재 여부만 확인하므로 1개만 조회
-    );
-    return response.total > 0;
-  } catch (e) {
-    return false;
-  }
+final pendingComplaintCountProvider = FutureProvider.autoDispose<int>((ref) async {
+  final page = await ref.watch(getPendingComplaintsUseCaseProvider).execute(
+    page: 1,
+    limit: 1,
+  );
+  return page.total;
 });

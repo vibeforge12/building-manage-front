@@ -19,4 +19,8 @@ fi
 
 # The test validates host/database again before opening a connection. Do not print the URL.
 cd "$BACK_DIR"
-exec npm test -- --runInBand apps/api/src/modules/complaint-actions/complaint-actions.integration.spec.ts
+export ACCOUNT_TEST_DATABASE_URL="${ACCOUNT_TEST_DATABASE_URL:-$COMPLAINT_TEST_DATABASE_URL}"
+exec npm test -- --runInBand \
+  apps/api/src/modules/complaint-actions/complaint-actions.integration.spec.ts \
+  apps/api/src/modules/auth/account-features.integration.spec.ts \
+  apps/api/src/modules/common/test-buildings.integration.spec.ts

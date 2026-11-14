@@ -29,6 +29,7 @@ class AuthInterceptor extends Interceptor {
     // 토큰이 필요없는 엔드포인트들
     final publicEndpoints = [
       '/app-update',
+      '/auth/resident/username-recovery/',
       '/auth/resident/register',
       '/auth/manager/register',
       '/auth/resident/login',

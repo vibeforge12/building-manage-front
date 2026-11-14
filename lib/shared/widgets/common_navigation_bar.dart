@@ -50,51 +50,18 @@ class CommonNavigationBar extends StatelessWidget {
   }
 
   Widget _buildNotificationIcon() {
-    return InkWell(
-      onTap: onNotificationTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            const Icon(
-              Icons.notifications_outlined,
-              size: 24,
-              color: Color(0xFF464A4D),
-            ),
-
-            // Badge - only show if count > 0
-            if (notificationCount > 0)
-              Positioned(
-                top: -4,
-                right: -4,
-                child: Container(
-                  padding: const EdgeInsets.all(2),
-                  constraints: const BoxConstraints(
-                    minWidth: 18,
-                    minHeight: 18,
-                  ),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF006FFF),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      notificationCount > 99 ? '99+' : '$notificationCount',
-                      style: const TextStyle(
-                        fontFamily: 'Pretendard',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 10,
-                        color: Colors.white,
-                        height: 1.2,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-              ),
-          ],
+    return IconButton(
+      tooltip: '알림',
+      onPressed: onNotificationTap,
+      icon: Badge(
+        label: Text(notificationCount > 99 ? '99+' : '$notificationCount'),
+        isLabelVisible: notificationCount > 0,
+        backgroundColor: const Color(0xFF006FFF),
+        textColor: Colors.white,
+        child: const Icon(
+          Icons.notifications_outlined,
+          size: 24,
+          color: Color(0xFF464A4D),
         ),
       ),
     );

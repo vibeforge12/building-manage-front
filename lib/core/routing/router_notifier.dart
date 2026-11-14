@@ -1,3 +1,4 @@
+import 'package:building_manage_front/modules/resident/presentation/screens/username_recovery_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -171,6 +172,12 @@ class RouterNotifier extends ChangeNotifier {
       path: '/user-login',
       name: 'userLogin',
       builder: (context, state) => const UserLoginScreen(),
+    ),
+
+    GoRoute(
+      path: '/username-recovery',
+      name: 'usernameRecovery',
+      builder: (context, state) => const UsernameRecoveryScreen(),
     ),
 
     // 비밀번호 찾기 (공개 경로)
@@ -445,7 +452,9 @@ class RouterNotifier extends ChangeNotifier {
     GoRoute(
       path: '/admin/resident-management',
       name: 'residentManagement',
-      builder: (context, state) => const ResidentManagementScreen(),
+      builder: (context, state) => ResidentManagementScreen(
+        showPending: state.uri.queryParameters['tab'] == 'pending',
+      ),
     ),
 
     // 입주민 상세 (관리자 전용)

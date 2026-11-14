@@ -11,6 +11,8 @@ class GetResidentsUseCase {
 
   GetResidentsUseCase(this._repository);
 
+  Future<int> pendingCount() => _repository.getPendingResidentCount();
+
   /// 입주민 목록 조회 실행
   ///
   /// [page] 페이지 번호 (기본값: 1)

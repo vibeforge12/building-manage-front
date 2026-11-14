@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -119,6 +118,17 @@ class _UserLoginScreenState extends ConsumerState<UserLoginScreen> {
     }
   }
 
+  Future<void> _recoverUsername() async {
+    final username = await context.pushNamed<String>('usernameRecovery');
+    if (!mounted || username == null) return;
+    setState(() {
+      _usernameController.text = username;
+      _passwordController.clear();
+      _loginFailed = false;
+      _loginErrorMessage = null;
+    });
+  }
+
   void _recoverPassword() {
     context.pushNamed('passwordReset');
   }
@@ -230,25 +240,19 @@ class _UserLoginScreenState extends ConsumerState<UserLoginScreen> {
                 ),
                 const SizedBox(height: 8),
 
-                Align(
-                  alignment: Alignment.center,
-                  child: RichText(
-                    text: TextSpan(
-                      style: theme.textTheme.bodyMedium,
-                      children: [
-                        const TextSpan(text: '비밀번호를 잊으셨나요? '),
-                        TextSpan(
-                          text: '비밀번호 찾기',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: const Color(0xFF006FFF),
-                            fontWeight: FontWeight.w700,
-                          ),
-                          recognizer: TapGestureRecognizer()
-                            ..onTap = _recoverPassword,
-                        ),
-                      ],
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 12,
+                  children: [
+                    TextButton(
+                      onPressed: _loading ? null : _recoverUsername,
+                      child: const Text('아이디 찾기'),
                     ),
-                  ),
+                    TextButton(
+                      onPressed: _loading ? null : _recoverPassword,
+                      child: const Text('비밀번호 찾기'),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 20),
 

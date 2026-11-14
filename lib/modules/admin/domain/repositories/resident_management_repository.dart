@@ -24,6 +24,8 @@ abstract class ResidentManagementRepository {
     String? keyword,
   });
 
+  Future<int> getPendingResidentCount();
+
   /// 입주민 승인
   ///
   /// [residentId] 입주민 ID

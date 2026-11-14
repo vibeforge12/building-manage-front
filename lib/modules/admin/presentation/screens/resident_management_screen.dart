@@ -7,7 +7,9 @@ import 'package:building_manage_front/shared/widgets/error_alert.dart';
 import 'package:building_manage_front/core/utils/error_message.dart';
 
 class ResidentManagementScreen extends ConsumerStatefulWidget {
-  const ResidentManagementScreen({super.key});
+  const ResidentManagementScreen({super.key, this.showPending = false});
+
+  final bool showPending;
 
   @override
   ConsumerState<ResidentManagementScreen> createState() =>
@@ -46,7 +48,11 @@ class _ResidentManagementScreenState
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(
+      length: 2,
+      initialIndex: widget.showPending ? 1 : 0,
+      vsync: this,
+    );
     _verifiedScroll.addListener(() => _onScroll(isVerified: true));
     _pendingScroll.addListener(() => _onScroll(isVerified: false));
     _loadVerifiedResidents(reset: true);

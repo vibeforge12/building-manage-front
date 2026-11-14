@@ -209,7 +209,7 @@ class _ComplaintResolveScreenState
       // 처리 완료 화면으로 이동
       if (mounted) {
         ref.invalidate(complaintActionsProvider(widget.complaintId));
-        ref.invalidate(hasPendingComplaintsProvider);
+        ref.invalidate(pendingComplaintCountProvider);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(

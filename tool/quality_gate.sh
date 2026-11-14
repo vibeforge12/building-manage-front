@@ -295,7 +295,7 @@ else
       apps/api/src/modules/life-services/life-services.service.spec.ts \
       apps/api/src/modules/life-services/life-service-images.service.spec.ts
     run_step "백엔드 단위 테스트" backend-test "$BACKEND_DIR" "${NPM[@]}" test -- --runInBand
-    run_step "민원 권한·동시 처리 PostgreSQL 검증" complaint-postgres "$FRONT_DIR" \
+    run_step "민원·계정·앱 버전·테스트 건물 PostgreSQL 검증" complaint-postgres "$FRONT_DIR" \
       env PATH="$NODE_BIN_DIR:$PATH" QUALITY_BACKEND_DIR="$BACKEND_DIR" \
       bash "$FRONT_DIR/tool/test_complaint_postgres.sh"
     run_step "백엔드 E2E 테스트" backend-e2e "$BACKEND_DIR" "${NPM[@]}" run test:e2e -- --runInBand

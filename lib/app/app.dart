@@ -1,3 +1,4 @@
+import '../modules/app_installation/presentation/app_installation_reporter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -93,7 +94,9 @@ class BuildingManageApp extends ConsumerWidget {
       ],
       routerConfig: router,
       builder: (context, child) =>
-          AppUpdateGate(child: child ?? const SizedBox.shrink()),
+          AppInstallationReporter(
+            child: AppUpdateGate(child: child ?? const SizedBox.shrink()),
+          ),
     );
   }
 

@@ -28,13 +28,18 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     // 화면이 다시 활성화될 때 NEW 뱃지 상태 갱신
     final route = ModalRoute.of(context);
     if (route != null && route.isCurrent) {
-      ref.invalidate(hasPendingResidentsProvider);
-      ref.invalidate(hasPendingComplaintsProvider);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !route.isCurrent) return;
+        ref.invalidate(pendingResidentCountProvider);
+        ref.invalidate(pendingComplaintCountProvider);
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final residents = ref.watch(pendingResidentCountProvider).asData?.value;
+    final complaints = ref.watch(pendingComplaintCountProvider).asData?.value;
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.white,
@@ -44,10 +49,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
           children: [
             // Navigation Bar - white background at top
             CommonNavigationBar(
-              notificationCount: 2,
-              onNotificationTap: () {
-                // Handle notification tap
-              },
+              notificationCount: complaints ?? 0,
+              onNotificationTap: () => context.pushNamed('complaintManagement'),
               onMenuTap: () {
                 _scaffoldKey.currentState?.openEndDrawer();
               },
@@ -98,7 +101,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                       const SeparatorWidget(),
 
                       // Menu grid
-                      _buildMenuGrid(context),
+                      _buildMenuGrid(context, residents ?? 0, complaints ?? 0),
 
                       _buildFixedBottomButton(context),
                     ],
@@ -115,12 +118,19 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   /// 당겨서 새로고침. 화면에 보이는 값(승인 대기 뱃지)을 다시 읽는다.
   /// 완료를 기다려야 인디케이터가 제때 사라진다.
   Future<void> _refresh() async {
-    ref.invalidate(hasPendingResidentsProvider);
-    ref.invalidate(hasPendingComplaintsProvider);
-    await Future.wait([
-      ref.read(hasPendingResidentsProvider.future),
-      ref.read(hasPendingComplaintsProvider.future),
-    ]);
+    ref.invalidate(pendingResidentCountProvider);
+    ref.invalidate(pendingComplaintCountProvider);
+    try {
+      await Future.wait([
+        ref.read(pendingResidentCountProvider.future),
+        ref.read(pendingComplaintCountProvider.future),
+      ]);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('알림 건수를 모두 불러오지 못했습니다.')));
+    }
   }
 
   Widget _buildHeader() {
@@ -169,12 +179,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildMenuGrid(BuildContext context) {
-    // 신규 입주민 존재 여부 확인
-    final hasPendingResidents = ref.watch(hasPendingResidentsProvider);
-    // 신규 민원 존재 여부 확인
-    final hasPendingComplaints = ref.watch(hasPendingComplaintsProvider);
-
+  Widget _buildMenuGrid(BuildContext context, int residents, int complaints) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 26, 16, 0),
       child: Column(
@@ -186,11 +191,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 child: _buildMenuCard(
                   icon: 'assets/icons/users_filled.svg',
                   title: '입주민 관리',
-                  showNewBadge: hasPendingResidents.when(
-                    data: (hasNew) => hasNew,
-                    loading: () => false,
-                    error: (_, __) => false,
-                  ),
+                  showNewBadge: residents > 0,
                   onTap: () {
                     context.push('/admin/resident-management');
                   },
@@ -201,11 +202,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 child: _buildMenuCard(
                   icon: 'assets/icons/calendar_check_filled.svg',
                   title: '민원 관리',
-                  showNewBadge: hasPendingComplaints.when(
-                    data: (hasNew) => hasNew,
-                    loading: () => false,
-                    error: (_, __) => false,
-                  ),
+                  showNewBadge: complaints > 0,
                   onTap: () {
                     context.push('/admin/complaint-management');
                   },
