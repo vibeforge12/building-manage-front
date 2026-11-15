@@ -23,4 +23,5 @@ export ACCOUNT_TEST_DATABASE_URL="${ACCOUNT_TEST_DATABASE_URL:-$COMPLAINT_TEST_D
 exec npm test -- --runInBand \
   apps/api/src/modules/complaint-actions/complaint-actions.integration.spec.ts \
   apps/api/src/modules/auth/account-features.integration.spec.ts \
-  apps/api/src/modules/common/test-buildings.integration.spec.ts
+  apps/api/src/modules/common/test-buildings.integration.spec.ts \
+  apps/api/src/modules/app-update/app-release.integration.spec.ts

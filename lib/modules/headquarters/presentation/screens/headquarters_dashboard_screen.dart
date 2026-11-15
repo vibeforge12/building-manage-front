@@ -1,8 +1,9 @@
+import 'package:building_manage_front/shared/widgets/scrollable_menu_body.dart';
 import 'package:flutter/material.dart';
 import 'package:building_manage_front/modules/auth/presentation/widgets/logout_action.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:package_info_plus/package_info_plus.dart';
+import 'package:building_manage_front/modules/app_update/presentation/app_version_section.dart';
 import 'package:building_manage_front/shared/widgets/full_screen_image_background.dart';
 
 class HeadquartersDashboardScreen extends ConsumerWidget {
@@ -23,7 +24,7 @@ class HeadquartersDashboardScreen extends ConsumerWidget {
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-              child: Column(
+              child: ScrollableMenuBody(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // 상단 버튼들 (마이페이지, 로그아웃)
@@ -247,22 +248,7 @@ class HeadquartersDashboardScreen extends ConsumerWidget {
                   ),
 
                   const SizedBox(height: 40),
-                  FutureBuilder<PackageInfo>(
-                    future: PackageInfo.fromPlatform(),
-                    builder: (context, snapshot) {
-                      final version = snapshot.data?.version ?? '';
-                      return Center(
-                        child: Text(
-                          'v$version',
-                          style: const TextStyle(
-                            color: Color(0xFFA4ADB2),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                  const AppVersionSection(),
                   const SizedBox(height: 16),
                 ],
               ),

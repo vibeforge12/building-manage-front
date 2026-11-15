@@ -1,3 +1,5 @@
+import 'store_url.dart';
+
 class UpdatePolicy {
   final bool enabled;
   final int minimumBuild;
@@ -18,13 +20,7 @@ class UpdatePolicy {
     }
     final build = json['minimumBuild'];
     final url = Uri.tryParse(json['storeUrl']?.toString() ?? '');
-    final validStore = platform == 'android'
-        ? url?.host == 'play.google.com' &&
-              url?.path == '/store/apps/details' &&
-              url?.queryParameters['id'] == 'com.j2partners.buildingManageFront'
-        : platform == 'ios' &&
-              url?.host == 'apps.apple.com' &&
-              (url?.path.endsWith('/id6755674738') ?? false);
+    final validStore = isOfficialStoreUrl(url, platform);
     if (build is! int ||
         build < 1 ||
         url?.scheme != 'https' ||

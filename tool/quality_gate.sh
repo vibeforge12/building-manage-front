@@ -254,8 +254,9 @@ else
     "${FLUTTER[@]}" test test/complaint_actions_test.dart
   run_step "로그아웃 전 기기 푸시 해제·실패 재시도 회귀" logout-push "$FRONT_DIR" \
     "${FLUTTER[@]}" test test/logout_usecase_test.dart
-  run_step "강제 업데이트·오프라인·스토어 이동 회귀" app-update "$FRONT_DIR" \
-    "${FLUTTER[@]}" test test/app_update_test.dart
+  run_step "최신 버전·앱 내 업데이트·필수 업데이트 회귀" app-update "$FRONT_DIR" \
+    "${FLUTTER[@]}" test test/app_update_test.dart test/app_latest_version_test.dart
+  skip_step "Google Play 실제 앱 내 설치" "스토어 설치본과 더 높은 배포 버전 필요: 단위 테스트의 네이티브 응답 대역과 구분"
   run_step "Android 릴리스 APK·크기 분석" android-release-build "$FRONT_DIR" \
     env ORG_GRADLE_PROJECT_appIdOverride="$ANDROID_PACKAGE" \
     ORG_GRADLE_PROJECT_appLabelOverride='엄지 Dev' \
@@ -295,7 +296,7 @@ else
       apps/api/src/modules/life-services/life-services.service.spec.ts \
       apps/api/src/modules/life-services/life-service-images.service.spec.ts
     run_step "백엔드 단위 테스트" backend-test "$BACKEND_DIR" "${NPM[@]}" test -- --runInBand
-    run_step "민원·계정·앱 버전·테스트 건물 PostgreSQL 검증" complaint-postgres "$FRONT_DIR" \
+    run_step "민원·계정·앱 버전·공개 버전·테스트 건물 PostgreSQL 검증" complaint-postgres "$FRONT_DIR" \
       env PATH="$NODE_BIN_DIR:$PATH" QUALITY_BACKEND_DIR="$BACKEND_DIR" \
       bash "$FRONT_DIR/tool/test_complaint_postgres.sh"
     run_step "백엔드 E2E 테스트" backend-e2e "$BACKEND_DIR" "${NPM[@]}" run test:e2e -- --runInBand

@@ -2,7 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'app_update_button.dart';
+import 'update_actions.dart';
+export 'update_actions.dart' show openUpdateStoreProvider;
 import '../../../core/config/app_config.dart';
 import '../../../core/network/api_client.dart';
 import '../data/update_repository.dart';
@@ -30,15 +32,16 @@ final updateIdentityProvider = Provider<Future<(String, int)> Function()>(
     return (kIsWeb ? '' : platform, int.parse(info.buildNumber));
   },
 );
-final openUpdateStoreProvider = Provider<Future<bool> Function(Uri)>(
-  (ref) =>
-      (url) => launchUrl(url, mode: LaunchMode.externalApplication),
-);
 
 class UpdateGateState {
   final bool loading;
+  final String platform;
   final UpdatePolicy? requiredPolicy;
-  const UpdateGateState({this.loading = true, this.requiredPolicy});
+  const UpdateGateState({
+    this.loading = true,
+    this.requiredPolicy,
+    this.platform = '',
+  });
 }
 
 final updateGateProvider =
@@ -66,6 +69,7 @@ class UpdateGateNotifier extends Notifier<UpdateGateState> {
       if (!_alive) return;
       state = UpdateGateState(
         loading: false,
+        platform: platform,
         requiredPolicy: policy == null
             ? state.requiredPolicy
             : policy.requiresUpdate(build)
@@ -77,6 +81,7 @@ class UpdateGateNotifier extends Notifier<UpdateGateState> {
       // A check failure never clears a previously confirmed mandatory update.
       state = UpdateGateState(
         loading: false,
+        platform: state.platform,
         requiredPolicy: state.requiredPolicy,
       );
     } finally {
@@ -99,7 +104,10 @@ class _AppUpdateGateState extends ConsumerState<AppUpdateGate>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     Future.microtask(() {
-      if (mounted) ref.read(updateGateProvider.notifier).check();
+      if (mounted) {
+        ref.read(updateGateProvider.notifier).check();
+        _resumeAndroidUpdate();
+      }
     });
   }
 
@@ -113,6 +121,17 @@ class _AppUpdateGateState extends ConsumerState<AppUpdateGate>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       ref.read(updateGateProvider.notifier).check();
+      _resumeAndroidUpdate();
+    }
+  }
+
+  Future<void> _resumeAndroidUpdate() async {
+    try {
+      final (platform, _) = await ref.read(updateIdentityProvider)();
+      if (!mounted || platform != 'android') return;
+      await ref.read(androidAppUpdaterProvider).start(resumeOnly: true);
+    } catch (_) {
+      // Resume is best effort; explicit update actions remain available.
     }
   }
 
@@ -162,31 +181,10 @@ class _AppUpdateGateState extends ConsumerState<AppUpdateGate>
                     ),
                   ),
                   const SizedBox(height: 32),
-                  FilledButton(
-                    onPressed: () async {
-                      bool opened = false;
-                      try {
-                        opened = await ref.read(openUpdateStoreProvider)(
-                          state.requiredPolicy!.storeUrl!,
-                        );
-                      } catch (_) {
-                        /* Show a recoverable action failure. */
-                      }
-                      if (!context.mounted || opened) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('스토어를 열지 못했습니다. 잠시 후 다시 시도해 주세요.'),
-                        ),
-                      );
-                    },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF006FFF),
-                      minimumSize: const Size(double.infinity, 48),
-                    ),
-                    child: const Text(
-                      '업데이트하기',
-                      style: TextStyle(fontFamily: 'Pretendard'),
-                    ),
+                  AppUpdateButton(
+                    platform: state.platform,
+                    storeUrl: state.requiredPolicy!.storeUrl!,
+                    targetBuild: state.requiredPolicy!.minimumBuild,
                   ),
                   TextButton(
                     onPressed: () =>

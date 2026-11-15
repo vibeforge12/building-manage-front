@@ -15,9 +15,9 @@ void main() {
     await _pump(tester, api);
     await tester.tap(find.text('아이디 찾기'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.widgetWithText(TextFormField, '이름'), ' 홍길동 ');
+    await tester.enterText(find.byKey(const ValueKey('recoveryName')), ' 홍길동 ');
     await tester.enterText(
-      find.widgetWithText(TextFormField, '휴대폰 번호'),
+      find.byKey(const ValueKey('recoveryPhone')),
       '01012345678',
     );
     await tester.tap(find.text('인증번호 받기'));
@@ -25,9 +25,14 @@ void main() {
     expect(api.requestBody, {'name': '홍길동', 'phoneNumber': '01012345678'});
     expect(find.text('resident-1'), findsNothing);
     await tester.enterText(
-      find.widgetWithText(TextFormField, '인증번호'),
+      find.byKey(const ValueKey('recoveryCode')),
       '123456',
     );
+    await tester.scrollUntilVisible(find.text('아이디 확인'), 200,
+        scrollable: find
+            .descendant(
+                of: find.byType(ListView), matching: find.byType(Scrollable))
+            .first);
     await tester.tap(find.text('아이디 확인'));
     await tester.pumpAndSettle();
     expect(find.text('건물 A'), findsOneWidget);
@@ -41,9 +46,9 @@ void main() {
   testWidgets('조회 실패를 표시하고 재시도 후 계정 없음과 재입력을 처리한다', (tester) async {
     final api = _Api()..fail = true;
     await _pump(tester, api, recovery: true);
-    await tester.enterText(find.widgetWithText(TextFormField, '이름'), '홍길동');
+    await tester.enterText(find.byKey(const ValueKey('recoveryName')), '홍길동');
     await tester.enterText(
-      find.widgetWithText(TextFormField, '휴대폰 번호'),
+      find.byKey(const ValueKey('recoveryPhone')),
       '01012345678',
     );
     await tester.tap(find.text('인증번호 받기'));
@@ -54,9 +59,14 @@ void main() {
     await tester.tap(find.text('인증번호 받기'));
     await tester.pumpAndSettle();
     await tester.enterText(
-      find.widgetWithText(TextFormField, '인증번호'),
+      find.byKey(const ValueKey('recoveryCode')),
       '123456',
     );
+    await tester.scrollUntilVisible(find.text('아이디 확인'), 200,
+        scrollable: find
+            .descendant(
+                of: find.byType(ListView), matching: find.byType(Scrollable))
+            .first);
     await tester.tap(find.text('아이디 확인'));
     await tester.pumpAndSettle();
     expect(find.text('입력하신 정보와 일치하는 계정이 없습니다.'), findsOneWidget);
@@ -113,9 +123,8 @@ class _Api extends Fake implements ApiClient {
       requestBody = data;
       result = {
         'challengeId': 'challenge',
-        'expiresAt': DateTime.now()
-            .add(const Duration(minutes: 5))
-            .toIso8601String(),
+        'expiresAt':
+            DateTime.now().add(const Duration(minutes: 5)).toIso8601String(),
         'retryAfterSeconds': 60,
       };
     } else {

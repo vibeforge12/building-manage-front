@@ -1,5 +1,6 @@
 class ApiEndpoints {
   static const String appUpdate = '/app-update';
+  static const String latestAppRelease = '/app-update/latest';
   // Auth endpoints - 인증 관련
   static const String auth = '/auth';
 
@@ -24,8 +25,10 @@ class ApiEndpoints {
   static const String passwordResetRequest = '$auth/password-reset/request';
   static const String passwordResetVerify = '$auth/password-reset/verify';
 
-  static const String usernameRecoveryRequest = '$auth/resident/username-recovery/request';
-  static const String usernameRecoveryVerify = '$auth/resident/username-recovery/verify';
+  static const String usernameRecoveryRequest =
+      '$auth/resident/username-recovery/request';
+  static const String usernameRecoveryVerify =
+      '$auth/resident/username-recovery/verify';
   static const String appInstallation = '$auth/app-installation';
 
   // User endpoints - 유저 관련

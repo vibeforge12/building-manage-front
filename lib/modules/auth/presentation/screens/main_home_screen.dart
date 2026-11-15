@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:package_info_plus/package_info_plus.dart';
+import 'package:building_manage_front/modules/app_update/presentation/app_version_section.dart';
 import 'package:building_manage_front/shared/widgets/full_screen_image_background.dart';
 import 'package:building_manage_front/shared/widgets/primary_action_button.dart';
 
@@ -93,22 +93,7 @@ class MainHomeScreen extends StatelessWidget {
                         onPressed: () => context.go('/resident-signup'),
                       ),
                       const SizedBox(height: 16),
-                      FutureBuilder<PackageInfo>(
-                        future: PackageInfo.fromPlatform(),
-                        builder: (context, snapshot) {
-                          final version = snapshot.data?.version ?? '';
-                          return Center(
-                            child: Text(
-                              'v$version',
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.6),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+                      const AppVersionSection(onDarkBackground: true),
                       const SizedBox(height: 8),
                     ],
                   ),

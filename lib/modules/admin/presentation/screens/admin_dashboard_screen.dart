@@ -1,10 +1,11 @@
+import 'package:building_manage_front/shared/widgets/scrollable_menu_body.dart';
 import 'package:flutter/material.dart';
 import 'package:building_manage_front/modules/auth/presentation/widgets/logout_action.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:package_info_plus/package_info_plus.dart';
+import 'package:building_manage_front/modules/app_update/presentation/app_version_section.dart';
 import 'package:building_manage_front/shared/widgets/separator.dart';
 import 'package:building_manage_front/shared/widgets/shrink_to_fit_text.dart';
 import 'package:building_manage_front/shared/widgets/common_navigation_bar.dart';
@@ -454,7 +455,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
       backgroundColor: Colors.white,
       width: MediaQuery.of(context).size.width,
       child: SafeArea(
-        child: Column(
+        child: ScrollableMenuBody(
           children: [
             // Navigation Bar
             Container(
@@ -618,25 +619,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               ],
             ),
             const Spacer(),
-            FutureBuilder<PackageInfo>(
-              future: PackageInfo.fromPlatform(),
-              builder: (context, snapshot) {
-                final version = snapshot.data?.version ?? '';
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Center(
-                    child: Text(
-                      'v$version',
-                      style: const TextStyle(
-                        color: Color(0xFFA4ADB2),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
+            const AppVersionSection(),
           ],
         ),
       ),
