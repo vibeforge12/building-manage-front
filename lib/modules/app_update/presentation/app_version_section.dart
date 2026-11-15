@@ -84,7 +84,7 @@ class _AppVersionSectionState extends ConsumerState<AppVersionSection>
         children: [
           installed.when(
             data: (info) => Text(
-              '현재 버전 ${info.version}',
+              'v${info.version}',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Pretendard',
@@ -97,34 +97,16 @@ class _AppVersionSectionState extends ConsumerState<AppVersionSection>
           ),
           latest.when(
             skipLoadingOnRefresh: false,
-            data: (result) => Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 4),
-                Text(
-                  switch (result.status) {
-                    AppVersionStatus.current => '최신 버전입니다',
-                    AppVersionStatus.updateAvailable =>
-                      '최신 버전 ${result.release.version}',
-                    AppVersionStatus.aheadOfStore => '공개 버전보다 새로운 버전입니다',
-                  },
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'Pretendard',
-                    fontSize: 12,
-                    color: color,
-                  ),
-                ),
-                if (result.status == AppVersionStatus.updateAvailable) ...[
-                  const SizedBox(height: 12),
-                  AppUpdateButton(
-                    platform: result.installed.platform,
-                    storeUrl: result.release.storeUrl,
-                    targetBuild: result.release.build,
-                  ),
-                ],
-              ],
-            ),
+            data: (result) => result.status == AppVersionStatus.updateAvailable
+                ? Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: AppUpdateButton(
+                      platform: result.installed.platform,
+                      storeUrl: result.release.storeUrl,
+                      targetBuild: result.release.build,
+                    ),
+                  )
+                : const SizedBox.shrink(),
             // Optional version checks stay silent until a fresh result exists.
             loading: () => const SizedBox.shrink(),
             error: (_, __) => const SizedBox.shrink(),

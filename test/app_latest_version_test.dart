@@ -136,8 +136,8 @@ void main() {
         return true;
       },
     );
-    expect(find.text('현재 버전 1.0.16'), findsOneWidget);
-    expect(find.text('최신 버전 1.0.17'), findsOneWidget);
+    expect(find.text('v1.0.16'), findsOneWidget);
+    expect(find.text('최신 버전 1.0.17'), findsNothing);
     await tester.tap(find.text('업데이트하기'));
     await tester.pumpAndSettle();
     expect(opened, iosUrl);
@@ -178,7 +178,14 @@ void main() {
   ) async {
     final repo = Releases();
     await pump(tester, repo, AndroidUpdates(), installed: 42);
-    expect(find.text('최신 버전입니다'), findsOneWidget);
+    expect(find.text('최신 버전입니다'), findsNothing);
+    expect(find.text('v1.0.16'), findsOneWidget);
+    repo.build = 41;
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    expect(find.text('공개 버전보다 새로운 버전입니다'), findsNothing);
+    expect(find.text('업데이트하기'), findsNothing);
+    repo.build = 42;
     repo.offline = true;
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
@@ -186,13 +193,14 @@ void main() {
     expect(find.text('최신 버전입니다'), findsNothing);
     expect(find.text('버전 확인 실패'), findsNothing);
     expect(find.text('다시 확인'), findsNothing);
-    expect(find.textContaining('현재 버전'), findsOneWidget);
+    expect(find.text('v1.0.16'), findsOneWidget);
     expect(find.text('업데이트하기'), findsNothing);
     repo.offline = false;
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpAndSettle();
-    expect(find.text('최신 버전입니다'), findsOneWidget);
+    expect(find.text('최신 버전입니다'), findsNothing);
+    expect(find.text('v1.0.16'), findsOneWidget);
     repo.build = 43;
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpAndSettle();
